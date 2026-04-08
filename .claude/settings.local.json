@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter --version)",
+      "Bash(where flutter:*)",
+      "Read(//c/Users/matheo/AppData/Local//**)",
+      "Bash(git -C /c/Users/matheo/Documents/GitHub/harmonix-apps log --oneline)",
+      "Bash(winget install:*)",
+      "Bash(winget search:*)",
+      "Bash(powershell -NoProfile -Command ':*)",
+      "Bash(taskkill /F /IM powershell.exe)",
+      "Bash(rm -f /c/Temp/flutter.zip)",
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Name powershell -Force -ErrorAction SilentlyContinue; Remove-Item 'C:\\\\Temp\\\\flutter.zip' -Force -ErrorAction SilentlyContinue; Write-Output 'OK'\")",
+      "Bash(tasklist.exe)",
+      "Bash(export PATH=\"$PATH:/c/Users/matheo/flutter/bin:/c/flutter/bin\")",
+      "Bash(winget list:*)",
+      "Bash(cmd.exe /c \"flutter --version\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)"
+    ]
+  }
+}

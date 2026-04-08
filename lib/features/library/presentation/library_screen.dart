@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../features/catalog/presentation/track_list_tile.dart';
+import '../../../shared/widgets/async_value_widget.dart';
+import '../providers/favorites_provider.dart';
+
+class LibraryScreen extends ConsumerWidget {
+  const LibraryScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Bibliothèque')),
+      body: AsyncValueWidget(
+        value: favorites,
+        data: (tracks) => tracks.isEmpty
+            ? const Center(child: Text('Aucun favori pour l\'instant.'))
+            : RefreshIndicator(
+                onRefresh: () => ref.refresh(favoritesProvider.future),
+                child: ListView.builder(
+                  itemCount: tracks.length,
+                  itemBuilder: (_, i) => TrackListTile(track: tracks[i]),
+                ),
+              ),
+      ),
+    );
+  }
+}
