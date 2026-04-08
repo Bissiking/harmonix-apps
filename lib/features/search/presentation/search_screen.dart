@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/catalog/presentation/track_list_tile.dart';
+import '../../../features/player/providers/player_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../data/search_repository.dart';
 
@@ -68,7 +69,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   ? const Center(child: Text('Aucun résultat'))
                   : ListView.builder(
                       itemCount: tracks.length,
-                      itemBuilder: (_, i) => TrackListTile(track: tracks[i]),
+                      itemBuilder: (_, i) => TrackListTile(
+                        track: tracks[i],
+                        onTap: () => ref
+                            .read(playerProvider.notifier)
+                            .playFromQueue(tracks, i),
+                      ),
                     ),
             ),
     );

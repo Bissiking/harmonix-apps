@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'settings_repository.g.dart';
 
 const _keyServerUrl = 'server_url';
-const _defaultServerUrl = 'http://localhost:3000';
+const _keyAuthToken = 'auth_token';
 
 class SettingsRepository {
   SettingsRepository(this._prefs);
@@ -15,6 +15,27 @@ class SettingsRepository {
 
   Future<void> setServerUrl(String url) =>
       _prefs.setString(_keyServerUrl, url);
+
+  String? get authToken =>
+      _prefs.getString(_keyAuthToken) ?? _defaultAuthToken;
+
+  Future<void> setAuthToken(String? token) async {
+    if (token == null || token.isEmpty) {
+      await _prefs.remove(_keyAuthToken);
+      return;
+    }
+    await _prefs.setString(_keyAuthToken, token);
+  }
+
+  static String get _defaultServerUrl => const String.fromEnvironment(
+        'HARMONIX_API_BASE_URL',
+        defaultValue: 'https://mhemery.fr',
+      );
+
+  static String? get _defaultAuthToken {
+    const token = String.fromEnvironment('HARMONIX_API_TOKEN');
+    return token.isEmpty ? null : token;
+  }
 }
 
 @Riverpod(keepAlive: true)

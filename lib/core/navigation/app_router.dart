@@ -8,6 +8,7 @@ import '../../features/library/presentation/library_screen.dart';
 import '../../features/player/presentation/full_player_screen.dart';
 import '../../features/search/presentation/search_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/auth/presentation/login_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 import 'route_names.dart';
 
@@ -54,6 +55,11 @@ GoRouter buildAppRouter() {
             builder: (_, __) => const SettingsScreen(),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/login',
+        name: RouteNames.login,
+        builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
         path: '/player',

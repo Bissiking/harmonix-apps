@@ -21,11 +21,28 @@ Dio dio(DioRef ref) {
     ),
   );
 
+  dio.interceptors.add(
+    InterceptorsWrapper(
+      onRequest: (options, handler) {
+        final token = settings.authToken;
+        if (token != null && token.isNotEmpty) {
+          options.headers['Authorization'] = 'Bearer $token';
+        } else {
+          options.headers.remove('Authorization');
+        }
+        handler.next(options);
+      },
+    ),
+  );
   dio.interceptors.add(HarmonixInterceptor());
 
   if (kDebugMode) {
     dio.interceptors.add(
-      LogInterceptor(requestBody: false, responseBody: false),
+      LogInterceptor(
+        requestBody: false,
+        responseBody: false,
+        requestHeader: false,
+      ),
     );
   }
 

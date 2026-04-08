@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../../core/api/api_exception.dart';
 
@@ -34,14 +35,25 @@ class ErrorView extends StatelessWidget {
     );
   }
 
-  String _message(Object error) => switch (error) {
-        NetworkTimeoutException() =>
-          'Délai dépassé. Vérifiez votre connexion.',
-        NetworkException(:final message) => 'Connexion impossible : $message',
-        NotFoundException() => 'Ressource introuvable.',
-        UnauthorizedException() => 'Authentification requise.',
-        ServerException(:final code, :final feature) =>
-          feature != null ? 'Fonctionnalité "$feature" à venir.' : 'Erreur serveur : $code',
-        _ => error.toString(),
-      };
+  String _message(Object error) {
+    final apiError = _apiError(error);
+    return switch (apiError ?? error) {
+      NetworkTimeoutException() =>
+        'Délai dépassé. Vérifiez votre connexion.',
+      NetworkException(:final message) => 'Connexion impossible : $message',
+      NotFoundException() => 'Ressource introuvable.',
+      UnauthorizedException() => 'Authentification requise.',
+      ServerException(:final code, :final feature) =>
+        feature != null ? 'Fonctionnalité "$feature" à venir.' : 'Erreur serveur : $code',
+      _ => error.toString(),
+    };
+  }
+
+  ApiException? _apiError(Object error) {
+    if (error is ApiException) return error;
+    if (error is DioException && error.error is ApiException) {
+      return error.error as ApiException;
+    }
+    return null;
+  }
 }

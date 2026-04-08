@@ -1,7 +1,7 @@
 name: harmonix_apps
 description: Cross-platform music streaming app for Android, iOS, Android Auto, and Desktop.
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+113
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -25,11 +25,11 @@ dependencies:
 
   # HTTP
   dio: ^5.7.0
-  retrofit: ^4.4.1
+  retrofit: 4.6.0
 
   # Serialization
   json_annotation: ^4.9.0
-  freezed_annotation: ^2.4.4
+  freezed_annotation: ^3.0.0
 
   # Images
   cached_network_image: ^3.4.1
@@ -41,6 +41,9 @@ dependencies:
   rxdart: ^0.28.0
   equatable: ^2.0.5
 
+  # App info
+  package_info_plus: ^8.0.0
+
   # Desktop
   window_manager: ^0.4.3
 
@@ -50,12 +53,14 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   build_runner: ^2.4.13
   riverpod_generator: ^2.6.4
-  retrofit_generator: ^9.1.0
+  retrofit_generator: ^9.7.0
   json_serializable: ^6.9.0
-  freezed: ^2.5.7
+  freezed: ^3.1.0
   custom_lint: ^0.7.5
   riverpod_lint: ^2.6.4
   mockito: ^5.4.4
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/logo_harmonix.png

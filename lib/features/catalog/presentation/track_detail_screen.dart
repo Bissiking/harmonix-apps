@@ -25,7 +25,12 @@ class TrackDetailScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              TrackArtwork(coverFile: t.coverFile, size: 220, borderRadius: 16),
+              TrackArtwork(
+                coverFile: t.coverFile,
+                coverUrl: t.coverUrl,
+                size: 220,
+                borderRadius: 16,
+              ),
               const SizedBox(height: 24),
               Text(
                 t.title,
