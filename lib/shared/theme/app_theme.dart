@@ -18,7 +18,7 @@ abstract final class AppTheme {
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
         ),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: HarmonixColors.darkSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(

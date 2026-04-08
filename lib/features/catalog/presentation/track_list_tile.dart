@@ -1,29 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/track.dart';
 import '../../../core/utils/duration_formatter.dart';
-import '../../../features/player/providers/player_provider.dart';
 import '../../../shared/widgets/track_artwork.dart';
 
-class TrackListTile extends ConsumerWidget {
-  const TrackListTile({super.key, required this.track});
+class TrackListTile extends StatelessWidget {
+  const TrackListTile({
+    super.key,
+    required this.track,
+    required this.onTap,
+  });
 
   final Track track;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: TrackArtwork(coverFile: track.coverFile),
-      title: Text(track.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(track.artist, maxLines: 1, overflow: TextOverflow.ellipsis),
+      leading: TrackArtwork(
+        coverFile: track.coverFile,
+        coverUrl: track.coverUrl,
+      ),
+      title: Text(
+        track.title.isNotEmpty ? track.title : track.id,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        track.artist.isNotEmpty ? track.artist : 'Unknown artist',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       trailing: Text(
-        formatMs(track.durationMs),
+        track.durationMs > 0 ? formatMs(track.durationMs) : '--:--',
         style: Theme.of(context).textTheme.bodySmall,
       ),
-      onTap: () => ref.read(playerProvider.notifier).playTrack(track),
+      onTap: onTap,
       onLongPress: () => context.pushNamed('track-detail', pathParameters: {'id': track.id}),
     );
   }

@@ -4,10 +4,10 @@ part 'bootstrap_config.freezed.dart';
 part 'bootstrap_config.g.dart';
 
 @freezed
-class BootstrapConfig with _$BootstrapConfig {
+abstract class BootstrapConfig with _$BootstrapConfig {
   const factory BootstrapConfig({
     @Default({}) Map<String, dynamic> capabilities,
-    @Default({}) Map<String, String> endpoints,
+    @Default({}) Map<String, dynamic> endpoints,
     @Default('1') String apiVersion,
   }) = _BootstrapConfig;
 

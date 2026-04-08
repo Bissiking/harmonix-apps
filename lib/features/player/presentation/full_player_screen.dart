@@ -18,13 +18,17 @@ class FullPlayerScreen extends ConsumerWidget {
     final nowPlaying = ref.watch(nowPlayingProvider).valueOrNull;
     final playbackState = ref.watch(playbackStateStreamProvider).valueOrNull;
     final position = ref.watch(playbackPositionProvider).valueOrNull;
+    final durationFromPlayer =
+        ref.watch(playbackDurationProvider).valueOrNull;
 
     if (nowPlaying == null) {
       return const Scaffold(body: Center(child: Text('Aucune piste en cours')));
     }
 
     final isPlaying = playbackState?.playing ?? false;
-    final duration = nowPlaying.duration ?? Duration.zero;
+    final duration = durationFromPlayer ??
+        nowPlaying.duration ??
+        Duration.zero;
     final shuffle =
         playbackState?.shuffleMode == AudioServiceShuffleMode.all;
     final repeat = playbackState?.repeatMode ?? AudioServiceRepeatMode.none;

@@ -6,5 +6,6 @@ abstract final class RouteNames {
   static const search = 'search';
   static const library = 'library';
   static const settings = 'settings';
+  static const login = 'login';
   static const player = 'player';
 }

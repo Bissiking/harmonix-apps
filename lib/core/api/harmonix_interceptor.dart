@@ -5,6 +5,12 @@ import 'api_exception.dart';
 class HarmonixInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
+    final path = response.requestOptions.path;
+    if (!path.startsWith('/api/harmonix/apps')) {
+      handler.next(response);
+      return;
+    }
+
     final data = response.data;
 
     if (data is! Map<String, dynamic>) {
@@ -14,7 +20,10 @@ class HarmonixInterceptor extends Interceptor {
     }
 
     if (data['ok'] == true) {
-      handler.next(response.copyWith(data: data['data']));
+      if (data.containsKey('data')) {
+        response.data = data['data'];
+      }
+      handler.next(response);
       return;
     }
 

@@ -2,11 +2,13 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'app.dart';
 import 'core/audio/audio_handler.dart';
 import 'core/audio/audio_handler_provider.dart';
+import 'core/settings/settings_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,10 +45,13 @@ Future<void> main() async {
     audioHandler = HarmonixAudioHandler();
   }
 
+  final prefs = await SharedPreferences.getInstance();
+
   runApp(
     ProviderScope(
       overrides: [
         audioHandlerProvider.overrideWithValue(audioHandler),
+        settingsRepositoryProvider.overrideWithValue(SettingsRepository(prefs)),
       ],
       child: const HarmonixApp(),
     ),

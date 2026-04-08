@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../features/catalog/presentation/track_list_tile.dart';
+import '../../../features/player/providers/player_provider.dart';
 import '../../../shared/widgets/async_value_widget.dart';
 import '../providers/favorites_provider.dart';
 
@@ -13,7 +14,7 @@ class LibraryScreen extends ConsumerWidget {
     final favorites = ref.watch(favoritesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Bibliothèque')),
+      appBar: AppBar(title: const Text('Favoris')),
       body: AsyncValueWidget(
         value: favorites,
         data: (tracks) => tracks.isEmpty
@@ -22,7 +23,12 @@ class LibraryScreen extends ConsumerWidget {
                 onRefresh: () => ref.refresh(favoritesProvider.future),
                 child: ListView.builder(
                   itemCount: tracks.length,
-                  itemBuilder: (_, i) => TrackListTile(track: tracks[i]),
+                  itemBuilder: (_, i) => TrackListTile(
+                    track: tracks[i],
+                    onTap: () => ref
+                        .read(playerProvider.notifier)
+                        .playFromQueue(tracks, i),
+                  ),
                 ),
               ),
       ),

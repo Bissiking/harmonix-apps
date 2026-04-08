@@ -1,10 +1,17 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 
 class HarmonixAudioHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
   HarmonixAudioHandler() {
-    _player.playbackEventStream.listen(_broadcastState);
+    _player.playbackEventStream.listen((event) {
+      _lastPlaybackEvent = event;
+      _broadcastState(event);
+      _logPlaybackEvent(event);
+    });
+    _player.loopModeStream.listen((_) => _rebroadcastState());
+    _player.shuffleModeEnabledStream.listen((_) => _rebroadcastState());
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
         skipToNext();
@@ -13,6 +20,8 @@ class HarmonixAudioHandler extends BaseAudioHandler
   }
 
   final AudioPlayer _player = AudioPlayer();
+  PlaybackEvent? _lastPlaybackEvent;
+  DateTime _lastPlaybackLog = DateTime.fromMillisecondsSinceEpoch(0);
 
   AudioPlayer get player => _player;
 
@@ -21,19 +30,27 @@ class HarmonixAudioHandler extends BaseAudioHandler
   Future<void> playFromTrackId(
     String trackId,
     String streamUrl, {
-    MediaItem? mediaItem,
+    MediaItem? initialMediaItem,
+    Map<String, String>? headers,
   }) async {
-    final item = mediaItem ??
+    final item = initialMediaItem ??
         MediaItem(
           id: trackId,
           title: 'Unknown',
         );
 
-    mediaItem.add(item);
+    this.mediaItem.add(item);
+    assert(() {
+      debugPrint(
+        'AudioHandler.playFromTrackId url=$streamUrl headers=${headers?.keys.toList()}',
+      );
+      return true;
+    }());
     await _player.setAudioSource(
       AudioSource.uri(
         Uri.parse(streamUrl),
         tag: item,
+        headers: headers,
       ),
     );
     await _player.play();
@@ -43,6 +60,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     List<MediaItem> items,
     List<String> streamUrls, {
     int initialIndex = 0,
+    Map<String, String>? headers,
   }) async {
     assert(items.length == streamUrls.length);
 
@@ -51,7 +69,11 @@ class HarmonixAudioHandler extends BaseAudioHandler
 
     final sources = List.generate(
       items.length,
-      (i) => AudioSource.uri(Uri.parse(streamUrls[i]), tag: items[i]),
+      (i) => AudioSource.uri(
+        Uri.parse(streamUrls[i]),
+        tag: items[i],
+        headers: headers,
+      ),
     );
 
     await _player.setAudioSource(
@@ -114,6 +136,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
       AudioServiceRepeatMode.all =>
         LoopMode.all,
     });
+    _rebroadcastState();
   }
 
   @override
@@ -121,6 +144,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     await _player.setShuffleModeEnabled(
       shuffleMode == AudioServiceShuffleMode.all,
     );
+    _rebroadcastState();
   }
 
   @override
@@ -173,5 +197,29 @@ class HarmonixAudioHandler extends BaseAudioHandler
         queueIndex: event.currentIndex,
       ),
     );
+  }
+
+  void _logPlaybackEvent(PlaybackEvent event) {
+    assert(() {
+      final now = DateTime.now();
+      if (now.difference(_lastPlaybackLog).inMilliseconds < 1000) {
+        return true;
+      }
+      _lastPlaybackLog = now;
+      debugPrint(
+        'AudioState playing=${_player.playing} state=${_player.processingState} '
+        'pos=${_player.position.inMilliseconds}ms '
+        'buf=${_player.bufferedPosition.inMilliseconds}ms '
+        'dur=${_player.duration?.inMilliseconds}ms',
+      );
+      return true;
+    }());
+  }
+
+  void _rebroadcastState() {
+    final event = _lastPlaybackEvent;
+    if (event != null) {
+      _broadcastState(event);
+    }
   }
 }

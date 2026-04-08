@@ -35,11 +35,6 @@ class AppShell extends StatelessWidget {
             label: 'Recherche',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.favorite_outline),
-            activeIcon: Icon(Icons.favorite),
-            label: 'Bibliothèque',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),
             activeIcon: Icon(Icons.settings),
             label: 'Paramètres',
@@ -51,13 +46,12 @@ class AppShell extends StatelessWidget {
 
   int _indexFromLocation(String loc) {
     if (loc.startsWith('/search')) return 1;
-    if (loc.startsWith('/library')) return 2;
-    if (loc.startsWith('/settings')) return 3;
+    if (loc.startsWith('/settings')) return 2;
     return 0; // catalog
   }
 
   void _navigate(BuildContext context, int index) {
-    const paths = ['/catalog', '/search', '/library', '/settings'];
+    const paths = ['/catalog', '/search', '/settings'];
     context.go(paths[index]);
   }
 }
