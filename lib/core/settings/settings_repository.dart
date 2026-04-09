@@ -29,7 +29,7 @@ class SettingsRepository {
 
   static String get _defaultServerUrl => const String.fromEnvironment(
         'HARMONIX_API_BASE_URL',
-        defaultValue: 'https://mhemery.fr',
+        defaultValue: 'https://dev.mhemery.fr',
       );
 
   static String? get _defaultAuthToken {

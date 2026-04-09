@@ -10,6 +10,13 @@ class HarmonixAudioHandler extends BaseAudioHandler
       _broadcastState(event);
       _logPlaybackEvent(event);
     });
+    _player.currentIndexStream.listen((index) {
+      if (index == null) return;
+      final q = queue.value;
+      if (index >= 0 && index < q.length) {
+        mediaItem.add(q[index]);
+      }
+    });
     _player.loopModeStream.listen((_) => _rebroadcastState());
     _player.shuffleModeEnabledStream.listen((_) => _rebroadcastState());
     _player.processingStateStream.listen((state) {
@@ -103,6 +110,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   Future<void> skipToNext() async {
     if (_player.hasNext) {
       await _player.seekToNext();
+      await _player.play();
       final idx = _player.currentIndex ?? 0;
       final q = queue.value;
       if (idx < q.length) mediaItem.add(q[idx]);
@@ -113,6 +121,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   Future<void> skipToPrevious() async {
     if (_player.hasPrevious) {
       await _player.seekToPrevious();
+      await _player.play();
       final idx = _player.currentIndex ?? 0;
       final q = queue.value;
       if (idx < q.length) mediaItem.add(q[idx]);
