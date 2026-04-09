@@ -14,8 +14,11 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$Track {
+  @JsonKey(readValue: readId, fromJson: stringFromJson)
   String get id;
+  @JsonKey(readValue: readTitle, fromJson: stringFromJson)
   String get title;
+  @JsonKey(readValue: readArtist, fromJson: stringFromJson)
   String get artist;
   String? get album;
   @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -24,6 +27,7 @@ mixin _$Track {
   String? get coverUrl;
   @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
   String? get streamUrl;
+  @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
   int get durationMs;
   @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
   bool get isFavorite;
@@ -76,9 +80,9 @@ abstract mixin class $TrackCopyWith<$Res> {
       _$TrackCopyWithImpl;
   @useResult
   $Res call(
-      {String id,
-      String title,
-      String artist,
+      {@JsonKey(readValue: readId, fromJson: stringFromJson) String id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJson) String title,
+      @JsonKey(readValue: readArtist, fromJson: stringFromJson) String artist,
       String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,
@@ -86,6 +90,7 @@ abstract mixin class $TrackCopyWith<$Res> {
       String? coverUrl,
       @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
       String? streamUrl,
+      @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
       int durationMs,
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       bool isFavorite});
@@ -248,8 +253,10 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            String id,
+            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
             String title,
+            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -258,6 +265,7 @@ extension TrackPatterns on Track {
             String? coverUrl,
             @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
             String? streamUrl,
+            @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
             int durationMs,
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite)?
@@ -298,8 +306,10 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            String id,
+            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
             String title,
+            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -308,6 +318,7 @@ extension TrackPatterns on Track {
             String? coverUrl,
             @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
             String? streamUrl,
+            @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
             int durationMs,
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite)
@@ -346,8 +357,10 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            String id,
+            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
             String title,
+            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -356,6 +369,7 @@ extension TrackPatterns on Track {
             String? coverUrl,
             @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
             String? streamUrl,
+            @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
             int durationMs,
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite)?
@@ -384,8 +398,10 @@ extension TrackPatterns on Track {
 @JsonSerializable()
 class _Track implements Track {
   const _Track(
-      {required this.id,
+      {@JsonKey(readValue: readId, fromJson: stringFromJson) required this.id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJson)
       required this.title,
+      @JsonKey(readValue: readArtist, fromJson: stringFromJson)
       required this.artist,
       this.album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -393,16 +409,20 @@ class _Track implements Track {
       @JsonKey(readValue: readCoverUrl, fromJson: stringFromJson) this.coverUrl,
       @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
       this.streamUrl,
+      @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
       this.durationMs = 0,
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       this.isFavorite = false});
   factory _Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
 
   @override
+  @JsonKey(readValue: readId, fromJson: stringFromJson)
   final String id;
   @override
+  @JsonKey(readValue: readTitle, fromJson: stringFromJson)
   final String title;
   @override
+  @JsonKey(readValue: readArtist, fromJson: stringFromJson)
   final String artist;
   @override
   final String? album;
@@ -416,7 +436,7 @@ class _Track implements Track {
   @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
   final String? streamUrl;
   @override
-  @JsonKey()
+  @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
   final int durationMs;
   @override
   @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
@@ -476,9 +496,9 @@ abstract mixin class _$TrackCopyWith<$Res> implements $TrackCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {String id,
-      String title,
-      String artist,
+      {@JsonKey(readValue: readId, fromJson: stringFromJson) String id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJson) String title,
+      @JsonKey(readValue: readArtist, fromJson: stringFromJson) String artist,
       String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,
@@ -486,6 +506,7 @@ abstract mixin class _$TrackCopyWith<$Res> implements $TrackCopyWith<$Res> {
       String? coverUrl,
       @JsonKey(readValue: readStreamUrl, fromJson: stringFromJson)
       String? streamUrl,
+      @JsonKey(readValue: readDurationMs, fromJson: durationMsFromJson)
       int durationMs,
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       bool isFavorite});
