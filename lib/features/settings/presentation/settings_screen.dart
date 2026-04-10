@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/dio_provider.dart';
 import '../../../core/navigation/route_names.dart';
 import '../../../core/settings/auth_token_provider.dart';
 import '../../../core/settings/settings_repository.dart';
+import '../../../core/update/update_checker.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,6 +20,9 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _urlController;
+  UpdateInfo? _updateInfo;
+  String? _updateError;
+  bool _isCheckingUpdate = false;
 
   @override
   void initState() {
@@ -104,6 +109,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           const SizedBox(height: 16),
           Text(
+            'Mises à jour',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          FilledButton(
+            onPressed: _isCheckingUpdate ? null : _checkUpdate,
+            child: Text(_isCheckingUpdate ? 'Vérification...' : 'Vérifier'),
+          ),
+          if (_updateError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _updateError!,
+                style: const TextStyle(color: Colors.redAccent),
+              ),
+            ),
+          if (_updateInfo != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _buildUpdateStatus(_updateInfo!),
+            ),
+          const SizedBox(height: 24),
+          Text(
             'À propos',
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -124,6 +152,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _checkUpdate() async {
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateError = null;
+    });
+    try {
+      final info = await checkForUpdate(
+        dio: ref.read(dioProvider),
+        packageInfo: await PackageInfo.fromPlatform(),
+      );
+      setState(() {
+        _updateInfo = info;
+      });
+    } catch (_) {
+      setState(() {
+        _updateError = 'Impossible de vérifier les mises à jour.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingUpdate = false);
+      }
+    }
+  }
+
+  Widget _buildUpdateStatus(UpdateInfo info) {
+    final updateAvailable = info.updateAvailable;
+    final forceUpdate = info.forceUpdate;
+    final latest = info.latestVersion;
+    final downloadUrl = info.downloadUrl;
+    final label = updateAvailable
+        ? (forceUpdate ? 'Mise à jour requise' : 'Mise à jour disponible')
+        : 'À jour';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        if (latest != null) Text('Dernière: $latest'),
+        if (downloadUrl != null && updateAvailable)
+          TextButton(
+            onPressed: () async {
+              final uri = Uri.tryParse(downloadUrl);
+              if (uri != null) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: const Text('Télécharger'),
+          ),
+      ],
     );
   }
 }

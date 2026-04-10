@@ -6,11 +6,11 @@ part 'track.g.dart';
 @freezed
 abstract class Track with _$Track {
   const factory Track({
-    @JsonKey(readValue: readId, fromJson: stringFromJson)
+    @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
     required String id,
-    @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+    @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
     required String title,
-    @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+    @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
     required String artist,
     String? album,
     @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -60,6 +60,9 @@ Object? readStreamUrl(Map json, String key) =>
     json['streamUrl'] ?? json['stream_url'] ?? json['stream'];
 
 String? stringFromJson(Object? value) => value is String ? value : null;
+
+String stringFromJsonOrEmpty(Object? value) =>
+    value is String ? value : '';
 
 Object? readDurationMs(Map json, String key) {
   if (json['duration_ms'] != null) {

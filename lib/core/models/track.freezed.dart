@@ -14,11 +14,11 @@ T _$identity<T>(T value) => value;
 
 /// @nodoc
 mixin _$Track {
-  @JsonKey(readValue: readId, fromJson: stringFromJson)
+  @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
   String get id;
-  @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+  @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
   String get title;
-  @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+  @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
   String get artist;
   String? get album;
   @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -80,9 +80,11 @@ abstract mixin class $TrackCopyWith<$Res> {
       _$TrackCopyWithImpl;
   @useResult
   $Res call(
-      {@JsonKey(readValue: readId, fromJson: stringFromJson) String id,
-      @JsonKey(readValue: readTitle, fromJson: stringFromJson) String title,
-      @JsonKey(readValue: readArtist, fromJson: stringFromJson) String artist,
+      {@JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty) String id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
+      String title,
+      @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
+      String artist,
       String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,
@@ -253,10 +255,11 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(
-            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
-            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+            @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
+            String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
             String title,
-            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+            @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -306,10 +309,11 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
     TResult Function(
-            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
-            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+            @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
+            String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
             String title,
-            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+            @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -357,10 +361,11 @@ extension TrackPatterns on Track {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(
-            @JsonKey(readValue: readId, fromJson: stringFromJson) String id,
-            @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+            @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
+            String id,
+            @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
             String title,
-            @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+            @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -398,10 +403,11 @@ extension TrackPatterns on Track {
 @JsonSerializable()
 class _Track implements Track {
   const _Track(
-      {@JsonKey(readValue: readId, fromJson: stringFromJson) required this.id,
-      @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+      {@JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
+      required this.id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
       required this.title,
-      @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+      @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
       required this.artist,
       this.album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -416,13 +422,13 @@ class _Track implements Track {
   factory _Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
 
   @override
-  @JsonKey(readValue: readId, fromJson: stringFromJson)
+  @JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty)
   final String id;
   @override
-  @JsonKey(readValue: readTitle, fromJson: stringFromJson)
+  @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
   final String title;
   @override
-  @JsonKey(readValue: readArtist, fromJson: stringFromJson)
+  @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
   final String artist;
   @override
   final String? album;
@@ -496,9 +502,11 @@ abstract mixin class _$TrackCopyWith<$Res> implements $TrackCopyWith<$Res> {
   @override
   @useResult
   $Res call(
-      {@JsonKey(readValue: readId, fromJson: stringFromJson) String id,
-      @JsonKey(readValue: readTitle, fromJson: stringFromJson) String title,
-      @JsonKey(readValue: readArtist, fromJson: stringFromJson) String artist,
+      {@JsonKey(readValue: readId, fromJson: stringFromJsonOrEmpty) String id,
+      @JsonKey(readValue: readTitle, fromJson: stringFromJsonOrEmpty)
+      String title,
+      @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
+      String artist,
       String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,

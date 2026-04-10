@@ -2,21 +2,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/api/dio_provider.dart';
+import '../../../core/update/update_checker.dart';
 import '../providers/bootstrap_provider.dart';
 import '../../../core/api/api_exception.dart';
 import '../../../shared/theme/color_scheme.dart';
 import '../../../shared/widgets/error_view.dart';
 
-class SplashScreen extends ConsumerWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _didCheckUpdate = false;
+  bool _isNavigating = false;
+
+  @override
+  Widget build(BuildContext context) {
     final bootstrap = ref.watch(bootstrapProvider);
 
     bootstrap.whenData((_) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted || _isNavigating) return;
+        if (!_didCheckUpdate) {
+          _didCheckUpdate = true;
+          final canContinue = await _checkForUpdates();
+          if (!canContinue || !mounted) return;
+        }
+        _isNavigating = true;
         if (context.mounted) context.go('/catalog');
       });
     });
@@ -92,4 +111,68 @@ class SplashScreen extends ConsumerWidget {
     }
     return null;
   }
+
+  Future<bool> _checkForUpdates() async {
+    try {
+      final dio = ref.read(dioProvider);
+      final info = await checkForUpdate(
+        dio: dio,
+        packageInfo: await PackageInfo.fromPlatform(),
+      );
+      if (info == null) return true;
+      final forceUpdate = info.forceUpdate;
+      final updateAvailable = info.updateAvailable;
+      final latest = info.latestVersion;
+      final downloadUrl = info.downloadUrl;
+
+      if (!forceUpdate && !updateAvailable) return true;
+
+      await _showUpdateDialog(
+        forceUpdate: forceUpdate,
+        latest: latest,
+        downloadUrl: downloadUrl,
+      );
+      return !forceUpdate;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<void> _showUpdateDialog({
+    required bool forceUpdate,
+    String? latest,
+    String? downloadUrl,
+  }) {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: !forceUpdate,
+      builder: (context) => AlertDialog(
+        title: const Text('Mise à jour disponible'),
+        content: Text(
+          latest != null
+              ? 'Une nouvelle version ($latest) est disponible.'
+              : 'Une nouvelle version est disponible.',
+        ),
+        actions: [
+          if (!forceUpdate)
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Plus tard'),
+            ),
+          FilledButton(
+            onPressed: () async {
+              if (downloadUrl != null) {
+                final uri = Uri.tryParse(downloadUrl);
+                if (uri != null) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              }
+            },
+            child: const Text('Mettre à jour'),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
