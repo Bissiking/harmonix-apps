@@ -47,7 +47,7 @@ Future<UpdateInfo?> checkForUpdate({
 
   final latest = payload['latest_version'] as String?;
   final min = payload['min_version'] as String?;
-  final downloadUrl = payload['download_url'] as String?;
+  final downloadUrl = _resolveAndroidDownloadUrl(dio.options.baseUrl);
 
   final forceUpdate = _boolValue(payload['force_update']);
   final updateAvailable =
@@ -68,6 +68,14 @@ Future<UpdateInfo?> checkForUpdate({
     updateAvailable: updateAvailable,
     downloadUrl: downloadUrl,
   );
+}
+
+String _resolveAndroidDownloadUrl(String baseUrl) {
+  final serverUri = Uri.tryParse(baseUrl);
+  if (serverUri != null) {
+    return serverUri.resolve('/harmonix/download/android').toString();
+  }
+  return '/harmonix/download/android';
 }
 
 bool _boolValue(Object? value) {

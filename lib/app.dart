@@ -30,7 +30,7 @@ class _HarmonixAppState extends ConsumerState<HarmonixApp> {
     final settings = ref.watch(settingsRepositoryProvider);
     final isDev = settings.serverUrl.contains('dev.mhemery.fr');
     return MaterialApp.router(
-      title: isDev ? 'Harmonix (dev)' : 'Harmonix',
+      title: 'Harmonix',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

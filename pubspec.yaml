@@ -1,7 +1,7 @@
 name: harmonix_apps
 description: Cross-platform music streaming app for Android, iOS, Android Auto, and Desktop.
 publish_to: 'none'
-version: 1.0.3+328
+version: 1.0.4+400
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
