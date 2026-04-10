@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/api/dio_provider.dart';
 import '../../../core/navigation/route_names.dart';
@@ -88,6 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.invalidate(dioProvider);
       ref.invalidate(authTokenProvider);
       ref.invalidate(bootstrapProvider);
+      TextInput.finishAutofillContext(shouldSave: true);
       if (!mounted) return;
       context.goNamed(RouteNames.splash);
     } on DioException catch (error) {
@@ -150,27 +152,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ?.copyWith(color: Colors.white70),
                 ),
                 const SizedBox(height: 24),
-                TextField(
-                  controller: _identifierController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email ou pseudo',
-                    hintText: 'toi@exemple.com',
-                    border: OutlineInputBorder(),
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _identifierController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email ou pseudo',
+                          hintText: 'toi@exemple.com',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [
+                          AutofillHints.username,
+                          AutofillHints.email,
+                        ],
+                        textInputAction: TextInputAction.next,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _passwordController,
+                        decoration: const InputDecoration(
+                          labelText: 'Mot de passe',
+                          border: OutlineInputBorder(),
+                        ),
+                        autofillHints: const [AutofillHints.password],
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) {
+                          if (!_isSubmitting) _login();
+                        },
+                        obscureText: true,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                      ),
+                    ],
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Mot de passe',
-                    border: OutlineInputBorder(),
-                  ),
-                  obscureText: true,
-                  autocorrect: false,
-                  enableSuggestions: false,
                 ),
                 const SizedBox(height: 8),
                 SwitchListTile(

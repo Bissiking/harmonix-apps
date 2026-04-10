@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -15,7 +16,13 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (defaultTargetPlatform == TargetPlatform.android) {
-    await Permission.notification.request();
+    try {
+      await Permission.notification.request();
+    } on PlatformException catch (e) {
+      // Android Auto/background starts can run without a foreground Activity.
+      // In that case permission_handler throws; keep app startup alive.
+      if (e.code != 'PermissionHandler.PermissionManager') rethrow;
+    }
   }
 
   // Desktop window setup
