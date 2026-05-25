@@ -1,0 +1,14 @@
+# Démarre l'émulateur
+flutter emulators --launch Pixel_7_Pro
+
+Get-ChildItem "$env:LOCALAPPDATA\Android\Sdk" -Recurse -Filter "*head*unit*.exe"
+adb start-server
+adb devices
+adb forward tcp:5277 tcp:5277
+
+# lance l'application sur l'émulateur
+flutter run -d emulator-5554
+
+flutter run -d R5CY43KAS0A
+
+flutter run -d windows

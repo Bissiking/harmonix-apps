@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 
 import 'package:harmonix_apps/features/catalog/data/catalog_repository.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
 import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
@@ -19,12 +23,13 @@ class AutoBridge {
 
   static StreamSubscription<MediaItem?>? _mediaItemSub;
   static StreamSubscription<PlaybackState>? _playbackStateSub;
+  static final Map<String, Uint8List> _artworkCache = <String, Uint8List>{};
+  static const int _maxArtworkCacheEntries = 64;
 
   static void register(WidgetRef ref) {
-    harmonixAutoChannel.setMethodCallHandler(
-      (call) => _handleCall(call, ref),
-    );
+    harmonixAutoChannel.setMethodCallHandler((call) => _handleCall(call, ref));
     _registerStateSync(ref);
+    _pushInitialState(ref);
   }
 
   static Future<dynamic> _handleCall(MethodCall call, WidgetRef ref) async {
@@ -32,8 +37,9 @@ class AutoBridge {
     final settings = ref.read(settingsRepositoryProvider);
     final baseUrl = settings.serverUrl;
     final token = settings.authToken;
-    final headers =
-        token != null && token.isNotEmpty ? {'Authorization': 'Bearer $token'} : null;
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
 
     switch (call.method) {
       case 'getQueue':
@@ -51,10 +57,15 @@ class AutoBridge {
         final trackId = call.arguments as String;
         try {
           final tracks = await ref.read(catalogRepositoryProvider).getTracks();
-          final initialIndex = tracks.indexWhere((track) => track.id == trackId);
+          final initialIndex = tracks.indexWhere(
+            (track) => track.id == trackId,
+          );
           if (tracks.isNotEmpty && initialIndex >= 0) {
-            final items = tracks.map((track) => _trackToMediaItem(baseUrl, track)).toList();
-            final urls = tracks.map((track) => _trackStreamUrl(baseUrl, track)).toList();
+            final items = tracks
+                .map((track) => _trackToMediaItem(baseUrl, track))
+                .toList();
+            final urls =
+                tracks.map((track) => _trackStreamUrl(baseUrl, track)).toList();
             await handler.loadQueue(
               items,
               urls,
@@ -127,17 +138,19 @@ class AutoBridge {
     String baseUrl,
   ) {
     return tracks
-        .map((track) => <String, dynamic>{
-              'id': track.id,
-              'title': track.title,
-              'subtitle': track.artist,
-              'coverUrl': track.coverFile != null
-                  ? coverUrl(baseUrl, track.coverFile!)
-                  : (track.coverUrl != null && track.coverUrl!.isNotEmpty)
-                      ? coverUrl(baseUrl, track.coverUrl!)
-                      : null,
-              'playable': true,
-            })
+        .map(
+          (track) => <String, dynamic>{
+            'id': track.id,
+            'title': track.title,
+            'subtitle': track.artist,
+            'coverUrl': track.coverFile != null
+                ? coverUrl(baseUrl, track.coverFile!)
+                : (track.coverUrl != null && track.coverUrl!.isNotEmpty)
+                    ? coverUrl(baseUrl, track.coverUrl!)
+                    : null,
+            'playable': true,
+          },
+        )
         .toList();
   }
 
@@ -149,6 +162,7 @@ class AutoBridge {
 
     _mediaItemSub = handler.mediaItem.listen((item) async {
       if (item == null) return;
+      final artworkBytes = await _resolveArtworkBytes(ref, item);
       try {
         await harmonixAutoChannel.invokeMethod('nowPlayingChanged', {
           'id': item.id,
@@ -156,6 +170,7 @@ class AutoBridge {
           'subtitle': item.artist ?? '',
           'album': item.album ?? '',
           'artUri': item.artUri?.toString(),
+          'artBytes': artworkBytes,
           'durationMs': item.duration?.inMilliseconds,
         });
       } on MissingPluginException {
@@ -238,20 +253,141 @@ class AutoBridge {
 
     return streamUrl(baseUrl, raw);
   }
+
+  static Future<Uint8List?> _resolveArtworkBytes(
+    WidgetRef ref,
+    MediaItem item,
+  ) async {
+    final settings = ref.read(settingsRepositoryProvider);
+    final baseUrl = settings.serverUrl;
+
+    String? artUrl = item.artUri?.toString();
+    if (artUrl == null || artUrl.isEmpty) {
+      final coverFile = item.extras?['coverFile'] as String?;
+      if (coverFile != null && coverFile.isNotEmpty) {
+        artUrl = coverUrl(baseUrl, coverFile);
+      }
+    }
+    if (artUrl == null || artUrl.isEmpty) return null;
+
+    final cached = _artworkCache[artUrl];
+    if (cached != null) return cached;
+
+    try {
+      final dio = ref.read(dioProvider);
+      final response = await dio.get<dynamic>(
+        artUrl,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final dynamic data = response.data;
+      final Uint8List? bytes = switch (data) {
+        Uint8List b => b,
+        List<int> l => Uint8List.fromList(l),
+        _ => null,
+      };
+      if (bytes == null || bytes.isEmpty) return null;
+      final normalized = await _normalizeArtwork(bytes);
+      if (normalized == null || normalized.isEmpty) return null;
+      if (_artworkCache.length >= _maxArtworkCacheEntries) {
+        _artworkCache.remove(_artworkCache.keys.first);
+      }
+      _artworkCache[artUrl] = normalized;
+      assert(() {
+        // Ignore in release; useful to verify DHU receives non-empty payload.
+        // Example: "AA artwork bytes fetched 18234 for .../covers/track.jpg"
+        print('AA artwork bytes fetched ${normalized.length} for $artUrl');
+        return true;
+      }());
+      return normalized;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<Uint8List?> _normalizeArtwork(Uint8List bytes) async {
+    try {
+      final codec = await ui.instantiateImageCodec(
+        bytes,
+        targetWidth: 256,
+        targetHeight: 256,
+      );
+      final frame = await codec.getNextFrame();
+      final byteData =
+          await frame.image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData == null) return bytes;
+      return byteData.buffer.asUint8List();
+    } catch (_) {
+      return bytes;
+    }
+  }
+
+  static void _pushInitialState(WidgetRef ref) {
+    final handler = ref.read(audioHandlerProvider);
+    final settings = ref.read(settingsRepositoryProvider);
+    final baseUrl = settings.serverUrl;
+
+    final currentItem = handler.mediaItem.value;
+    final currentState = handler.playbackState.value;
+    final queue = handler.queue.value;
+
+    Future<void>(() async {
+      if (currentItem != null) {
+        final artworkBytes = await _resolveArtworkBytes(ref, currentItem);
+        try {
+          await harmonixAutoChannel.invokeMethod('nowPlayingChanged', {
+            'id': currentItem.id,
+            'title': currentItem.title,
+            'subtitle': currentItem.artist ?? '',
+            'album': currentItem.album ?? '',
+            'artUri': currentItem.artUri?.toString(),
+            'artBytes': artworkBytes,
+            'durationMs': currentItem.duration?.inMilliseconds,
+          });
+        } on MissingPluginException {
+          // Ignore when not running under Android Auto host.
+        }
+      }
+
+      try {
+        await harmonixAutoChannel.invokeMethod('playbackStateChanged', {
+          'playing': currentState.playing,
+          'processingState': _processingStateToInt(
+            currentState.processingState,
+          ),
+          'positionMs': currentState.updatePosition.inMilliseconds,
+          'speed': currentState.speed,
+        });
+      } on MissingPluginException {
+        // Ignore when not running under Android Auto host.
+      }
+
+      try {
+        await harmonixAutoChannel.invokeMethod(
+          'queueChanged',
+          _queueToAutoItems(queue, baseUrl),
+        );
+      } on MissingPluginException {
+        // Ignore when not running under Android Auto host.
+      }
+    });
+  }
 }
 
 /// Sends the current queue/state to the Android Auto layer when it changes.
 Future<void> notifyAutoQueueChanged(List<Track> tracks, String baseUrl) async {
   try {
-    final items = tracks.map((t) => <String, dynamic>{
-          'id': t.id,
-          'title': t.title,
-          'subtitle': t.artist,
-          'coverUrl': t.coverFile != null
-              ? coverUrl(baseUrl, t.coverFile!)
-              : null,
-          'playable': true,
-        }).toList();
+    final items = tracks
+        .map(
+          (t) => <String, dynamic>{
+            'id': t.id,
+            'title': t.title,
+            'subtitle': t.artist,
+            'coverUrl':
+                t.coverFile != null ? coverUrl(baseUrl, t.coverFile!) : null,
+            'playable': true,
+          },
+        )
+        .toList();
     await harmonixAutoChannel.invokeMethod('queueChanged', items);
   } on MissingPluginException {
     // Not running under Android Auto — ignore

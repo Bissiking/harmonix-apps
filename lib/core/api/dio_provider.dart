@@ -10,7 +10,7 @@ part 'dio_provider.g.dart';
 @Riverpod(keepAlive: true)
 Dio dio(DioRef ref) {
   final settings = ref.watch(settingsRepositoryProvider);
-  final baseUrl = settings.serverUrl;
+  final baseUrl = _normalizeBaseUrl(settings.serverUrl);
 
   final dio = Dio(
     BaseOptions(
@@ -47,4 +47,13 @@ Dio dio(DioRef ref) {
   }
 
   return dio;
+}
+
+String _normalizeBaseUrl(String rawUrl) {
+  final trimmed = rawUrl.trim();
+  if (trimmed.isEmpty) return 'https://dev.mhemery.fr';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return 'https://$trimmed';
 }

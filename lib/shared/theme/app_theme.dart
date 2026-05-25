@@ -1,38 +1,39 @@
 import 'package:flutter/material.dart';
 
+import 'package:harmonix_apps/core/theme/theme_palette.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 
 abstract final class AppTheme {
-  static ThemeData get dark => ThemeData(
+  static ThemeData dark(ThemePalette palette) => ThemeData(
         useMaterial3: true,
-        colorScheme: HarmonixColors.dark,
-        scaffoldBackgroundColor: HarmonixColors.darkBackground,
+        colorScheme: HarmonixColors.darkFromPalette(palette),
+        scaffoldBackgroundColor: palette.darkBackground,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: false,
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-          backgroundColor: HarmonixColors.darkSurface,
-          selectedItemColor: HarmonixColors.accent,
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: palette.darkSurface,
+          selectedItemColor: palette.accent,
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
         ),
         cardTheme: CardThemeData(
-          color: HarmonixColors.darkSurface,
+          color: palette.darkSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         sliderTheme: SliderThemeData(
-          activeTrackColor: HarmonixColors.accent,
+          activeTrackColor: palette.accent,
           inactiveTrackColor: Colors.white24,
-          thumbColor: HarmonixColors.accent,
-          overlayColor: HarmonixColors.accent.withOpacity(0.2),
+          thumbColor: palette.accent,
+          overlayColor: palette.accent.withValues(alpha: 0.2),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        textTheme: _textTheme(Colors.white),
+        iconTheme: IconThemeData(color: palette.text),
+        textTheme: _textTheme(palette.text),
       );
 
   static ThemeData get light => ThemeData(
@@ -48,7 +49,8 @@ abstract final class AppTheme {
             TextStyle(fontWeight: FontWeight.w600, color: color, fontSize: 18),
         titleMedium:
             TextStyle(fontWeight: FontWeight.w500, color: color, fontSize: 16),
-        bodyMedium: TextStyle(color: color.withOpacity(0.85), fontSize: 14),
-        bodySmall: TextStyle(color: color.withOpacity(0.6), fontSize: 12),
+        bodyMedium:
+            TextStyle(color: color.withValues(alpha: 0.85), fontSize: 14),
+        bodySmall: TextStyle(color: color.withValues(alpha: 0.6), fontSize: 12),
       );
 }

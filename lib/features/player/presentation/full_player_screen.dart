@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as math;
 
 import 'package:harmonix_apps/core/utils/duration_formatter.dart';
 import 'package:harmonix_apps/features/player/providers/now_playing_provider.dart';
@@ -105,85 +106,89 @@ class _NowPlayingPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final width = MediaQuery.sizeOf(context).width;
-    final artSize = ResponsiveBreakpoints.isDesktop(context)
+    final size = MediaQuery.sizeOf(context);
+    final maxByWidth = ResponsiveBreakpoints.isDesktop(context)
         ? 380.0
-        : (width - 64).clamp(220.0, 420.0);
+        : (size.width - 64).clamp(180.0, 420.0);
+    final maxByHeight = (size.height * 0.38).clamp(160.0, 320.0);
+    final artSize = math.min(maxByWidth, maxByHeight);
 
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        TrackArtwork(
-          coverFile: nowPlaying.extras?['coverFile'] as String?,
-          size: artSize,
-          borderRadius: 20,
-        ),
-        const SizedBox(height: 20),
-        Text(
-          nowPlaying.title,
-          style: Theme.of(context).textTheme.headlineMedium,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          nowPlaying.artist ?? '',
-          style: Theme.of(context).textTheme.bodyMedium,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 20),
-        ProgressBar(
-          progress: position,
-          total: duration,
-          buffered: playbackState?.bufferedPosition,
-          onSeek: (d) => ref.read(playerProvider.notifier).seek(d),
-          thumbColor: HarmonixColors.accent,
-          progressBarColor: HarmonixColors.accent,
-          baseBarColor: Colors.white12,
-          bufferedBarColor: Colors.white24,
-          timeLabelTextStyle:
-              const TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(
-              icon: Icon(
-                Icons.shuffle,
-                color: shuffle ? HarmonixColors.accent : Colors.white54,
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          TrackArtwork(
+            coverFile: nowPlaying.extras?['coverFile'] as String?,
+            size: artSize,
+            borderRadius: 20,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            nowPlaying.title,
+            style: Theme.of(context).textTheme.headlineMedium,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            nowPlaying.artist ?? '',
+            style: Theme.of(context).textTheme.bodyMedium,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
+          ProgressBar(
+            progress: position,
+            total: duration,
+            buffered: playbackState?.bufferedPosition,
+            onSeek: (d) => ref.read(playerProvider.notifier).seek(d),
+            thumbColor: HarmonixColors.accent,
+            progressBarColor: HarmonixColors.accent,
+            baseBarColor: Colors.white12,
+            bufferedBarColor: Colors.white24,
+            timeLabelTextStyle:
+                const TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.shuffle,
+                  color: shuffle ? HarmonixColors.accent : Colors.white54,
+                ),
+                onPressed: () =>
+                    ref.read(playerProvider.notifier).setShuffle(!shuffle),
               ),
-              onPressed: () =>
-                  ref.read(playerProvider.notifier).setShuffle(!shuffle),
-            ),
-            IconButton(
-              iconSize: 36,
-              icon: const Icon(Icons.skip_previous),
-              onPressed: () =>
-                  ref.read(playerProvider.notifier).skipToPrevious(),
-            ),
-            _PlayPauseButton(isPlaying: isPlaying),
-            IconButton(
-              iconSize: 36,
-              icon: const Icon(Icons.skip_next),
-              onPressed: () => ref.read(playerProvider.notifier).skipToNext(),
-            ),
-            IconButton(
-              icon: Icon(
-                _repeatIcon(repeat),
-                color: repeat != AudioServiceRepeatMode.none
-                    ? HarmonixColors.accent
-                    : Colors.white54,
+              IconButton(
+                iconSize: 36,
+                icon: const Icon(Icons.skip_previous),
+                onPressed: () =>
+                    ref.read(playerProvider.notifier).skipToPrevious(),
               ),
-              onPressed: () => ref
-                  .read(playerProvider.notifier)
-                  .setRepeat(_nextRepeat(repeat)),
-            ),
-          ],
-        ),
-      ],
+              _PlayPauseButton(isPlaying: isPlaying),
+              IconButton(
+                iconSize: 36,
+                icon: const Icon(Icons.skip_next),
+                onPressed: () => ref.read(playerProvider.notifier).skipToNext(),
+              ),
+              IconButton(
+                icon: Icon(
+                  _repeatIcon(repeat),
+                  color: repeat != AudioServiceRepeatMode.none
+                      ? HarmonixColors.accent
+                      : Colors.white54,
+                ),
+                onPressed: () => ref
+                    .read(playerProvider.notifier)
+                    .setRepeat(_nextRepeat(repeat)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

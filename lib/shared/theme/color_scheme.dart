@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:harmonix_apps/core/theme/theme_palette.dart';
+
 abstract final class HarmonixColors {
   static const accent = Color(0xFF7C4DFF); // Purple
   static const darkBackground = Color(0xFF0E0E14);
@@ -18,4 +20,12 @@ abstract final class HarmonixColors {
     primary: accent,
     secondary: Color(0xFF00BCD4),
   );
+
+  static ColorScheme darkFromPalette(ThemePalette palette) => ColorScheme.dark(
+        primary: palette.accent,
+        secondary: palette.secondary,
+        surface: palette.darkSurface,
+        onPrimary: palette.text,
+        onSurface: palette.text,
+      );
 }

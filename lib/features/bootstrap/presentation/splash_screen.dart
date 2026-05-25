@@ -9,6 +9,7 @@ import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
 import 'package:harmonix_apps/features/bootstrap/providers/bootstrap_provider.dart';
 import 'package:harmonix_apps/core/api/api_exception.dart';
+import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/widgets/error_view.dart';
 
@@ -32,6 +33,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         if (!mounted || _isNavigating) return;
         if (!_didCheckUpdate) {
           _didCheckUpdate = true;
+          await ref.read(themeControllerProvider.notifier).syncFromApi();
           final canContinue = await _checkForUpdates();
           if (!canContinue || !mounted) return;
         }
@@ -174,5 +176,4 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       ),
     );
   }
-
 }

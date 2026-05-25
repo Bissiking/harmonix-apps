@@ -10,6 +10,7 @@ import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
+import 'package:harmonix_apps/features/cast/providers/cast_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -39,8 +40,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.read(settingsRepositoryProvider);
     final authToken = ref.watch(authTokenProvider);
+    final castState = ref.watch(castProvider);
     final hasToken = authToken?.isNotEmpty ?? false;
 
     return Scaffold(
@@ -67,13 +68,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onPressed: () async {
               final url = _urlController.text.trim();
               if (url.isEmpty) return;
-              await ref
-                  .read(settingsRepositoryProvider)
-                  .setServerUrl(url);
+              await ref.read(settingsRepositoryProvider).setServerUrl(url);
               ref.invalidate(dioProvider);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('URL mise à jour — relancez l\'app.')),
+                  const SnackBar(
+                      content: Text('URL mise à jour — relancez l\'app.')),
                 );
               }
             },
@@ -109,6 +109,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           const SizedBox(height: 16),
           Text(
+            'Cast',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton(
+                onPressed: castState.connecting
+                    ? null
+                    : () => ref.read(castProvider.notifier).start(),
+                child: Text(
+                    castState.connecting ? 'Connexion...' : 'Démarrer session'),
+              ),
+              OutlinedButton(
+                onPressed: castState.isActive
+                    ? () => ref.read(castProvider.notifier).syncPlaybackState()
+                    : null,
+                child: const Text('Synchroniser'),
+              ),
+              OutlinedButton(
+                onPressed: castState.isActive
+                    ? () => ref.read(castProvider.notifier).end()
+                    : null,
+                child: const Text('Terminer session'),
+              ),
+            ],
+          ),
+          if (castState.sessionId != null) ...[
+            const SizedBox(height: 8),
+            Text('Session active: ${castState.sessionId}'),
+          ],
+          if (castState.error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              castState.error!,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ],
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          Text(
             'Mises à jour',
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -140,9 +184,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
               final info = snapshot.data;
-              final version = info == null
-                  ? '...'
-                  : 'v${info.version}+${info.buildNumber}';
+              final version =
+                  info == null ? '...' : 'v${info.version}+${info.buildNumber}';
               return ListTile(
                 leading: const Icon(Icons.info_outline),
                 title: const Text('Harmonix Apps'),
