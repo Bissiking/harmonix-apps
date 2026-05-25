@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../features/bootstrap/presentation/splash_screen.dart';
-import '../../features/catalog/presentation/catalog_screen.dart';
-import '../../features/catalog/presentation/track_detail_screen.dart';
-import '../../features/library/presentation/library_screen.dart';
-import '../../features/player/presentation/full_player_screen.dart';
-import '../../features/search/presentation/search_screen.dart';
-import '../../features/settings/presentation/settings_screen.dart';
-import '../../features/auth/presentation/login_screen.dart';
-import '../../shared/widgets/app_shell.dart';
-import 'route_names.dart';
+import 'package:harmonix_apps/features/bootstrap/presentation/splash_screen.dart';
+import 'package:harmonix_apps/features/catalog/presentation/album_detail_screen.dart';
+import 'package:harmonix_apps/features/catalog/presentation/catalog_screen.dart';
+import 'package:harmonix_apps/features/catalog/presentation/track_detail_screen.dart';
+import 'package:harmonix_apps/features/library/presentation/library_screen.dart';
+import 'package:harmonix_apps/features/player/presentation/full_player_screen.dart';
+import 'package:harmonix_apps/features/search/presentation/search_screen.dart';
+import 'package:harmonix_apps/features/settings/presentation/settings_screen.dart';
+import 'package:harmonix_apps/features/auth/presentation/login_screen.dart';
+import 'package:harmonix_apps/shared/widgets/app_shell.dart';
+import 'package:harmonix_apps/core/navigation/route_names.dart';
 
 GoRouter buildAppRouter() {
   return GoRouter(
@@ -35,6 +36,13 @@ GoRouter buildAppRouter() {
                 name: RouteNames.trackDetail,
                 builder: (_, state) => TrackDetailScreen(
                   trackId: state.pathParameters['id']!,
+                ),
+              ),
+              GoRoute(
+                path: 'album/:id',
+                name: RouteNames.albumDetail,
+                builder: (_, state) => AlbumDetailScreen(
+                  albumId: state.pathParameters['id']!,
                 ),
               ),
             ],

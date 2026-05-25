@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import 'api_exception.dart';
+import 'package:harmonix_apps/core/api/api_exception.dart';
 
 class HarmonixInterceptor extends Interceptor {
   @override

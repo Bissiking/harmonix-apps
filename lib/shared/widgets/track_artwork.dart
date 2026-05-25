@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/settings/settings_repository.dart';
-import '../../core/utils/image_url_builder.dart' as url_builder;
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/utils/image_url_builder.dart' as url_builder;
 
 class TrackArtwork extends ConsumerWidget {
   const TrackArtwork({

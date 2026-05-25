@@ -1,0 +1,63 @@
+# Harmonix V2 TODO
+
+## Core
+[ ] Prise en charge complète des albums
+    [ ] Vue album
+    [ ] Navigation pistes d’un album
+    [ ] Cover album
+    [ ] Métadonnées album
+    [ ] Lecture album complète
+    [ ] Shuffle album
+    [ ] API albums
+
+## Android Auto
+[ ] Correction du logo non affiché
+[ ] Vérifier compatibilité des icônes Android Auto
+[ ] Ajouter fallback icône Android Auto
+
+[ ] Amélioration stabilité Android Auto
+    [ ] Investiguer cycle de vie app/service
+    [ ] Vérifier MediaSession
+    [ ] Vérifier foreground service
+    [ ] Permettre fonctionnement sans ouverture préalable app
+    [ ] Reconnexion automatique session player
+    [ ] Vérifier compatibilité Android Auto MediaBrowserService / MediaLibraryService
+    [ ] Ajouter logs debug Android Auto
+    [ ] Vérifier comportement background playback Android 14+
+
+## Responsive / Multi-device
+[ ] Correction affichage mode paysage
+[ ] Support tablette
+[ ] Support Windows
+[ ] Refonte UI paysage
+    [ ] Layout desktop/tablette
+    [ ] Sidebar adaptive
+    [ ] Queue responsive
+    [ ] Player horizontal optimisé
+    [ ] Gestion ratios écran
+
+## UI / UX
+[ ] Uniformisation design mobile/tablette/desktop
+[ ] Amélioration transitions UI
+[ ] Optimisation animations
+[ ] Refonte navigation paysage
+
+## Thèmes & Branding
+[ ] Synchronisation dynamique du thème depuis la version web
+    [ ] Création endpoint API thème
+    [ ] Export variables CSS web
+    [ ] Application dynamique couleurs natives mobile
+    [ ] Fallback thème hors ligne
+    [ ] Synchronisation automatique au lancement
+    [ ] Support AMOLED
+    [ ] Préparer support thèmes utilisateurs
+    [ ] Préparer thème dynamique basé sur la cover en lecture
+
+## Technique
+[ ] Optimisation synchronisation player
+[ ] Réduction latence affichage
+[ ] Stabilisation reconnexion stream
+[ ] Gestion erreurs Android Auto
+[ ] Optimisation lifecycle player/service
+[ ] Vérification stabilité mode background
+[ ] Gestion reconnexion réseau

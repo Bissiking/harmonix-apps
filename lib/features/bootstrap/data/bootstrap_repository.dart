@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/api/dio_provider.dart';
-import '../../../core/models/bootstrap_config.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
+import 'package:harmonix_apps/core/models/bootstrap_config.dart';
 
 part 'bootstrap_repository.g.dart';
 
@@ -15,7 +15,7 @@ class BootstrapRepository {
   Future<BootstrapConfig> fetch() async {
     try {
       final response = await _withTransientRetry(
-        () => _dio.get('/api/harmonix/apps/bootstrap'),
+        () => _dio.get('/api/harmonix/apps/v2/bootstrap'),
       );
       final config = BootstrapConfig.fromJson(response.data as Map<String, dynamic>);
       _lastConfig = config;

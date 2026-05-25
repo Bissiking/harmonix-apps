@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/models/track.dart';
-import '../data/library_repository.dart';
+import 'package:harmonix_apps/core/models/track.dart';
+import 'package:harmonix_apps/features/library/data/library_repository.dart';
 
 part 'favorites_provider.g.dart';
 

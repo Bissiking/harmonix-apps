@@ -10,7 +10,7 @@ _Track _$TrackFromJson(Map<String, dynamic> json) => _Track(
       id: stringFromJsonOrEmpty(readId(json, 'id')),
       title: stringFromJsonOrEmpty(readTitle(json, 'title')),
       artist: stringFromJsonOrEmpty(readArtist(json, 'artist')),
-      album: json['album'] as String?,
+      album: stringFromJson(readAlbum(json, 'album')),
       coverFile: coverFileFromJson(readCoverFile(json, 'cover_file')),
       coverUrl: stringFromJson(readCoverUrl(json, 'cover_url')),
       streamUrl: stringFromJson(readStreamUrl(json, 'stream_url')),

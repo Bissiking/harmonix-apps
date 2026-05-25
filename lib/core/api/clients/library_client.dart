@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
-import '../../models/track.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 
 part 'library_client.g.dart';
 
@@ -9,9 +9,9 @@ part 'library_client.g.dart';
 abstract class LibraryClient {
   factory LibraryClient(Dio dio) = _LibraryClient;
 
-  @GET('/api/harmonix/apps/library/favorites')
+  @GET('/api/harmonix/apps/v2/library/favorites')
   Future<List<Track>> getFavorites();
 
-  @POST('/api/harmonix/apps/library/favorites/toggle')
+  @POST('/api/harmonix/apps/v2/library/favorites/toggle')
   Future<void> toggleFavorite(@Body() Map<String, dynamic> body);
 }

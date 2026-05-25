@@ -1,6 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'audio_handler.dart';
+import 'package:harmonix_apps/core/audio/audio_handler.dart';
 
 part 'audio_handler_provider.g.dart';
 

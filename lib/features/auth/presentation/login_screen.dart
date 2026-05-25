@@ -5,12 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/api/dio_provider.dart';
-import '../../../core/navigation/route_names.dart';
-import '../../../core/settings/auth_token_provider.dart';
-import '../../../core/settings/settings_repository.dart';
-import '../../bootstrap/providers/bootstrap_provider.dart';
-import '../../../shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
+import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/features/bootstrap/providers/bootstrap_provider.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});

@@ -3,12 +3,13 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/utils/duration_formatter.dart';
-import '../../../shared/theme/color_scheme.dart';
-import '../../../shared/widgets/track_artwork.dart';
-import '../providers/now_playing_provider.dart';
-import '../providers/playback_position_provider.dart';
-import '../providers/player_provider.dart';
+import 'package:harmonix_apps/core/utils/duration_formatter.dart';
+import 'package:harmonix_apps/features/player/providers/now_playing_provider.dart';
+import 'package:harmonix_apps/features/player/providers/playback_position_provider.dart';
+import 'package:harmonix_apps/features/player/providers/player_provider.dart';
+import 'package:harmonix_apps/shared/layout/responsive_breakpoints.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
 
 class FullPlayerScreen extends ConsumerWidget {
   const FullPlayerScreen({super.key});
@@ -18,20 +19,20 @@ class FullPlayerScreen extends ConsumerWidget {
     final nowPlaying = ref.watch(nowPlayingProvider).valueOrNull;
     final playbackState = ref.watch(playbackStateStreamProvider).valueOrNull;
     final position = ref.watch(playbackPositionProvider).valueOrNull;
-    final durationFromPlayer =
-        ref.watch(playbackDurationProvider).valueOrNull;
+    final durationFromPlayer = ref.watch(playbackDurationProvider).valueOrNull;
+    final queue =
+        ref.watch(playbackQueueProvider).valueOrNull ?? const <MediaItem>[];
 
     if (nowPlaying == null) {
       return const Scaffold(body: Center(child: Text('Aucune piste en cours')));
     }
 
     final isPlaying = playbackState?.playing ?? false;
-    final duration = durationFromPlayer ??
-        nowPlaying.duration ??
-        Duration.zero;
-    final shuffle =
-        playbackState?.shuffleMode == AudioServiceShuffleMode.all;
+    final duration = durationFromPlayer ?? nowPlaying.duration ?? Duration.zero;
+    final shuffle = playbackState?.shuffleMode == AudioServiceShuffleMode.all;
     final repeat = playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
+    final isWide = ResponsiveBreakpoints.isTablet(context) &&
+        ResponsiveBreakpoints.isLandscape(context);
 
     return Scaffold(
       backgroundColor: HarmonixColors.darkBackground,
@@ -44,88 +45,145 @@ class FullPlayerScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            children: [
-              const SizedBox(height: 32),
-              TrackArtwork(
-                coverFile:
-                    nowPlaying.extras?['coverFile'] as String?,
-                size: MediaQuery.of(context).size.width - 64,
-                borderRadius: 20,
-              ),
-              const SizedBox(height: 32),
-              // Title / artist
-              Text(
-                nowPlaying.title,
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                nowPlaying.artist ?? '',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 32),
-              // Progress bar
-              ProgressBar(
-                progress: position ?? Duration.zero,
-                total: duration,
-                buffered: playbackState?.bufferedPosition,
-                onSeek: (d) => ref.read(playerProvider.notifier).seek(d),
-                thumbColor: HarmonixColors.accent,
-                progressBarColor: HarmonixColors.accent,
-                baseBarColor: Colors.white12,
-                bufferedBarColor: Colors.white24,
-                timeLabelTextStyle:
-                    const TextStyle(color: Colors.white54, fontSize: 12),
-              ),
-              const SizedBox(height: 24),
-              // Controls row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.shuffle,
-                      color: shuffle ? HarmonixColors.accent : Colors.white54,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: isWide
+              ? Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _NowPlayingPanel(
+                        nowPlaying: nowPlaying,
+                        playbackState: playbackState,
+                        position: position ?? Duration.zero,
+                        duration: duration,
+                        isPlaying: isPlaying,
+                        shuffle: shuffle,
+                        repeat: repeat,
+                      ),
                     ),
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).setShuffle(!shuffle),
-                  ),
-                  IconButton(
-                    iconSize: 36,
-                    icon: const Icon(Icons.skip_previous),
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).skipToPrevious(),
-                  ),
-                  _PlayPauseButton(isPlaying: isPlaying),
-                  IconButton(
-                    iconSize: 36,
-                    icon: const Icon(Icons.skip_next),
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).skipToNext(),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _repeatIcon(repeat),
-                      color: repeat != AudioServiceRepeatMode.none
-                          ? HarmonixColors.accent
-                          : Colors.white54,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      flex: 2,
+                      child:
+                          _QueuePanel(queue: queue, currentId: nowPlaying.id),
                     ),
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).setRepeat(
-                          _nextRepeat(repeat),
-                        ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                )
+              : _NowPlayingPanel(
+                  nowPlaying: nowPlaying,
+                  playbackState: playbackState,
+                  position: position ?? Duration.zero,
+                  duration: duration,
+                  isPlaying: isPlaying,
+                  shuffle: shuffle,
+                  repeat: repeat,
+                ),
         ),
       ),
+    );
+  }
+}
+
+class _NowPlayingPanel extends ConsumerWidget {
+  const _NowPlayingPanel({
+    required this.nowPlaying,
+    required this.playbackState,
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+    required this.shuffle,
+    required this.repeat,
+  });
+
+  final MediaItem nowPlaying;
+  final PlaybackState? playbackState;
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+  final bool shuffle;
+  final AudioServiceRepeatMode repeat;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final width = MediaQuery.sizeOf(context).width;
+    final artSize = ResponsiveBreakpoints.isDesktop(context)
+        ? 380.0
+        : (width - 64).clamp(220.0, 420.0);
+
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        TrackArtwork(
+          coverFile: nowPlaying.extras?['coverFile'] as String?,
+          size: artSize,
+          borderRadius: 20,
+        ),
+        const SizedBox(height: 20),
+        Text(
+          nowPlaying.title,
+          style: Theme.of(context).textTheme.headlineMedium,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          nowPlaying.artist ?? '',
+          style: Theme.of(context).textTheme.bodyMedium,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 20),
+        ProgressBar(
+          progress: position,
+          total: duration,
+          buffered: playbackState?.bufferedPosition,
+          onSeek: (d) => ref.read(playerProvider.notifier).seek(d),
+          thumbColor: HarmonixColors.accent,
+          progressBarColor: HarmonixColors.accent,
+          baseBarColor: Colors.white12,
+          bufferedBarColor: Colors.white24,
+          timeLabelTextStyle:
+              const TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.shuffle,
+                color: shuffle ? HarmonixColors.accent : Colors.white54,
+              ),
+              onPressed: () =>
+                  ref.read(playerProvider.notifier).setShuffle(!shuffle),
+            ),
+            IconButton(
+              iconSize: 36,
+              icon: const Icon(Icons.skip_previous),
+              onPressed: () =>
+                  ref.read(playerProvider.notifier).skipToPrevious(),
+            ),
+            _PlayPauseButton(isPlaying: isPlaying),
+            IconButton(
+              iconSize: 36,
+              icon: const Icon(Icons.skip_next),
+              onPressed: () => ref.read(playerProvider.notifier).skipToNext(),
+            ),
+            IconButton(
+              icon: Icon(
+                _repeatIcon(repeat),
+                color: repeat != AudioServiceRepeatMode.none
+                    ? HarmonixColors.accent
+                    : Colors.white54,
+              ),
+              onPressed: () => ref
+                  .read(playerProvider.notifier)
+                  .setRepeat(_nextRepeat(repeat)),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -140,6 +198,65 @@ class FullPlayerScreen extends ConsumerWidget {
         AudioServiceRepeatMode.all => AudioServiceRepeatMode.one,
         _ => AudioServiceRepeatMode.none,
       };
+}
+
+class _QueuePanel extends StatelessWidget {
+  const _QueuePanel({required this.queue, required this.currentId});
+
+  final List<MediaItem> queue;
+  final String currentId;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child:
+                Text('Queue', style: Theme.of(context).textTheme.titleMedium),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              itemCount: queue.length,
+              itemBuilder: (_, i) {
+                final item = queue[i];
+                final isCurrent = item.id == currentId;
+                return ListTile(
+                  dense: true,
+                  title: Text(
+                    item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    item.artist ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: isCurrent
+                      ? const Icon(Icons.equalizer,
+                          color: HarmonixColors.accent)
+                      : (item.duration != null
+                          ? Text(
+                              formatMs(item.duration!.inMilliseconds),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            )
+                          : null),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PlayPauseButton extends ConsumerWidget {

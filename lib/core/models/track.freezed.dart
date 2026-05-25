@@ -20,6 +20,7 @@ mixin _$Track {
   String get title;
   @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
   String get artist;
+  @JsonKey(readValue: readAlbum, fromJson: stringFromJson)
   String? get album;
   @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
   String? get coverFile;
@@ -85,7 +86,7 @@ abstract mixin class $TrackCopyWith<$Res> {
       String title,
       @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
       String artist,
-      String? album,
+      @JsonKey(readValue: readAlbum, fromJson: stringFromJson) String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,
       @JsonKey(readValue: readCoverUrl, fromJson: stringFromJson)
@@ -261,6 +262,7 @@ extension TrackPatterns on Track {
             String title,
             @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
+            @JsonKey(readValue: readAlbum, fromJson: stringFromJson)
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
             String? coverFile,
@@ -315,6 +317,7 @@ extension TrackPatterns on Track {
             String title,
             @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
+            @JsonKey(readValue: readAlbum, fromJson: stringFromJson)
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
             String? coverFile,
@@ -367,6 +370,7 @@ extension TrackPatterns on Track {
             String title,
             @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
             String artist,
+            @JsonKey(readValue: readAlbum, fromJson: stringFromJson)
             String? album,
             @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
             String? coverFile,
@@ -409,7 +413,7 @@ class _Track implements Track {
       required this.title,
       @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
       required this.artist,
-      this.album,
+      @JsonKey(readValue: readAlbum, fromJson: stringFromJson) this.album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       this.coverFile,
       @JsonKey(readValue: readCoverUrl, fromJson: stringFromJson) this.coverUrl,
@@ -431,6 +435,7 @@ class _Track implements Track {
   @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
   final String artist;
   @override
+  @JsonKey(readValue: readAlbum, fromJson: stringFromJson)
   final String? album;
   @override
   @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
@@ -507,7 +512,7 @@ abstract mixin class _$TrackCopyWith<$Res> implements $TrackCopyWith<$Res> {
       String title,
       @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
       String artist,
-      String? album,
+      @JsonKey(readValue: readAlbum, fromJson: stringFromJson) String? album,
       @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
       String? coverFile,
       @JsonKey(readValue: readCoverUrl, fromJson: stringFromJson)

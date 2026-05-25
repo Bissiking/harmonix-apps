@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import 'track.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 
 part 'resume_info.freezed.dart';
 part 'resume_info.g.dart';

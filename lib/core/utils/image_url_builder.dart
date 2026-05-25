@@ -15,13 +15,14 @@ String coverUrl(String baseUrl, String coverFile) {
     }
     return trimmed;
   }
-  if (trimmed.startsWith('/api/harmonix/apps/covers/')) {
+  if (trimmed.startsWith('/api/harmonix/apps/covers/') ||
+      trimmed.startsWith('/api/harmonix/apps/v2/covers/')) {
     return '$baseUrl$trimmed';
   }
   if (trimmed.startsWith('/')) {
     return '$baseUrl$trimmed';
   }
-  return '$baseUrl/api/harmonix/apps/covers/$trimmed';
+  return '$baseUrl/api/harmonix/apps/v2/covers/$trimmed';
 }
 
 String streamUrl(String baseUrl, String trackId) {
@@ -41,11 +42,12 @@ String streamUrl(String baseUrl, String trackId) {
     }
     return trimmed;
   }
-  if (trimmed.startsWith('/api/harmonix/apps/stream/')) {
+  if (trimmed.startsWith('/api/harmonix/apps/stream/') ||
+      trimmed.startsWith('/api/harmonix/apps/v2/stream/')) {
     return '$baseUrl$trimmed';
   }
   if (trimmed.startsWith('/')) {
     return '$baseUrl$trimmed';
   }
-  return '$baseUrl/api/harmonix/apps/stream/$trimmed';
+  return '$baseUrl/api/harmonix/apps/v2/stream/$trimmed';
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/api/providers/library_client_provider.dart';
-import '../../../core/models/track.dart';
+import 'package:harmonix_apps/core/api/providers/library_client_provider.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 
 part 'library_repository.g.dart';
 

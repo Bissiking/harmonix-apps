@@ -24,7 +24,7 @@ Future<UpdateInfo?> checkForUpdate({
 }) async {
   final currentVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
   final response = await dio.get(
-    '/api/harmonix/apps/version',
+    '/api/harmonix/apps/v2/version',
     queryParameters: {'app_version': currentVersion},
   );
   final data = response.data;

@@ -4,12 +4,12 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/catalog/data/catalog_repository.dart';
-import '../audio/audio_handler_provider.dart';
-import '../models/track.dart';
-import '../settings/settings_repository.dart';
-import '../utils/image_url_builder.dart';
-import 'platform_channel.dart';
+import 'package:harmonix_apps/features/catalog/data/catalog_repository.dart';
+import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/models/track.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/utils/image_url_builder.dart';
+import 'package:harmonix_apps/core/platform/platform_channel.dart';
 
 /// Registers the Flutter-side handler for Android Auto MethodChannel calls.
 ///

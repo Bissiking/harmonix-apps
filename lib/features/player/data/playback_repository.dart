@@ -1,8 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/api/providers/playback_client_provider.dart';
-import '../../../core/models/playback_state_model.dart';
-import '../../../core/models/resume_info.dart';
+import 'package:harmonix_apps/core/api/providers/playback_client_provider.dart';
+import 'package:harmonix_apps/core/models/playback_state_model.dart';
+import 'package:harmonix_apps/core/models/resume_info.dart';
 
 part 'playback_repository.g.dart';
 

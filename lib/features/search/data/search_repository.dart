@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/api/providers/catalog_client_provider.dart';
-import '../../../core/models/track.dart';
+import 'package:harmonix_apps/core/api/providers/catalog_client_provider.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 
 part 'search_repository.g.dart';
 

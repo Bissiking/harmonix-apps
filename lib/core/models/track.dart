@@ -12,7 +12,7 @@ abstract class Track with _$Track {
     required String title,
     @JsonKey(readValue: readArtist, fromJson: stringFromJsonOrEmpty)
     required String artist,
-    String? album,
+    @JsonKey(readValue: readAlbum, fromJson: stringFromJson) String? album,
     @JsonKey(readValue: readCoverFile, fromJson: coverFileFromJson)
     String? coverFile,
     @JsonKey(readValue: readCoverUrl, fromJson: stringFromJson)
@@ -40,6 +40,9 @@ Object? readTitle(Map json, String key) =>
 
 Object? readArtist(Map json, String key) =>
     json['artist'] ?? json['author'] ?? json['track_artist'];
+
+Object? readAlbum(Map json, String key) =>
+    json['album'] ?? json['album_title'] ?? json['album_name'];
 
 String? coverFileFromJson(Object? value) {
   if (value == null) return null;

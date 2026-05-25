@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-import '../../../core/utils/duration_formatter.dart';
-import '../../../features/player/providers/player_provider.dart';
-import '../../../shared/widgets/async_value_widget.dart';
-import '../../../shared/widgets/track_artwork.dart';
-import '../providers/tracks_provider.dart';
+import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/utils/duration_formatter.dart';
+import 'package:harmonix_apps/features/player/providers/player_provider.dart';
+import 'package:harmonix_apps/features/catalog/providers/albums_provider.dart';
+import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
+import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
+import 'package:harmonix_apps/features/catalog/providers/tracks_provider.dart';
 
 class TrackDetailScreen extends ConsumerWidget {
   const TrackDetailScreen({super.key, required this.trackId});
@@ -42,11 +45,31 @@ class TrackDetailScreen extends ConsumerWidget {
                 t.artist,
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
-              if (t.album != null) ...[
+              if (t.album != null && t.album!.trim().isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Text(
-                  t.album!,
-                  style: Theme.of(context).textTheme.bodySmall,
+                GestureDetector(
+                  onTap: () async {
+                    final albums = await ref.read(albumsProvider.future);
+                    String? albumId;
+                    for (final candidate in albums) {
+                      if (candidate.title == t.album) {
+                        albumId = candidate.id;
+                        break;
+                      }
+                    }
+                    if (albumId != null && context.mounted) {
+                      context.pushNamed(
+                        RouteNames.albumDetail,
+                        pathParameters: {'id': albumId},
+                      );
+                    }
+                  },
+                  child: Text(
+                    t.album!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(height: 4),

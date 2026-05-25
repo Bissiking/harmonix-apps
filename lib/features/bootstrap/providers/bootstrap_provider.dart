@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/models/bootstrap_config.dart';
-import '../data/bootstrap_repository.dart';
+import 'package:harmonix_apps/core/models/bootstrap_config.dart';
+import 'package:harmonix_apps/features/bootstrap/data/bootstrap_repository.dart';
 
 part 'bootstrap_provider.g.dart';
 

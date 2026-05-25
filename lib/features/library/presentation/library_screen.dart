@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../features/catalog/presentation/track_list_tile.dart';
-import '../../../features/player/providers/player_provider.dart';
-import '../../../shared/widgets/async_value_widget.dart';
-import '../providers/favorites_provider.dart';
+import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart';
+import 'package:harmonix_apps/features/player/providers/player_provider.dart';
+import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
+import 'package:harmonix_apps/features/library/providers/favorites_provider.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -21,13 +21,19 @@ class LibraryScreen extends ConsumerWidget {
             ? const Center(child: Text('Aucun favori pour l\'instant.'))
             : RefreshIndicator(
                 onRefresh: () => ref.refresh(favoritesProvider.future),
-                child: ListView.builder(
-                  itemCount: tracks.length,
-                  itemBuilder: (_, i) => TrackListTile(
-                    track: tracks[i],
-                    onTap: () => ref
-                        .read(playerProvider.notifier)
-                        .playFromQueue(tracks, i),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 980),
+                    child: ListView.builder(
+                      itemCount: tracks.length,
+                      itemBuilder: (_, i) => TrackListTile(
+                        track: tracks[i],
+                        onTap: () => ref
+                            .read(playerProvider.notifier)
+                            .playFromQueue(tracks, i),
+                      ),
+                    ),
                   ),
                 ),
               ),

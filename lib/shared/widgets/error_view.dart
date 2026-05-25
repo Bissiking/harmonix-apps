@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 
-import '../../core/api/api_exception.dart';
+import 'package:harmonix_apps/core/api/api_exception.dart';
 
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.error, this.onRetry});

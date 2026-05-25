@@ -27,7 +27,7 @@ class _LibraryClient implements LibraryClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/library/favorites',
+            '/api/harmonix/apps/v2/library/favorites',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -57,7 +57,7 @@ class _LibraryClient implements LibraryClient {
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/library/favorites/toggle',
+            '/api/harmonix/apps/v2/library/favorites/toggle',
             queryParameters: queryParameters,
             data: _data,
           )

@@ -5,12 +5,12 @@ import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/api/dio_provider.dart';
-import '../../../core/update/update_checker.dart';
-import '../providers/bootstrap_provider.dart';
-import '../../../core/api/api_exception.dart';
-import '../../../shared/theme/color_scheme.dart';
-import '../../../shared/widgets/error_view.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
+import 'package:harmonix_apps/core/update/update_checker.dart';
+import 'package:harmonix_apps/features/bootstrap/providers/bootstrap_provider.dart';
+import 'package:harmonix_apps/core/api/api_exception.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/shared/widgets/error_view.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});

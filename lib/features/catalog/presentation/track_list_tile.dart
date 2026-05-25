@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/models/track.dart';
-import '../../../core/utils/duration_formatter.dart';
-import '../../../shared/widgets/track_artwork.dart';
+import 'package:harmonix_apps/core/models/track.dart';
+import 'package:harmonix_apps/core/utils/duration_formatter.dart';
+import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
 
 class TrackListTile extends StatelessWidget {
   const TrackListTile({

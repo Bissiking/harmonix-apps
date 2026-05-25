@@ -1,0 +1,54 @@
+HARMONIX API V2
+Base URL: /api/harmonix/apps/v2
+Date: 2026-05-25
+
+Notes:
+- Endpoints publics: health, version
+- Tous les autres endpoints requierent auth Harmonix Apps (session cookie ou bearer session token)
+- Le theme utilisateur est disponible:
+  1) des la connexion via GET /bootstrap (champ `theme`)
+  2) via endpoints dedies /theme
+
+[PUBLIC]
+GET    /api/harmonix/apps/v2/health
+GET    /api/harmonix/apps/v2/version
+
+[DEBUG] (si HARMONIX_APPS_DEBUG_STREAM=true)
+GET    /api/harmonix/apps/v2/debug/stream/:id
+GET    /api/harmonix/apps/v2/debug/catalog/tracks
+
+[BOOTSTRAP]
+GET    /api/harmonix/apps/v2/bootstrap
+
+[CATALOG]
+GET    /api/harmonix/apps/v2/catalog/tracks
+GET    /api/harmonix/apps/v2/catalog/search?q=...
+GET    /api/harmonix/apps/v2/catalog/tracks/:id
+
+[STREAM / COVERS]
+GET    /api/harmonix/apps/v2/stream/:id
+GET    /api/harmonix/apps/v2/covers/:file
+
+[FAVORITES]
+GET    /api/harmonix/apps/v2/library/favorites
+POST   /api/harmonix/apps/v2/library/favorites/toggle
+
+[THEME]
+GET    /api/harmonix/apps/v2/theme
+PUT    /api/harmonix/apps/v2/theme
+
+[PLAYBACK]
+GET    /api/harmonix/apps/v2/playback/state
+PUT    /api/harmonix/apps/v2/playback/state
+GET    /api/harmonix/apps/v2/playback/resume-active
+GET    /api/harmonix/apps/v2/playback/resume/:trackId
+
+[CAST] (planned)
+POST   /api/harmonix/apps/v2/cast/sessions
+PATCH  /api/harmonix/apps/v2/cast/sessions/:sessionId
+DELETE /api/harmonix/apps/v2/cast/sessions/:sessionId
+
+[RIFT SYNC] (planned)
+POST   /api/harmonix/apps/v2/sync/sessions
+POST   /api/harmonix/apps/v2/sync/sessions/:sessionId/join
+PATCH  /api/harmonix/apps/v2/sync/sessions/:sessionId/state

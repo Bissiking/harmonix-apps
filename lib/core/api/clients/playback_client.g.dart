@@ -27,7 +27,7 @@ class _PlaybackClient implements PlaybackClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/playback/state',
+            '/api/harmonix/apps/v2/playback/state',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -55,7 +55,7 @@ class _PlaybackClient implements PlaybackClient {
       Options(method: 'PUT', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/playback/state',
+            '/api/harmonix/apps/v2/playback/state',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -74,7 +74,7 @@ class _PlaybackClient implements PlaybackClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/playback/resume-active',
+            '/api/harmonix/apps/v2/playback/resume-active',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -101,7 +101,7 @@ class _PlaybackClient implements PlaybackClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/playback/resume/${trackId}',
+            '/api/harmonix/apps/v2/playback/resume/${trackId}',
             queryParameters: queryParameters,
             data: _data,
           )

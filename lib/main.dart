@@ -7,10 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'app.dart';
-import 'core/audio/audio_handler.dart';
-import 'core/audio/audio_handler_provider.dart';
-import 'core/settings/settings_repository.dart';
+import 'package:harmonix_apps/app.dart';
+import 'package:harmonix_apps/core/audio/audio_handler.dart';
+import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

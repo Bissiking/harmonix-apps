@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/api/dio_provider.dart';
-import '../../../core/navigation/route_names.dart';
-import '../../../core/settings/auth_token_provider.dart';
-import '../../../core/settings/settings_repository.dart';
-import '../../../core/update/update_checker.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
+import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/update/update_checker.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});

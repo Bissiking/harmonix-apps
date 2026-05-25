@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../clients/library_client.dart';
-import '../dio_provider.dart';
+import 'package:harmonix_apps/core/api/clients/library_client.dart';
+import 'package:harmonix_apps/core/api/dio_provider.dart';
 
 part 'library_client_provider.g.dart';
 

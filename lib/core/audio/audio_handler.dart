@@ -46,7 +46,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
           title: 'Unknown',
         );
 
-    this.mediaItem.add(item);
+    mediaItem.add(item);
     assert(() {
       debugPrint(
         'AudioHandler.playFromTrackId url=$streamUrl headers=${headers?.keys.toList()}',

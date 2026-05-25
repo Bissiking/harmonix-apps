@@ -2,8 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../settings/settings_repository.dart';
-import 'harmonix_interceptor.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/api/harmonix_interceptor.dart';
 
 part 'dio_provider.g.dart';
 

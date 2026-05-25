@@ -1,0 +1,86 @@
+# Harmonix V2 TODO
+
+## V2.0
+[ ] Cast
+    [ ] Création de session Cast
+    [ ] Contrôle session Cast (play/pause/seek/volume)
+    [ ] Reconnexion session Cast
+    [ ] Fin de session Cast
+
+## Migration API V2 (apps)
+[x] Base URL dev par défaut (`https://dev.mhemery.fr`)
+[x] Bootstrap -> `/api/harmonix/apps/v2/bootstrap`
+[x] Catalog -> `/api/harmonix/apps/v2/catalog/*`
+[x] Stream & Covers -> `/api/harmonix/apps/v2/stream/:id` et `/api/harmonix/apps/v2/covers/:file`
+[x] Favorites -> `/api/harmonix/apps/v2/library/favorites*`
+[x] Playback -> `/api/harmonix/apps/v2/playback/*`
+[x] Version -> `/api/harmonix/apps/v2/version`
+
+## Core
+[x] Prise en charge complète des albums
+    [x] Vue album
+    [x] Navigation pistes d’un album
+    [x] Cover album
+    [x] Métadonnées album
+    [x] Lecture album complète
+    [x] Shuffle album
+
+## Android Auto
+[ ] Correction du logo non affiché
+[ ] Vérifier compatibilité des icônes Android Auto
+[ ] Ajouter fallback icône Android Auto
+
+[ ] Amélioration stabilité Android Auto
+    [ ] Investiguer cycle de vie app/service
+    [ ] Vérifier MediaSession
+    [ ] Vérifier foreground service
+    [ ] Permettre fonctionnement sans ouverture préalable app
+    [ ] Reconnexion automatique session player
+    [ ] Vérifier compatibilité Android Auto MediaBrowserService / MediaLibraryService
+    [ ] Ajouter logs debug Android Auto
+    [ ] Vérifier comportement background playback Android 14+
+
+## Responsive / Multi-device
+[x] Correction affichage mode paysage
+[x] Support tablette
+[x] Support Windows
+[x] Refonte UI paysage
+    [x] Layout desktop/tablette
+    [x] Sidebar adaptive
+    [x] Queue responsive
+    [x] Player horizontal optimisé
+    [x] Gestion ratios écran
+
+## UI / UX
+[ ] Uniformisation design mobile/tablette/desktop
+[ ] Amélioration transitions UI
+[ ] Optimisation animations
+[ ] Refonte navigation paysage
+
+## Thèmes & Branding
+[ ] Synchronisation dynamique du thème depuis la version web
+    [ ] Création endpoint API thème
+    [ ] Export variables CSS web
+    [ ] Application dynamique couleurs natives mobile
+    [ ] Fallback thème hors ligne
+    [ ] Synchronisation automatique au lancement
+    [ ] Support AMOLED
+    [ ] Préparer support thèmes utilisateurs
+    [ ] Préparer thème dynamique basé sur la cover en lecture
+
+## Technique
+[ ] Optimisation synchronisation player
+[ ] Réduction latence affichage
+[ ] Stabilisation reconnexion stream
+[ ] Gestion erreurs Android Auto
+[ ] Optimisation lifecycle player/service
+[ ] Vérification stabilité mode background
+[ ] Gestion reconnexion réseau
+
+## V2.1
+[ ] Compatibilité Android TV
+    [ ] Support D-pad / focus navigation
+    [ ] UI catalogue optimisée TV (10-foot)
+    [ ] UI player optimisée TV
+    [ ] Recherche adaptée Android TV
+    [ ] Optimisation performances Android TV

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/theme/color_scheme.dart';
-import '../../../shared/widgets/track_artwork.dart';
-import '../providers/now_playing_provider.dart';
-import '../providers/player_provider.dart';
+import 'package:harmonix_apps/shared/layout/responsive_breakpoints.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
+import 'package:harmonix_apps/features/player/providers/now_playing_provider.dart';
+import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 
 class MiniPlayerBar extends ConsumerWidget {
   const MiniPlayerBar({super.key});
@@ -20,11 +21,13 @@ class MiniPlayerBar extends ConsumerWidget {
 
         final playbackState = ref.watch(playbackStateStreamProvider);
         final isPlaying = playbackState.valueOrNull?.playing ?? false;
+        final isDesktop = ResponsiveBreakpoints.isDesktop(context);
+        final barHeight = isDesktop ? 72.0 : 64.0;
 
         return GestureDetector(
           onTap: () => context.pushNamed('player'),
           child: Container(
-            height: 64,
+            height: barHeight,
             color: HarmonixColors.darkSurface,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
@@ -70,7 +73,8 @@ class MiniPlayerBar extends ConsumerWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: () => ref.read(playerProvider.notifier).skipToNext(),
+                  onPressed: () =>
+                      ref.read(playerProvider.notifier).skipToNext(),
                 ),
               ],
             ),

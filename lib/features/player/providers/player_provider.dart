@@ -2,10 +2,10 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/audio/audio_handler_provider.dart';
-import '../../../core/models/track.dart';
-import '../../../core/settings/settings_repository.dart';
-import '../../../core/utils/image_url_builder.dart';
+import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/models/track.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/utils/image_url_builder.dart';
 
 part 'player_provider.g.dart';
 

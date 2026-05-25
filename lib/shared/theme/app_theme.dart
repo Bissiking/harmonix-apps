@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'color_scheme.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 
 abstract final class AppTheme {
   static ThemeData get dark => ThemeData(
@@ -12,7 +12,7 @@ abstract final class AppTheme {
           elevation: 0,
           centerTitle: false,
         ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: HarmonixColors.darkSurface,
           selectedItemColor: HarmonixColors.accent,
           unselectedItemColor: Colors.white54,

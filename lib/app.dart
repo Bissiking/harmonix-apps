@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'core/navigation/app_router_provider.dart';
-import 'core/platform/auto_bridge.dart';
-import 'core/settings/settings_repository.dart';
-import 'shared/theme/app_theme.dart';
-import 'shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/core/navigation/app_router_provider.dart';
+import 'package:harmonix_apps/core/platform/auto_bridge.dart';
+import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/shared/theme/app_theme.dart';
+import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 
 class HarmonixApp extends ConsumerStatefulWidget {
   const HarmonixApp({super.key});

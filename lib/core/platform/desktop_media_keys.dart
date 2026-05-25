@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
 
 /// Registers keyboard media-key handlers for desktop platforms.
 /// Call once from a top-level widget using ref.

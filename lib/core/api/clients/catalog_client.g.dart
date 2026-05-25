@@ -27,7 +27,7 @@ class _CatalogClient implements CatalogClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/catalog/tracks',
+            '/api/harmonix/apps/v2/catalog/tracks',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -56,7 +56,7 @@ class _CatalogClient implements CatalogClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/catalog/search',
+            '/api/harmonix/apps/v2/catalog/search',
             queryParameters: queryParameters,
             data: _data,
           )
@@ -85,7 +85,7 @@ class _CatalogClient implements CatalogClient {
       Options(method: 'GET', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
-            '/api/harmonix/apps/catalog/tracks/${id}',
+            '/api/harmonix/apps/v2/catalog/tracks/${id}',
             queryParameters: queryParameters,
             data: _data,
           )
