@@ -53,11 +53,13 @@ class HarmonixAudioHandler extends BaseAudioHandler
       );
       return true;
     }());
-    await _player.setAudioSource(
-      AudioSource.uri(
-        Uri.parse(streamUrl),
-        tag: item,
-        headers: headers,
+    await _setAudioSourceWithRetry(
+      () => _player.setAudioSource(
+        AudioSource.uri(
+          Uri.parse(streamUrl),
+          tag: item,
+          headers: headers,
+        ),
       ),
     );
     await _player.play();
@@ -83,9 +85,11 @@ class HarmonixAudioHandler extends BaseAudioHandler
       ),
     );
 
-    await _player.setAudioSource(
-      ConcatenatingAudioSource(children: sources),
-      initialIndex: initialIndex,
+    await _setAudioSourceWithRetry(
+      () => _player.setAudioSource(
+        ConcatenatingAudioSource(children: sources),
+        initialIndex: initialIndex,
+      ),
     );
   }
 
@@ -230,5 +234,23 @@ class HarmonixAudioHandler extends BaseAudioHandler
     if (event != null) {
       _broadcastState(event);
     }
+  }
+
+  Future<void> _setAudioSourceWithRetry(
+    Future<Duration?> Function() action, {
+    int maxAttempts = 3,
+  }) async {
+    Object? lastError;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await action();
+        return;
+      } catch (error) {
+        lastError = error;
+        if (attempt == maxAttempts) break;
+        await Future<void>.delayed(Duration(milliseconds: 300 * attempt));
+      }
+    }
+    throw lastError ?? StateError('Unable to set audio source');
   }
 }

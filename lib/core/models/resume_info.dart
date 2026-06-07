@@ -6,7 +6,7 @@ part 'resume_info.freezed.dart';
 part 'resume_info.g.dart';
 
 @freezed
-class ResumeInfo with _$ResumeInfo {
+abstract class ResumeInfo with _$ResumeInfo {
   const factory ResumeInfo({
     required Track track,
     @Default(0) int positionMs,

@@ -21,9 +21,18 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _urlController;
+  final TextEditingController _riftSessionIdController = TextEditingController();
+  final TextEditingController _riftCodeController = TextEditingController();
+  String _selectedRiftRole = 'listen';
   UpdateInfo? _updateInfo;
   String? _updateError;
   bool _isCheckingUpdate = false;
+
+  static const Map<String, String> _roleLabels = {
+    'host': 'Hôte',
+    'control': 'Contrôle',
+    'listen': 'Écoute',
+  };
 
   @override
   void initState() {
@@ -35,6 +44,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void dispose() {
     _urlController.dispose();
+    _riftSessionIdController.dispose();
+    _riftCodeController.dispose();
     super.dispose();
   }
 
@@ -96,12 +107,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 await ref.read(settingsRepositoryProvider).setAuthToken(null);
                 ref.invalidate(dioProvider);
                 ref.invalidate(authTokenProvider);
-                if (mounted) {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Déconnecté.')),
-                  );
-                }
+                if (!mounted) return;
+                setState(() {});
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(content: Text('Déconnecté.')),
+                );
               },
               child: const Text('Se déconnecter'),
             ),
@@ -109,8 +119,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Divider(),
           const SizedBox(height: 16),
           Text(
-            'Cast',
+            'RIFT (écoute synchronisée)',
             style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedRiftRole,
+            decoration: const InputDecoration(
+              labelText: 'Rôle',
+              border: OutlineInputBorder(),
+            ),
+            items: _roleLabels.entries
+                .map(
+                  (entry) =>
+                      DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _selectedRiftRole = value);
+            },
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _riftSessionIdController,
+            decoration: const InputDecoration(
+              labelText: 'ID de session',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _riftCodeController,
+            decoration: const InputDecoration(
+              labelText: 'Code invité (optionnel)',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -120,15 +164,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               FilledButton(
                 onPressed: castState.connecting
                     ? null
-                    : () => ref.read(castProvider.notifier).start(),
+                    : () => ref
+                        .read(castProvider.notifier)
+                        .start(role: _selectedRiftRole),
                 child: Text(
-                    castState.connecting ? 'Connexion...' : 'Démarrer session'),
+                  castState.connecting ? 'Connexion...' : 'Créer une session',
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: castState.connecting
+                    ? null
+                    : () => ref.read(castProvider.notifier).join(
+                          sessionId: _riftSessionIdController.text.trim(),
+                          code: _riftCodeController.text.trim(),
+                          role: _selectedRiftRole,
+                        ),
+                child: const Text('Rejoindre'),
               ),
               OutlinedButton(
                 onPressed: castState.isActive
                     ? () => ref.read(castProvider.notifier).syncPlaybackState()
                     : null,
-                child: const Text('Synchroniser'),
+                child: const Text('Synchroniser maintenant'),
+              ),
+              OutlinedButton(
+                onPressed: castState.isActive
+                    ? () => ref.read(castProvider.notifier).setParticipantMode(
+                          _selectedRiftRole,
+                        )
+                    : null,
+                child: const Text('Appliquer ce rôle'),
+              ),
+              OutlinedButton(
+                onPressed: castState.isActive
+                    ? () => ref.read(castProvider.notifier).leave()
+                    : null,
+                child: const Text('Quitter session'),
               ),
               OutlinedButton(
                 onPressed: castState.isActive
@@ -142,6 +213,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 8),
             Text('Session active: ${castState.sessionId}'),
           ],
+          if (castState.sessionCode != null) ...[
+            const SizedBox(height: 4),
+            Text('Code session: ${castState.sessionCode}'),
+          ],
+          if (castState.role != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Rôle courant: ${_roleLabels[castState.role] ?? castState.role}',
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            'Compat legacy: fallback auto vers /sync/* si /rift/* indisponible.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           if (castState.error != null) ...[
             const SizedBox(height: 8),
             Text(

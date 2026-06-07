@@ -1,11 +1,12 @@
 # Harmonix V2 TODO
 
 ## V2.0
-[ ] Cast
-    [x] Création de session Cast
-    [x] Contrôle session Cast (play/pause/seek/volume)
-    [ ] Reconnexion session Cast
-    [x] Fin de session Cast
+[ ] RIFT (sync multi-device)
+    [x] Création de session RIFT
+    [x] Contrôle session RIFT (state sync)
+    [x] Reconnexion session RIFT
+    [x] Fin de session RIFT
+[ ] Google Cast (Chromecast / Home)
 
 ## Migration API V2 (apps)
 [x] Base URL dev par défaut (`https://mhemery.fr`)
@@ -35,7 +36,7 @@
     [x] Vérifier MediaSession
     [x] Vérifier foreground service
     [x] Permettre fonctionnement sans ouverture préalable app
-    [ ] Reconnexion automatique session player
+    [x] Reconnexion automatique session player
     [ ] Vérifier compatibilité Android Auto MediaBrowserService / MediaLibraryService
     [x] Ajouter logs debug Android Auto
     [ ] Vérifier comportement background playback Android 14+
@@ -68,13 +69,13 @@
     [x] Préparer support thèmes utilisateurs
 
 ## Technique
-[ ] Optimisation synchronisation player
+[x] Optimisation synchronisation player
 [ ] Réduction latence affichage
-[ ] Stabilisation reconnexion stream
-[ ] Gestion erreurs Android Auto
-[ ] Optimisation lifecycle player/service
+[x] Stabilisation reconnexion stream
+[x] Gestion erreurs Android Auto
+[x] Optimisation lifecycle player/service
 [ ] Vérification stabilité mode background
-[ ] Gestion reconnexion réseau
+[x] Gestion reconnexion réseau
 
 ## V2.1
 [ ] Compatibilité Android TV

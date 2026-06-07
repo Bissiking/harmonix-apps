@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:harmonix_apps/core/navigation/app_router_provider.dart';
+import 'package:harmonix_apps/core/audio/session_reconnect_provider.dart';
 import 'package:harmonix_apps/core/platform/auto_bridge.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/theme/theme_provider.dart';
@@ -22,15 +25,28 @@ class _HarmonixAppState extends ConsumerState<HarmonixApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(themeControllerProvider.notifier).initFromCache();
+      _requestNotificationPermissionIfForeground();
     });
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
       AutoBridge.register(ref);
     }
   }
 
+  Future<void> _requestNotificationPermissionIfForeground() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    if (lifecycle != AppLifecycleState.resumed) return;
+    try {
+      await Permission.notification.request();
+    } on PlatformException catch (_) {
+      // Ignore when no foreground activity is bound to this engine.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    ref.watch(castPlaybackSyncProvider);
+    ref.watch(riftPlaybackSyncProvider);
+    ref.watch(sessionReconnectProvider);
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final themePalette = ref.watch(themeControllerProvider);

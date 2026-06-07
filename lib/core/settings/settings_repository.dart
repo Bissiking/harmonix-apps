@@ -6,6 +6,8 @@ part 'settings_repository.g.dart';
 const _keyServerUrl = 'server_url';
 const _keyAuthToken = 'auth_token';
 const _keyThemeJson = 'theme_json';
+const _keyRiftSessionId = 'rift_session_id';
+const _keyRiftDeviceId = 'rift_device_id';
 
 class SettingsRepository {
   SettingsRepository(this._prefs);
@@ -31,9 +33,27 @@ class SettingsRepository {
   Future<void> setThemeJson(String json) =>
       _prefs.setString(_keyThemeJson, json);
 
+  String? get riftSessionId => _prefs.getString(_keyRiftSessionId);
+
+  Future<void> setRiftSessionId(String? sessionId) async {
+    if (sessionId == null || sessionId.isEmpty) {
+      await _prefs.remove(_keyRiftSessionId);
+      return;
+    }
+    await _prefs.setString(_keyRiftSessionId, sessionId);
+  }
+
+  String getOrCreateRiftDeviceId() {
+    final existing = _prefs.getString(_keyRiftDeviceId);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final created = 'device-${DateTime.now().millisecondsSinceEpoch}';
+    _prefs.setString(_keyRiftDeviceId, created);
+    return created;
+  }
+
   static String get _defaultServerUrl => const String.fromEnvironment(
         'HARMONIX_API_BASE_URL',
-        defaultValue: 'https://mhemery.fr',
+        defaultValue: 'https://dev.mhemery.fr',
       );
 
   static String? get _defaultAuthToken {

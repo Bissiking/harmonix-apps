@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/api/harmonix_interceptor.dart';
+import 'package:harmonix_apps/core/api/retry_interceptor.dart';
 
 part 'dio_provider.g.dart';
 
@@ -34,6 +35,7 @@ Dio dio(DioRef ref) {
       },
     ),
   );
+  dio.interceptors.add(RetryInterceptor(dio));
   dio.interceptors.add(HarmonixInterceptor());
 
   if (kDebugMode) {

@@ -4,7 +4,7 @@ part 'playback_state_model.freezed.dart';
 part 'playback_state_model.g.dart';
 
 @freezed
-class PlaybackStateModel with _$PlaybackStateModel {
+abstract class PlaybackStateModel with _$PlaybackStateModel {
   const factory PlaybackStateModel({
     String? trackId,
     @Default(0) int positionMs,

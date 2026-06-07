@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -23,6 +23,7 @@ class AutoBridge {
 
   static StreamSubscription<MediaItem?>? _mediaItemSub;
   static StreamSubscription<PlaybackState>? _playbackStateSub;
+  static StreamSubscription<List<MediaItem>>? _queueSub;
   static final Map<String, Uint8List> _artworkCache = <String, Uint8List>{};
   static const int _maxArtworkCacheEntries = 64;
 
@@ -157,6 +158,7 @@ class AutoBridge {
   static void _registerStateSync(WidgetRef ref) {
     _mediaItemSub?.cancel();
     _playbackStateSub?.cancel();
+    _queueSub?.cancel();
 
     final handler = ref.read(audioHandlerProvider);
 
@@ -186,6 +188,19 @@ class AutoBridge {
           'positionMs': state.updatePosition.inMilliseconds,
           'speed': state.speed,
         });
+      } on MissingPluginException {
+        // Ignore when not running under Android Auto host.
+      }
+    });
+
+    _queueSub = handler.queue.listen((items) async {
+      final settings = ref.read(settingsRepositoryProvider);
+      final baseUrl = settings.serverUrl;
+      try {
+        await harmonixAutoChannel.invokeMethod(
+          'queueChanged',
+          _queueToAutoItems(items, baseUrl),
+        );
       } on MissingPluginException {
         // Ignore when not running under Android Auto host.
       }
@@ -281,8 +296,8 @@ class AutoBridge {
       );
       final dynamic data = response.data;
       final Uint8List? bytes = switch (data) {
-        Uint8List b => b,
-        List<int> l => Uint8List.fromList(l),
+        final Uint8List b => b,
+        final List<int> l => Uint8List.fromList(l),
         _ => null,
       };
       if (bytes == null || bytes.isEmpty) return null;
@@ -295,7 +310,7 @@ class AutoBridge {
       assert(() {
         // Ignore in release; useful to verify DHU receives non-empty payload.
         // Example: "AA artwork bytes fetched 18234 for .../covers/track.jpg"
-        print('AA artwork bytes fetched ${normalized.length} for $artUrl');
+        debugPrint('AA artwork bytes fetched ${normalized.length} for $artUrl');
         return true;
       }());
       return normalized;
