@@ -13,6 +13,11 @@ import 'package:harmonix_apps/core/settings/settings_repository.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Optimisation latence d'affichage : cache d'images en mémoire élargi
+  // pour les grilles d'albums / pochettes (desktop, tablette, mobile).
+  PaintingBinding.instance.imageCache.maximumSize = 800;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 256 << 20;
+
   // Desktop window setup
   if (defaultTargetPlatform == TargetPlatform.windows ||
       defaultTargetPlatform == TargetPlatform.macOS ||

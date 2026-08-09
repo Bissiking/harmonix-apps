@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:harmonix_apps/features/cast/providers/google_cast_provider.dart';
 import 'package:harmonix_apps/shared/layout/responsive_breakpoints.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
@@ -20,9 +21,15 @@ class MiniPlayerBar extends ConsumerWidget {
         if (item == null) return const SizedBox.shrink();
 
         final playbackState = ref.watch(playbackStateStreamProvider);
-        final isPlaying = playbackState.valueOrNull?.playing ?? false;
+        final cast = ref.watch(googleCastProvider);
         final isDesktop = ResponsiveBreakpoints.isDesktop(context);
         final barHeight = isDesktop ? 72.0 : 64.0;
+        final useCast = cast.casting;
+        final isPlaying =
+            useCast ? cast.isPlaying : (playbackState.valueOrNull?.playing ?? false);
+
+        final playerNotifier = ref.read(playerProvider.notifier);
+        final castNotifier = ref.read(googleCastProvider.notifier);
 
         return GestureDetector(
           onTap: () => context.pushNamed('player'),
@@ -53,11 +60,11 @@ class MiniPlayerBar extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        item.artist ?? '',
+                        useCast ? 'Cast → ${cast.deviceName}' : (item.artist ?? ''),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white54,
+                        style: TextStyle(
+                          color: useCast ? HarmonixColors.accent : Colors.white54,
                           fontSize: 12,
                         ),
                       ),
@@ -65,16 +72,36 @@ class MiniPlayerBar extends ConsumerWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                  icon: const Icon(Icons.skip_previous),
+                  onPressed: () => useCast
+                      ? castNotifier.skipToPrevious()
+                      : playerNotifier.skipToPrevious(),
+                ),
+                IconButton(
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 180),
+                    transitionBuilder: (child, animation) =>
+                        ScaleTransition(scale: animation, child: child),
+                    child: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow,
+                      key: ValueKey(isPlaying),
+                    ),
+                  ),
                   onPressed: () {
-                    final notifier = ref.read(playerProvider.notifier);
-                    isPlaying ? notifier.pause() : notifier.play();
+                    if (useCast) {
+                      isPlaying ? castNotifier.pause() : castNotifier.play();
+                    } else {
+                      isPlaying
+                          ? playerNotifier.pause()
+                          : playerNotifier.play();
+                    }
                   },
                 ),
                 IconButton(
                   icon: const Icon(Icons.skip_next),
-                  onPressed: () =>
-                      ref.read(playerProvider.notifier).skipToNext(),
+                  onPressed: () => useCast
+                      ? castNotifier.skipToNext()
+                      : playerNotifier.skipToNext(),
                 ),
               ],
             ),

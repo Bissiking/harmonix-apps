@@ -8,6 +8,7 @@ const _keyAuthToken = 'auth_token';
 const _keyThemeJson = 'theme_json';
 const _keyRiftSessionId = 'rift_session_id';
 const _keyRiftDeviceId = 'rift_device_id';
+const _keyCastLastDevice = 'cast_last_device';
 
 class SettingsRepository {
   SettingsRepository(this._prefs);
@@ -49,6 +50,16 @@ class SettingsRepository {
     final created = 'device-${DateTime.now().millisecondsSinceEpoch}';
     _prefs.setString(_keyRiftDeviceId, created);
     return created;
+  }
+
+  String? get castLastDevice => _prefs.getString(_keyCastLastDevice);
+
+  Future<void> setCastLastDevice(String? json) async {
+    if (json == null || json.isEmpty) {
+      await _prefs.remove(_keyCastLastDevice);
+      return;
+    }
+    await _prefs.setString(_keyCastLastDevice, json);
   }
 
   static String get _defaultServerUrl => const String.fromEnvironment(

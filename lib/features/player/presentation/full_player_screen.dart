@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
 import 'package:harmonix_apps/core/utils/duration_formatter.dart';
+import 'package:harmonix_apps/features/cast/presentation/cast_sheet.dart';
+import 'package:harmonix_apps/features/cast/providers/google_cast_provider.dart';
 import 'package:harmonix_apps/features/player/providers/now_playing_provider.dart';
 import 'package:harmonix_apps/features/player/providers/playback_position_provider.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
@@ -19,21 +21,56 @@ class FullPlayerScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nowPlaying = ref.watch(nowPlayingProvider).valueOrNull;
     final playbackState = ref.watch(playbackStateStreamProvider).valueOrNull;
-    final position = ref.watch(playbackPositionProvider).valueOrNull;
+    final localPosition = ref.watch(playbackPositionProvider).valueOrNull;
     final durationFromPlayer = ref.watch(playbackDurationProvider).valueOrNull;
     final queue =
         ref.watch(playbackQueueProvider).valueOrNull ?? const <MediaItem>[];
+    final cast = ref.watch(googleCastProvider);
 
     if (nowPlaying == null) {
       return const Scaffold(body: Center(child: Text('Aucune piste en cours')));
     }
 
-    final isPlaying = playbackState?.playing ?? false;
-    final duration = durationFromPlayer ?? nowPlaying.duration ?? Duration.zero;
-    final shuffle = playbackState?.shuffleMode == AudioServiceShuffleMode.all;
-    final repeat = playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
+    final useCast = cast.casting;
+    final isPlaying = useCast ? cast.isPlaying : (playbackState?.playing ?? false);
+    final position = useCast ? cast.position : (localPosition ?? Duration.zero);
+    final duration = useCast
+        ? (cast.duration ?? nowPlaying.duration ?? Duration.zero)
+        : (durationFromPlayer ?? nowPlaying.duration ?? Duration.zero);
+    final shuffle = useCast
+        ? false
+        : playbackState?.shuffleMode == AudioServiceShuffleMode.all;
+    final repeat = useCast
+        ? AudioServiceRepeatMode.none
+        : playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
     final isWide = ResponsiveBreakpoints.isTablet(context) &&
         ResponsiveBreakpoints.isLandscape(context);
+
+    final playerNotifier = ref.read(playerProvider.notifier);
+    final castNotifier = ref.read(googleCastProvider.notifier);
+
+    void onPlayPause() {
+      if (useCast) {
+        isPlaying ? castNotifier.pause() : castNotifier.play();
+      } else {
+        isPlaying ? playerNotifier.pause() : playerNotifier.play();
+      }
+    }
+
+    void onSeek(Duration target) {
+      if (useCast) {
+        castNotifier.seek(target);
+      } else {
+        playerNotifier.seek(target);
+      }
+    }
+
+    void onNext() =>
+        useCast ? castNotifier.skipToNext() : playerNotifier.skipToNext();
+
+    void onPrevious() => useCast
+        ? castNotifier.skipToPrevious()
+        : playerNotifier.skipToPrevious();
 
     return Scaffold(
       backgroundColor: HarmonixColors.darkBackground,
@@ -43,6 +80,18 @@ class FullPlayerScreen extends ConsumerWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('En cours de lecture'),
+        actions: [
+          IconButton(
+            tooltip: useCast
+                ? 'Cast vers ${cast.deviceName}'
+                : 'Diffuser sur un appareil',
+            icon: Icon(
+              cast.connected ? Icons.cast_connected : Icons.cast,
+              color: useCast ? HarmonixColors.accent : null,
+            ),
+            onPressed: () => showCastSheet(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -55,11 +104,16 @@ class FullPlayerScreen extends ConsumerWidget {
                       child: _NowPlayingPanel(
                         nowPlaying: nowPlaying,
                         playbackState: playbackState,
-                        position: position ?? Duration.zero,
+                        position: position,
                         duration: duration,
                         isPlaying: isPlaying,
                         shuffle: shuffle,
                         repeat: repeat,
+                        useCast: useCast,
+                        onPlayPause: onPlayPause,
+                        onSeek: onSeek,
+                        onNext: onNext,
+                        onPrevious: onPrevious,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -73,11 +127,16 @@ class FullPlayerScreen extends ConsumerWidget {
               : _NowPlayingPanel(
                   nowPlaying: nowPlaying,
                   playbackState: playbackState,
-                  position: position ?? Duration.zero,
+                  position: position,
                   duration: duration,
                   isPlaying: isPlaying,
                   shuffle: shuffle,
                   repeat: repeat,
+                  useCast: useCast,
+                  onPlayPause: onPlayPause,
+                  onSeek: onSeek,
+                  onNext: onNext,
+                  onPrevious: onPrevious,
                 ),
         ),
       ),
@@ -94,6 +153,11 @@ class _NowPlayingPanel extends ConsumerWidget {
     required this.isPlaying,
     required this.shuffle,
     required this.repeat,
+    required this.useCast,
+    required this.onPlayPause,
+    required this.onSeek,
+    required this.onNext,
+    required this.onPrevious,
   });
 
   final MediaItem nowPlaying;
@@ -103,6 +167,11 @@ class _NowPlayingPanel extends ConsumerWidget {
   final bool isPlaying;
   final bool shuffle;
   final AudioServiceRepeatMode repeat;
+  final bool useCast;
+  final VoidCallback onPlayPause;
+  final ValueChanged<Duration> onSeek;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -137,12 +206,19 @@ class _NowPlayingPanel extends ConsumerWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
+          if (useCast) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Diffusion sur ${ref.watch(googleCastProvider).deviceName}',
+              style: const TextStyle(color: HarmonixColors.accent, fontSize: 12),
+            ),
+          ],
           const SizedBox(height: 20),
           ProgressBar(
             progress: position,
             total: duration,
-            buffered: playbackState?.bufferedPosition,
-            onSeek: (d) => ref.read(playerProvider.notifier).seek(d),
+            buffered: useCast ? null : playbackState?.bufferedPosition,
+            onSeek: onSeek,
             thumbColor: HarmonixColors.accent,
             progressBarColor: HarmonixColors.accent,
             baseBarColor: Colors.white12,
@@ -159,20 +235,24 @@ class _NowPlayingPanel extends ConsumerWidget {
                   Icons.shuffle,
                   color: shuffle ? HarmonixColors.accent : Colors.white54,
                 ),
-                onPressed: () =>
-                    ref.read(playerProvider.notifier).setShuffle(!shuffle),
+                onPressed: useCast
+                    ? null
+                    : () =>
+                        ref.read(playerProvider.notifier).setShuffle(!shuffle),
               ),
               IconButton(
                 iconSize: 36,
                 icon: const Icon(Icons.skip_previous),
-                onPressed: () =>
-                    ref.read(playerProvider.notifier).skipToPrevious(),
+                onPressed: onPrevious,
               ),
-              _PlayPauseButton(isPlaying: isPlaying),
+              _PlayPauseButton(
+                isPlaying: isPlaying,
+                onPressed: onPlayPause,
+              ),
               IconButton(
                 iconSize: 36,
                 icon: const Icon(Icons.skip_next),
-                onPressed: () => ref.read(playerProvider.notifier).skipToNext(),
+                onPressed: onNext,
               ),
               IconButton(
                 icon: Icon(
@@ -181,9 +261,11 @@ class _NowPlayingPanel extends ConsumerWidget {
                       ? HarmonixColors.accent
                       : Colors.white54,
                 ),
-                onPressed: () => ref
-                    .read(playerProvider.notifier)
-                    .setRepeat(_nextRepeat(repeat)),
+                onPressed: useCast
+                    ? null
+                    : () => ref
+                        .read(playerProvider.notifier)
+                        .setRepeat(_nextRepeat(repeat)),
               ),
             ],
           ),
@@ -264,13 +346,14 @@ class _QueuePanel extends StatelessWidget {
   }
 }
 
-class _PlayPauseButton extends ConsumerWidget {
-  const _PlayPauseButton({required this.isPlaying});
+class _PlayPauseButton extends StatelessWidget {
+  const _PlayPauseButton({required this.isPlaying, required this.onPressed});
 
   final bool isPlaying;
+  final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
         color: HarmonixColors.accent,
@@ -278,13 +361,19 @@ class _PlayPauseButton extends ConsumerWidget {
       ),
       child: IconButton(
         iconSize: 40,
-        icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
+          child: Icon(
+            isPlaying ? Icons.pause : Icons.play_arrow,
+            key: ValueKey(isPlaying),
+          ),
+        ),
         color: Colors.white,
-        onPressed: () {
-          final notifier = ref.read(playerProvider.notifier);
-          isPlaying ? notifier.pause() : notifier.play();
-        },
+        onPressed: onPressed,
       ),
     );
   }
 }
+

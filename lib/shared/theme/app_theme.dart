@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:harmonix_apps/core/theme/theme_palette.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/shared/theme/page_transitions.dart';
 
 abstract final class AppTheme {
   static ThemeData dark(ThemePalette palette) => ThemeData(
@@ -34,12 +35,30 @@ abstract final class AppTheme {
         ),
         iconTheme: IconThemeData(color: palette.text),
         textTheme: _textTheme(palette.text),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.iOS: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.macOS: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.windows: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.linux: HarmonixPageTransitionsBuilder(),
+          },
+        ),
       );
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
         colorScheme: HarmonixColors.light,
         textTheme: _textTheme(Colors.black87),
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.iOS: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.macOS: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.windows: HarmonixPageTransitionsBuilder(),
+            TargetPlatform.linux: HarmonixPageTransitionsBuilder(),
+          },
+        ),
       );
 
   static TextTheme _textTheme(Color color) => TextTheme(

@@ -1,0 +1,75 @@
+J’ai recensé les routes directement depuis le code actuel. L’application utilise l’URL serveur configurée comme base, avec `https://dev.mhemery.fr` par défaut.
+
+### Routes principales
+
+| Méthode | Route | Données |
+|---|---|---|
+| `POST` | `/api/auth/login` | `{ identifier, password, remember }` |
+| `GET` | `/api/harmonix/apps/v2/bootstrap` | — |
+| `GET` | `/api/harmonix/apps/v2/theme` | — |
+| `GET` | `/api/harmonix/apps/v2/catalog/tracks` | — |
+| `GET` | `/api/harmonix/apps/v2/catalog/search` | Query : `q` |
+| `GET` | `/api/harmonix/apps/v2/catalog/tracks/{id}` | Path : `id` |
+| `GET` | `/api/harmonix/apps/v2/library/favorites` | — |
+| `POST` | `/api/harmonix/apps/v2/library/favorites/toggle` | `{ trackId }` |
+| `GET` | `/api/harmonix/apps/v2/playback/state` | — |
+| `PUT` | `/api/harmonix/apps/v2/playback/state` | `{ trackId, positionMs, volume, shuffle, repeat, isPlaying }` |
+| `GET` | `/api/harmonix/apps/v2/playback/resume-active` | — |
+| `GET` | `/api/harmonix/apps/v2/playback/resume/{trackId}` | Path : `trackId` |
+| `GET` | `/api/harmonix/apps/v2/stream/{trackId}` | Flux audio, également sondé par le Cast |
+| `GET` | `/api/harmonix/apps/v2/covers/{file}` | Image |
+
+Sources principales : [clients API](C:/Users/mathe/Documents/GitHub/harmonix-apps/lib/core/api/clients), [authentification](C:/Users/mathe/Documents/GitHub/harmonix-apps/lib/features/auth/presentation/login_screen.dart:55), [construction stream/cover](C:/Users/mathe/Documents/GitHub/harmonix-apps/lib/core/utils/image_url_builder.dart:1).
+
+### Vérification des mises à jour
+
+L’application essaie ces routes successivement jusqu’à recevoir une réponse exploitable :
+
+| Ordre | Route |
+|---:|---|
+| 1 | `GET /api/harmonix/apps/v2/releases` |
+| 2 | `GET /api/harmonix/apps/v2/version` |
+| 3 | `GET /api/harmonix/apps/releases` |
+| 4 | `GET /api/harmonix/apps/version` |
+
+Query commune :
+
+```text
+platform=android|windows|macos
+app_version={version}+{build}
+```
+
+Si `download_url` est absent de la réponse, le téléchargement utilise :
+
+```text
+GET /harmonix/download/{platform}
+```
+
+Source : [update_checker.dart](C:/Users/mathe/Documents/GitHub/harmonix-apps/lib/core/update/update_checker.dart:21).
+
+### Sessions Rift / Sync
+
+L’application appelle d’abord `/rift/`. Sur un `404` ou `405`, elle retente automatiquement la même route sous `/sync/`.
+
+| Méthode | Route principale | Fallback |
+|---|---|---|
+| `POST` | `/api/harmonix/apps/v2/rift/sessions` | `/api/harmonix/apps/v2/sync/sessions` |
+| `GET` | `/api/harmonix/apps/v2/rift/sessions/{sessionId}` | `/api/harmonix/apps/v2/sync/sessions/{sessionId}` |
+| `POST` | `/api/harmonix/apps/v2/rift/sessions/{sessionId}/join` | `/api/harmonix/apps/v2/sync/sessions/{sessionId}/join` |
+| `PATCH` | `/api/harmonix/apps/v2/rift/sessions/{sessionId}/state` | `/api/harmonix/apps/v2/sync/sessions/{sessionId}/state` |
+| `DELETE` | `/api/harmonix/apps/v2/rift/sessions/{sessionId}` | `/api/harmonix/apps/v2/sync/sessions/{sessionId}` |
+
+À noter : le `GET` d’une session est implémenté mais je n’ai trouvé aucun appel actif dans l’interface actuelle.
+
+Source : [cast_repository.dart](C:/Users/mathe/Documents/GitHub/harmonix-apps/lib/features/cast/data/cast_repository.dart:6).
+
+### Contraintes importantes pour Sonora/Kyros
+
+- Toutes les routes, sauf potentiellement le login initial, reçoivent `Authorization: Bearer {token}`.
+- Les réponses `/api/harmonix/apps...` peuvent suivre l’enveloppe `{ "ok": true, "data": ... }` : l’application extrait automatiquement `data`.
+- Les pistes acceptent plusieurs conventions : `id` ou `track_id`, `title` ou `name`, `artist` ou `author`, `coverUrl` ou `cover_url`, `streamUrl` ou `stream_url`.
+- `streamUrl` et `coverUrl` peuvent être des URL absolues ou des chemins relatifs fournis directement par Sonora/Kyros.
+- `PUT /theme`, `/health`, les routes debug et `/catalog/albums` figurent dans d’anciens documents, mais ne sont pas appelés par le code actuel.
+- Aucun WebSocket métier n’est utilisé.
+
+Je n’ai modifié aucun fichier. Si tu me donnes maintenant la structure des routes Sonora et Kyros, je peux produire la table de correspondance exacte `ancienne route → Sonora/Kyros` et adapter les clients Flutter.

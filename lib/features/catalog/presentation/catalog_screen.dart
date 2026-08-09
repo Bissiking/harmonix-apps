@@ -6,6 +6,7 @@ import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/features/catalog/providers/tracks_provider.dart';
 import 'package:harmonix_apps/features/catalog/providers/albums_provider.dart';
+import 'package:harmonix_apps/shared/layout/content_constraints.dart';
 import 'package:harmonix_apps/shared/layout/responsive_breakpoints.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart';
@@ -42,7 +43,7 @@ class CatalogScreen extends ConsumerWidget {
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 980),
+	constraints: const BoxConstraints(maxWidth: contentMaxWidth),
                           child: ListView.builder(
                             padding: const EdgeInsets.only(bottom: 8),
                             itemCount: list.length,

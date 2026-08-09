@@ -6,7 +6,14 @@
     [x] Contrôle session RIFT (state sync)
     [x] Reconnexion session RIFT
     [x] Fin de session RIFT
-[ ] Google Cast (Chromecast / Home)
+[x] Google Cast (Chromecast / Home)
+    [x] Découverte appareils (dart_cast)
+    [x] Connexion / reconnexion dernier appareil
+    [x] Cast de la piste courante + file de lecture
+    [x] Contrôles playback (play/pause/seek/next/prev)
+    [x] UI de cast (bottom sheet + full player + mini player)
+    [x] Proxy HLS/audio avec headers d'authentification
+    [x] Permissions Android (multicast) et iOS (réseau local)
 
 ## Migration API V2 (apps)
 [x] Base URL dev par défaut (`https://mhemery.fr`)
@@ -28,7 +35,7 @@
 
 ## Android Auto
 [x] Correction du cover non affiché
-[ ] Vérifier compatibilité des icônes Android Auto
+[x] Vérifier compatibilité des icônes Android Auto (fallback ic_launcher + covers publiques OK)
 [x] Ajouter fallback icône Android Auto
 
 [ ] Amélioration stabilité Android Auto
@@ -37,9 +44,9 @@
     [x] Vérifier foreground service
     [x] Permettre fonctionnement sans ouverture préalable app
     [x] Reconnexion automatique session player
-    [ ] Vérifier compatibilité Android Auto MediaBrowserService / MediaLibraryService
+    [x] Vérifier compatibilité Android Auto MediaBrowserService / MediaLibraryService (MediaBrowserServiceCompat legacy OK, pas besoin de Media3)
     [x] Ajouter logs debug Android Auto
-    [ ] Vérifier comportement background playback Android 14+
+    [x] Vérifier comportement background playback Android 14+ (FGS mediaPlayback + permission + startForegroundSafe OK)
 
 ## Responsive / Multi-device
 [x] Correction affichage mode paysage
@@ -53,9 +60,14 @@
     [x] Gestion ratios écran
 
 ## UI / UX
-[ ] Uniformisation design mobile/tablette/desktop
-[ ] Amélioration transitions UI
-[ ] Optimisation animations
+[x] Uniformisation design mobile/tablette/desktop
+    [x] Constante largeur contenu partagée (contentMaxWidth)
+    [x] Transition de page harmonisée toutes plateformes
+    [x] AnimatedSwitcher play/pause (full player + mini player)
+[x] Amélioration transitions UI
+    [x] HarmonixPageTransitionsBuilder (fondu + léger slide)
+[x] Optimisation animations
+    [x] AnimatedSwitcher play/pause (full player + mini player)
 [x] Refonte navigation paysage
 
 ## Thèmes & Branding
@@ -70,11 +82,15 @@
 
 ## Technique
 [x] Optimisation synchronisation player
-[ ] Réduction latence affichage
+[x] Réduction latence affichage
+    [x] Cache d'images en mémoire élargi (main.dart)
+    [x] RepaintBoundary sur TrackArtwork
 [x] Stabilisation reconnexion stream
 [x] Gestion erreurs Android Auto
 [x] Optimisation lifecycle player/service
-[ ] Vérification stabilité mode background
+[x] Vérification stabilité mode background
+    [x] FGS mediaPlayback + WAKE_LOCK + reconnexion session vérifiés
+    [x] Pas de redémarrage playback au boot (politique média Android)
 [x] Gestion reconnexion réseau
 
 ## V2.1
