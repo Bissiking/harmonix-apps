@@ -13,10 +13,16 @@ import 'package:harmonix_apps/features/auth/presentation/login_screen.dart';
 import 'package:harmonix_apps/shared/widgets/app_shell.dart';
 import 'package:harmonix_apps/core/navigation/route_names.dart';
 
-GoRouter buildAppRouter() {
+GoRouter buildAppRouter({bool requireLogin = false}) {
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
+    redirect: (context, state) {
+      if (!requireLogin) return null;
+      final path = state.uri.path;
+      if (path != '/login' && path != '/') return '/login';
+      return null;
+    },
     routes: [
       GoRoute(
         path: '/',

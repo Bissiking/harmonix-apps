@@ -19,9 +19,10 @@ Future<void> main() async {
   PaintingBinding.instance.imageCache.maximumSizeBytes = 256 << 20;
 
   // Desktop window setup
-  if (defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.macOS ||
-      defaultTargetPlatform == TargetPlatform.linux) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.linux)) {
     await windowManager.ensureInitialized();
     const options = WindowOptions(
       size: Size(1100, 720),
@@ -33,10 +34,11 @@ Future<void> main() async {
     await windowManager.show();
   }
 
-  // Initialize audio service (mobile only; desktop uses handler directly)
+  // Initialize audio service (mobile only; desktop & web use handler directly)
   HarmonixAudioHandler? audioHandler;
-  if (defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS)) {
     audioHandler = await AudioService.init(
       builder: HarmonixAudioHandler.new,
       config: const AudioServiceConfig(

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,6 +7,7 @@ part 'settings_repository.g.dart';
 const _keyServerUrl = 'server_url';
 const _keyAuthToken = 'auth_token';
 const _keyThemeJson = 'theme_json';
+const _keyThemeMode = 'theme_mode';
 const _keyRiftSessionId = 'rift_session_id';
 const _keyRiftDeviceId = 'rift_device_id';
 const _keyCastLastDevice = 'cast_last_device';
@@ -33,6 +35,18 @@ class SettingsRepository {
 
   Future<void> setThemeJson(String json) =>
       _prefs.setString(_keyThemeJson, json);
+
+  ThemeMode get themeMode {
+    final raw = _prefs.getString(_keyThemeMode);
+    return switch (raw) {
+      'light' => ThemeMode.light,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
+    };
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) =>
+      _prefs.setString(_keyThemeMode, mode.name);
 
   String? get riftSessionId => _prefs.getString(_keyRiftSessionId);
 
@@ -64,7 +78,7 @@ class SettingsRepository {
 
   static String get _defaultServerUrl => const String.fromEnvironment(
         'HARMONIX_API_BASE_URL',
-        defaultValue: 'https://dev.mhemery.fr',
+        defaultValue: 'https://sonora.mhemery.fr',
       );
 
   static String? get _defaultAuthToken {

@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/api/harmonix_interceptor.dart';
 import 'package:harmonix_apps/core/api/retry_interceptor.dart';
+import 'package:harmonix_apps/core/session/session_controller.dart';
 
 part 'dio_provider.g.dart';
 
@@ -36,7 +37,13 @@ Dio dio(DioRef ref) {
     ),
   );
   dio.interceptors.add(RetryInterceptor(dio));
-  dio.interceptors.add(HarmonixInterceptor());
+  dio.interceptors.add(
+    HarmonixInterceptor(
+      onConnectionFailure: (_) {
+        ref.read(requireLoginProvider.notifier).state = true;
+      },
+    ),
+  );
 
   if (kDebugMode) {
     dio.interceptors.add(
@@ -53,7 +60,7 @@ Dio dio(DioRef ref) {
 
 String _normalizeBaseUrl(String rawUrl) {
   final trimmed = rawUrl.trim();
-  if (trimmed.isEmpty) return 'https://dev.mhemery.fr';
+  if (trimmed.isEmpty) return 'https://sonora.mhemery.fr';
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }

@@ -66,8 +66,8 @@ class CatalogScreen extends ConsumerWidget {
                           ? GridView.builder(
                               padding: const EdgeInsets.all(16),
                               gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: _gridColumns(context),
                                 mainAxisSpacing: 12,
                                 crossAxisSpacing: 12,
                                 childAspectRatio: 0.95,
@@ -147,5 +147,13 @@ class CatalogScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  int _gridColumns(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width >= 1600) return 6;
+    if (width >= 1200) return 5;
+    if (width >= 900) return 4;
+    return 3;
   }
 }

@@ -12,6 +12,7 @@ import 'package:harmonix_apps/core/api/api_exception.dart';
 import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/widgets/error_view.dart';
+import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -122,51 +123,58 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         packageInfo: await PackageInfo.fromPlatform(),
       );
       if (info == null) return true;
-      final forceUpdate = info.forceUpdate;
-      final updateAvailable = info.updateAvailable;
-      final latest = info.latestVersion;
-      final downloadUrl = info.downloadUrl;
 
-      if (!forceUpdate && !updateAvailable) return true;
+      if (!info.forceUpdate && !info.updateAvailable) return true;
 
-      await _showUpdateDialog(
-        forceUpdate: forceUpdate,
-        latest: latest,
-        downloadUrl: downloadUrl,
-      );
-      return !forceUpdate;
+      await _showUpdateDialog(info: info);
+      return !info.forceUpdate;
     } catch (_) {
       return true;
     }
   }
 
-  Future<void> _showUpdateDialog({
-    required bool forceUpdate,
-    String? latest,
-    String? downloadUrl,
-  }) {
+  Future<void> _showUpdateDialog({required UpdateInfo info}) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: !forceUpdate,
+      barrierDismissible: !info.forceUpdate,
       builder: (context) => AlertDialog(
         title: const Text('Mise à jour disponible'),
-        content: Text(
-          latest != null
-              ? 'Une nouvelle version ($latest) est disponible.'
-              : 'Une nouvelle version est disponible.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              info.latestVersion != null
+                  ? 'Une nouvelle version (${info.latestVersion}) est disponible.'
+                  : 'Une nouvelle version est disponible.',
+            ),
+            if (info.releaseNotes != null && info.releaseNotes!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                info.releaseNotes!,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
         ),
         actions: [
-          if (!forceUpdate)
+          if (!info.forceUpdate)
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Plus tard'),
             ),
           FilledButton(
             onPressed: () async {
-              if (downloadUrl != null) {
-                final uri = Uri.tryParse(downloadUrl);
+              Navigator.of(context).pop();
+              if (isDesktopPlatform) {
+                await _downloadAndInstall(info);
+              } else {
+                final uri = Uri.tryParse(info.downloadUrl ?? '');
                 if (uri != null) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
                 }
               }
             },
@@ -175,5 +183,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _downloadAndInstall(UpdateInfo info) async {
+    if (!mounted) return;
+    final file = await showUpdateDownloadDialog(context, info);
+    if (file == null || !mounted) return;
+    final opened = await launchUrl(
+      Uri.file(file.path),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Mise à jour vérifiée (SHA-256 OK). Fichier : ${file.path}',
+          ),
+        ),
+      );
+    }
   }
 }

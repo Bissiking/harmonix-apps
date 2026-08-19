@@ -7,10 +7,12 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/session/session_controller.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
 import 'package:harmonix_apps/features/cast/providers/cast_provider.dart';
+import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -24,6 +26,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final TextEditingController _riftSessionIdController = TextEditingController();
   final TextEditingController _riftCodeController = TextEditingController();
   String _selectedRiftRole = 'listen';
+  ThemeMode _themeMode = ThemeMode.dark;
   UpdateInfo? _updateInfo;
   String? _updateError;
   bool _isCheckingUpdate = false;
@@ -39,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     final settings = ref.read(settingsRepositoryProvider);
     _urlController = TextEditingController(text: settings.serverUrl);
+    _themeMode = settings.themeMode;
   }
 
   @override
@@ -69,7 +73,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             controller: _urlController,
             decoration: const InputDecoration(
               labelText: 'URL du serveur',
-              hintText: 'http://192.168.1.x:3000',
+              hintText: 'https://sonora.mhemery.fr',
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.url,
@@ -92,6 +96,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           Text(
+            'Apparence',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          SegmentedButton<ThemeMode>(
+            segments: const [
+              ButtonSegment(
+                value: ThemeMode.light,
+                icon: Icon(Icons.light_mode_outlined),
+                label: Text('Clair'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.dark,
+                icon: Icon(Icons.dark_mode_outlined),
+                label: Text('Sombre'),
+              ),
+              ButtonSegment(
+                value: ThemeMode.system,
+                icon: Icon(Icons.brightness_auto_outlined),
+                label: Text('Auto'),
+              ),
+            ],
+            selected: {_themeMode},
+            onSelectionChanged: (selection) async {
+              final mode = selection.first;
+              setState(() => _themeMode = mode);
+              await ref
+                  .read(settingsRepositoryProvider)
+                  .setThemeMode(mode);
+            },
+          ),
+          const SizedBox(height: 24),
+          Text(
             'Authentification',
             style: Theme.of(context).textTheme.titleMedium,
           ),
@@ -107,9 +144,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 await ref.read(settingsRepositoryProvider).setAuthToken(null);
                 ref.invalidate(dioProvider);
                 ref.invalidate(authTokenProvider);
-                if (!mounted) return;
-                setState(() {});
-                ScaffoldMessenger.of(this.context).showSnackBar(
+                ref.read(requireLoginProvider.notifier).state = true;
+                if (!context.mounted) return;
+                context.goNamed(RouteNames.login);
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Déconnecté.')),
                 );
               },
@@ -321,12 +359,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       children: [
         Text(label),
         if (latest != null) Text('Dernière: $latest'),
+        if (info.releaseNotes != null && info.releaseNotes!.isNotEmpty)
+          Text(
+            info.releaseNotes!,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         if (downloadUrl != null && updateAvailable)
           TextButton(
             onPressed: () async {
-              final uri = Uri.tryParse(downloadUrl);
-              if (uri != null) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              if (isDesktopPlatform) {
+                final file = await showUpdateDownloadDialog(context, info);
+                if (file == null || !mounted) return;
+                final opened = await launchUrl(
+                  Uri.file(file.path),
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Mise à jour vérifiée (SHA-256 OK). Fichier : '
+                        '${file.path}',
+                      ),
+                    ),
+                  );
+                }
+              } else {
+                final uri = Uri.tryParse(downloadUrl);
+                if (uri != null) {
+                  await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+                }
               }
             },
             child: const Text('Télécharger'),

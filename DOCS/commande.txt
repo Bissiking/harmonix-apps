@@ -1,0 +1,48 @@
+# Commandes de développement Harmonix
+
+## Ranger les documents dans DOCS
+mkdir -p DOCS
+git mv sso-guide.md todolist.txt todolist_backup.txt enderpoint.txt enderpoints_V2.txt DOCS/
+git mv "# Démarre l'émulateur.yaml" DOCS/commande.txt
+
+## Démarrer l'émulateur Android
+flutter emulators --launch Pixel_7_Pro
+
+## Rechercher Android Auto Desktop Head Unit (PowerShell)
+Get-ChildItem "$env:LOCALAPPDATA\Android\Sdk" -Recurse -Filter "*head*unit*.exe"
+
+## Préparer ADB et la redirection Android Auto
+adb start-server
+adb devices
+adb forward tcp:5277 tcp:5277
+
+## Lancer l'application sur l'émulateur Android
+flutter run -d emulator-5554
+
+## Lancer l'application sur le téléphone Android
+flutter run -d R5CY43KAS0A
+
+## Lancer l'application sous Windows
+flutter run -d windows
+
+## Créer les paquets disponibles localement sur macOS
+chmod +x tool/build_releases.sh
+./tool/build_releases.sh all
+
+## Créer uniquement l'APK et l'AAB Android
+./tool/build_releases.sh android
+
+## Créer uniquement le DMG et le ZIP macOS
+./tool/build_releases.sh macos
+
+## Créer l'IPA iOS (signature Apple configurée dans Xcode requise)
+./tool/build_releases.sh ios
+
+## Créer uniquement le ZIP Web
+./tool/build_releases.sh web
+
+## Déclencher la compilation distante EXE Windows et Linux
+# Prérequis : GitHub CLI installé, connecté, puis workflow poussé sur GitHub.
+./tool/build_releases.sh remote-desktop
+gh run watch
+gh run download --dir dist/remote-desktop

@@ -1,0 +1,44 @@
+name: Build Windows and Linux
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package Windows application
+        shell: pwsh
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath Harmonix-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Harmonix-Windows
+          path: Harmonix-Windows.zip
+
+  linux:
+    name: Linux bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libasound2-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Package Linux application
+        run: tar -C build/linux/x64/release/bundle -czf Harmonix-Linux.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Harmonix-Linux
+          path: Harmonix-Linux.tar.gz
