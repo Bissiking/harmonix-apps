@@ -46,3 +46,20 @@ chmod +x tool/build_releases.sh
 ./tool/build_releases.sh remote-desktop
 gh run watch
 gh run download --dir dist/remote-desktop
+
+## Vérifier le réseau Docker partagé avec Nginx Proxy Manager
+docker network inspect npm_default
+
+## Vérifier que l'adresse 172.18.0.9 n'est pas déjà utilisée
+docker network inspect npm_default --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{println}}{{end}}'
+
+## Construire et démarrer Harmonix Web dans Docker
+docker compose up -d --build
+
+## Vérifier le conteneur et suivre ses journaux
+docker compose ps
+docker compose logs -f web
+
+## Mettre à jour le déploiement
+git pull
+docker compose up -d --build

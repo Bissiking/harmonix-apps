@@ -5,7 +5,6 @@ import 'package:dio/dio.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
 import 'package:harmonix_apps/features/bootstrap/providers/bootstrap_provider.dart';
 import 'package:harmonix_apps/core/api/api_exception.dart';
@@ -117,9 +116,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Future<bool> _checkForUpdates() async {
     try {
-      final dio = ref.read(dioProvider);
       final info = await checkForUpdate(
-        dio: dio,
         packageInfo: await PackageInfo.fromPlatform(),
       );
       if (info == null) return true;

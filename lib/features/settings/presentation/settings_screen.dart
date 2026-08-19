@@ -23,7 +23,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _urlController;
-  final TextEditingController _riftSessionIdController = TextEditingController();
+  final TextEditingController _riftSessionIdController =
+      TextEditingController();
   final TextEditingController _riftCodeController = TextEditingController();
   String _selectedRiftRole = 'listen';
   ThemeMode _themeMode = ThemeMode.dark;
@@ -122,9 +123,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onSelectionChanged: (selection) async {
               final mode = selection.first;
               setState(() => _themeMode = mode);
-              await ref
-                  .read(settingsRepositoryProvider)
-                  .setThemeMode(mode);
+              await ref.read(settingsRepositoryProvider).setThemeMode(mode);
             },
           ),
           const SizedBox(height: 24),
@@ -169,8 +168,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             items: _roleLabels.entries
                 .map(
-                  (entry) =>
-                      DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+                  (entry) => DropdownMenuItem(
+                      value: entry.key, child: Text(entry.value)),
                 )
                 .toList(),
             onChanged: (value) {
@@ -329,15 +328,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
     try {
       final info = await checkForUpdate(
-        dio: ref.read(dioProvider),
         packageInfo: await PackageInfo.fromPlatform(),
       );
       setState(() {
         _updateInfo = info;
       });
-    } catch (_) {
+    } catch (error) {
       setState(() {
-        _updateError = 'Impossible de vérifier les mises à jour.';
+        _updateError = error is UpdateCheckException
+            ? error.message
+            : 'Impossible de vérifier les mises à jour.';
       });
     } finally {
       if (mounted) {

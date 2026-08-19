@@ -38,31 +38,44 @@ class UpdateVerificationException implements Exception {
   String toString() => message;
 }
 
+class UpdateCheckException implements Exception {
+  const UpdateCheckException(this.message, {this.code});
+
+  final String message;
+  final String? code;
+
+  @override
+  String toString() => message;
+}
+
 const String updateStoreBaseUrl = String.fromEnvironment(
   'HARMONIX_STORE_URL',
   defaultValue: 'https://store.mhemery.fr',
 );
 
 Future<UpdateInfo?> checkForUpdate({
-  required Dio dio,
   required PackageInfo packageInfo,
+  Dio? client,
 }) async {
   if (kIsWeb) return null;
-  final currentVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
+  final currentVersion = packageInfo.version;
   final platform = _platformParam();
+  if (platform == null) return null;
   final query = {
     'current_version': currentVersion,
     'platform': platform,
     'arch': 'universal',
     'channel': 'stable',
   };
-  final payload = await _fetchStorePayload(dio: dio, queryParameters: query);
-  if (payload == null) return null;
+  final payload = await _fetchStorePayload(
+    client: client ?? _createStoreClient(),
+    queryParameters: query,
+  );
 
   final available = _boolValue(payload['available']);
   if (!available) {
     return UpdateInfo(
-      latestVersion: payload['currentVersion'] as String?,
+      latestVersion: null,
       minVersion: null,
       forceUpdate: false,
       updateAvailable: false,
@@ -71,54 +84,94 @@ Future<UpdateInfo?> checkForUpdate({
   }
 
   final artifact = payload['artifact'];
-  final artifactMap = artifact is Map<String, dynamic> ? artifact : null;
+  final artifactMap =
+      artifact is Map ? Map<String, dynamic>.from(artifact) : null;
 
-  final downloadUrl = artifactMap?['url'] as String?;
+  final latestVersion = _stringValue(payload['version']);
+  final rawDownloadUrl = _stringValue(artifactMap?['url']);
+  final artifactSha256 = _stringValue(artifactMap?['sha256']);
+  if (latestVersion == null ||
+      rawDownloadUrl == null ||
+      artifactSha256 == null) {
+    throw const UpdateCheckException(
+      'Réponse de mise à jour incomplète reçue du Store.',
+      code: 'invalid_response',
+    );
+  }
+  final downloadUrl =
+      Uri.parse(updateStoreBaseUrl).resolve(rawDownloadUrl).toString();
 
   if (kDebugMode) {
     debugPrint(
       'UpdateCheck current=$currentVersion '
-      'latest=${payload['version']} platform=$platform '
+      'latest=$latestVersion platform=$platform '
       'available=true url=$downloadUrl',
     );
   }
 
   return UpdateInfo(
-    latestVersion: payload['version'] as String?,
+    latestVersion: latestVersion,
     minVersion: null,
     forceUpdate: false,
     updateAvailable: true,
     downloadUrl: downloadUrl,
-    artifactFileName: artifactMap?['fileName'] as String?,
+    artifactFileName: _stringValue(artifactMap?['fileName']),
     artifactSize: artifactMap?['size'] is num
         ? (artifactMap!['size'] as num).toInt()
         : null,
-    artifactSha256: artifactMap?['sha256'] as String?,
-    releaseNotes: payload['releaseNotes'] as String?,
+    artifactSha256: artifactSha256,
+    releaseNotes: _stringValue(payload['releaseNotes']),
   );
 }
 
-Future<Map<String, dynamic>?> _fetchStorePayload({
-  required Dio dio,
+Future<Map<String, dynamic>> _fetchStorePayload({
+  required Dio client,
   required Map<String, dynamic> queryParameters,
 }) async {
-  final uri = Uri.parse('$updateStoreBaseUrl/api/v1/apps/harmonix/updates')
-      .replace(queryParameters: queryParameters);
+  final uri = Uri.parse(updateStoreBaseUrl).replace(
+    path: '/api/v1/apps/harmonix/updates',
+    queryParameters: queryParameters,
+  );
   try {
-    final response = await dio.getUri<dynamic>(uri);
+    final response = await client.getUri<dynamic>(uri);
     final data = response.data;
     if (kDebugMode) {
       debugPrint('UpdateCheck store response: $data');
     }
-    if (data is Map<String, dynamic> && data['data'] is Map<String, dynamic>) {
-      return data['data'] as Map<String, dynamic>;
+    if (data is Map && data['data'] is Map) {
+      return Map<String, dynamic>.from(data['data'] as Map);
     }
-  } catch (e) {
+    throw const UpdateCheckException(
+      'Réponse invalide reçue du Store.',
+      code: 'invalid_response',
+    );
+  } on UpdateCheckException {
+    rethrow;
+  } on DioException catch (error) {
     if (kDebugMode) {
-      debugPrint('UpdateCheck store failed: $e');
+      debugPrint('UpdateCheck store failed: $error');
     }
+    final errorData = error.response?.data;
+    final errorMap = errorData is Map && errorData['error'] is Map
+        ? Map<String, dynamic>.from(errorData['error'] as Map)
+        : null;
+    final code = _stringValue(errorMap?['code']);
+    final apiMessage = _stringValue(errorMap?['message']);
+    throw UpdateCheckException(
+      _updateErrorMessage(code, apiMessage),
+      code: code,
+    );
   }
-  return null;
+}
+
+Dio _createStoreClient() {
+  return Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 30),
+      headers: const {'Accept': 'application/json'},
+    ),
+  );
 }
 
 /// Télécharge l'artefact vers un fichier temporaire en calculant son
@@ -138,6 +191,13 @@ Future<File> downloadArtifactAndVerify({
     );
   }
 
+  final expected = update.artifactSha256?.trim().toLowerCase() ?? '';
+  if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(expected)) {
+    throw const UpdateVerificationException(
+      'Empreinte SHA-256 absente ou invalide.',
+    );
+  }
+
   final storeDio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 10),
@@ -146,50 +206,60 @@ Future<File> downloadArtifactAndVerify({
   );
 
   final dir = await Directory.systemTemp.createTemp('harmonix_update');
-  final safeName =
-      (update.artifactFileName ?? 'harmonix-update').replaceAll(
-            RegExp(r'[^\w.\-]'),
-            '_',
-          );
-  final file = File('${dir.path}${Platform.pathSeparator}$safeName');
-
-  final digestSink = _DigestSink();
-  final hasher = crypto.sha256.startChunkedConversion(digestSink);
-
-  final response = await storeDio.get<ResponseBody>(
-    downloadUrl,
-    options: Options(responseType: ResponseType.stream),
+  final safeName = (update.artifactFileName ?? 'harmonix-update').replaceAll(
+    RegExp(r'[^\w.\-]'),
+    '_',
   );
-
-  final stream = response.data?.stream;
-  if (stream == null) {
-    hasher.close();
-    throw const UpdateVerificationException('Réponse de téléchargement vide');
-  }
-
-  final raf = await file.open(mode: FileMode.write);
-  var received = 0;
-  final total = update.artifactSize ?? 0;
+  final file = File('${dir.path}${Platform.pathSeparator}$safeName');
   try {
-    await for (final chunk in stream) {
-      await raf.writeFrom(chunk);
-      hasher.add(chunk);
-      received += chunk.length;
-      onProgress?.call(received, total);
-    }
-  } finally {
-    await raf.close();
-    hasher.close();
-  }
-
-  final expected = update.artifactSha256?.trim().toLowerCase() ?? '';
-  final digest = digestSink.digest?.toString().toLowerCase() ?? '';
-  if (expected.isNotEmpty && digest != expected) {
-    throw UpdateVerificationException(
-      'Empreinte SHA-256 invalide (attendue $expected, obtenue $digest)',
+    final response = await storeDio.get<ResponseBody>(
+      downloadUrl,
+      options: Options(responseType: ResponseType.stream),
     );
+
+    final stream = response.data?.stream;
+    if (stream == null) {
+      throw const UpdateVerificationException(
+        'Réponse de téléchargement vide',
+      );
+    }
+
+    final digestSink = _DigestSink();
+    final hasher = crypto.sha256.startChunkedConversion(digestSink);
+    final raf = await file.open(mode: FileMode.write);
+    var received = 0;
+    final total = update.artifactSize ?? 0;
+    try {
+      await for (final chunk in stream) {
+        await raf.writeFrom(chunk);
+        hasher.add(chunk);
+        received += chunk.length;
+        onProgress?.call(received, total);
+      }
+    } finally {
+      await raf.close();
+      hasher.close();
+    }
+
+    if (total > 0 && received != total) {
+      throw UpdateVerificationException(
+        'Taille du fichier invalide (attendue $total, reçue $received).',
+      );
+    }
+
+    final digest = digestSink.digest?.toString().toLowerCase() ?? '';
+    if (digest != expected) {
+      throw UpdateVerificationException(
+        'Empreinte SHA-256 invalide (attendue $expected, obtenue $digest)',
+      );
+    }
+    return file;
+  } catch (_) {
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+    rethrow;
   }
-  return file;
 }
 
 class _DigestSink implements Sink<crypto.Digest> {
@@ -202,12 +272,13 @@ class _DigestSink implements Sink<crypto.Digest> {
   void close() {}
 }
 
-String _platformParam() {
+String? _platformParam() {
   return switch (defaultTargetPlatform) {
+    TargetPlatform.android => 'android',
     TargetPlatform.windows => 'windows',
     TargetPlatform.macOS => 'macos',
     TargetPlatform.linux => 'linux',
-    _ => 'android',
+    TargetPlatform.iOS || TargetPlatform.fuchsia => null,
   };
 }
 
@@ -216,7 +287,8 @@ bool get isDesktopPlatform {
   return switch (defaultTargetPlatform) {
     TargetPlatform.windows ||
     TargetPlatform.macOS ||
-    TargetPlatform.linux => true,
+    TargetPlatform.linux =>
+      true,
     _ => false,
   };
 }
@@ -232,4 +304,21 @@ bool _boolValue(Object? value) {
         normalized == 'on';
   }
   return false;
+}
+
+String? _stringValue(Object? value) {
+  if (value is! String) return null;
+  final trimmed = value.trim();
+  return trimmed.isEmpty ? null : trimmed;
+}
+
+String _updateErrorMessage(String? code, String? apiMessage) {
+  return switch (code) {
+    'invalid_parameters' =>
+      'La requête de mise à jour envoyée au Store est invalide.',
+    'not_found' => 'Harmonix est introuvable dans le Store.',
+    'rate_limited' =>
+      'Trop de vérifications ont été effectuées. Réessayez plus tard.',
+    _ => apiMessage ?? 'Impossible de joindre le service de mise à jour.',
+  };
 }
