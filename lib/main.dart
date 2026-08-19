@@ -13,10 +13,16 @@ import 'package:harmonix_apps/core/settings/settings_repository.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Optimisation latence d'affichage : cache d'images en mémoire élargi
+  // pour les grilles d'albums / pochettes (desktop, tablette, mobile).
+  PaintingBinding.instance.imageCache.maximumSize = 800;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 256 << 20;
+
   // Desktop window setup
-  if (defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.macOS ||
-      defaultTargetPlatform == TargetPlatform.linux) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS ||
+          defaultTargetPlatform == TargetPlatform.linux)) {
     await windowManager.ensureInitialized();
     const options = WindowOptions(
       size: Size(1100, 720),
@@ -28,10 +34,11 @@ Future<void> main() async {
     await windowManager.show();
   }
 
-  // Initialize audio service (mobile only; desktop uses handler directly)
+  // Initialize audio service (mobile only; desktop & web use handler directly)
   HarmonixAudioHandler? audioHandler;
-  if (defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS)) {
     audioHandler = await AudioService.init(
       builder: HarmonixAudioHandler.new,
       config: const AudioServiceConfig(

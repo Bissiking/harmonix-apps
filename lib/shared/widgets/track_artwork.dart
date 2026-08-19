@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
@@ -38,19 +37,21 @@ class TrackArtwork extends ConsumerWidget {
       return true;
     }());
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: url != null
-          ? CachedNetworkImage(
-              imageUrl: url,
-              httpHeaders: headers ?? const {},
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => _placeholder(size),
-              errorWidget: (_, __, ___) => _placeholder(size),
-            )
-          : _placeholder(size),
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: url != null
+            ? CachedNetworkImage(
+                imageUrl: url,
+                httpHeaders: headers ?? const {},
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _placeholder(size),
+                errorWidget: (_, __, ___) => _placeholder(size),
+              )
+            : _placeholder(size),
+      ),
     );
   }
 

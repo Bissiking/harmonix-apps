@@ -3,6 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:harmonix_apps/core/api/api_exception.dart';
 
 class HarmonixInterceptor extends Interceptor {
+  HarmonixInterceptor({this.onConnectionFailure});
+
+  /// Appelé quand une requête échoue pour une raison de connexion
+  /// (réseau, timeout, 401, erreur serveur) afin de rediriger vers le login.
+  final void Function(ApiException mapped)? onConnectionFailure;
+
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     final path = response.requestOptions.path;
@@ -63,6 +69,12 @@ class HarmonixInterceptor extends Interceptor {
         NetworkException(err.message ?? 'connection error'),
       _ => UnknownException(err.message ?? 'unknown'),
     };
+
+    if (mapped is NetworkTimeoutException ||
+        mapped is NetworkException ||
+        mapped is UnauthorizedException) {
+      onConnectionFailure?.call(mapped);
+    }
 
     handler.next(
       DioException(

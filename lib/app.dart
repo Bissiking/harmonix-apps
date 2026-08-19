@@ -56,7 +56,7 @@ class _HarmonixAppState extends ConsumerState<HarmonixApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark(themePalette),
-      themeMode: ThemeMode.dark,
+      themeMode: settings.themeMode,
       routerConfig: router,
       builder: (context, child) {
         final content = child ?? const SizedBox.shrink();

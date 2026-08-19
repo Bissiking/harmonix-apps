@@ -5,6 +5,7 @@ import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 import 'package:harmonix_apps/features/library/providers/favorites_provider.dart';
+import 'package:harmonix_apps/shared/layout/content_constraints.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -24,7 +25,7 @@ class LibraryScreen extends ConsumerWidget {
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 980),
+	constraints: const BoxConstraints(maxWidth: contentMaxWidth),
                     child: ListView.builder(
                       itemCount: tracks.length,
                       itemBuilder: (_, i) => TrackListTile(
