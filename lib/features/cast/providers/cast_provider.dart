@@ -117,7 +117,8 @@ class CastController extends StateNotifier<CastState> {
             code: code,
             role: role,
           );
-      final session = await _ref.read(castRepositoryProvider).getSession(sessionId);
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
       state = state.copyWith(
         connecting: false,
         sessionId: sessionId,
@@ -131,6 +132,43 @@ class CastController extends StateNotifier<CastState> {
       state = state.copyWith(
         connecting: false,
         error: 'Impossible de rejoindre la session RIFT',
+      );
+    }
+  }
+
+  Future<void> joinByCode({
+    required String code,
+    String role = 'listen',
+  }) async {
+    final normalizedCode = code.trim().toUpperCase();
+    if (normalizedCode.isEmpty) {
+      state = state.copyWith(error: 'Saisis le code de la séance');
+      return;
+    }
+    state = state.copyWith(connecting: true, clearError: true);
+    try {
+      final sessionId =
+          await _ref.read(castRepositoryProvider).joinSessionByCode(
+                code: normalizedCode,
+                deviceId: _deviceId(_ref),
+                role: role,
+              );
+      if (sessionId == null) throw StateError('session_id_missing');
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
+      state = state.copyWith(
+        connecting: false,
+        sessionId: sessionId,
+        sessionCode: _readSessionCode(session) ?? normalizedCode,
+        role: role,
+        lastSession: session,
+      );
+      await _ref.read(settingsRepositoryProvider).setRiftSessionId(sessionId);
+      _startPolling();
+    } catch (_) {
+      state = state.copyWith(
+        connecting: false,
+        error: 'Code introuvable ou séance terminée',
       );
     }
   }
@@ -177,7 +215,8 @@ class CastController extends StateNotifier<CastState> {
     final sessionId = state.sessionId;
     if (sessionId == null) return;
     try {
-      final session = await _ref.read(castRepositoryProvider).getSession(sessionId);
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
       await _applyRemoteState(session);
       state = state.copyWith(
         lastSession: session,
@@ -222,7 +261,8 @@ class CastController extends StateNotifier<CastState> {
     required bool isPlaying,
     int? positionSeconds,
     String? trackId,
-  }) => _sendAction(
+  }) =>
+      _sendAction(
         'playback_state',
         payload: {
           'is_playing': isPlaying,
@@ -252,7 +292,8 @@ class CastController extends StateNotifier<CastState> {
     }
   }
 
-  Future<void> _sendAction(String action, {Map<String, dynamic>? payload}) async {
+  Future<void> _sendAction(String action,
+      {Map<String, dynamic>? payload}) async {
     final sessionId = state.sessionId;
     if (sessionId == null) return;
     try {
@@ -332,7 +373,8 @@ class CastController extends StateNotifier<CastState> {
         } catch (_) {}
       }
       if (tracks.isNotEmpty) {
-        final idx = remoteTrackId is String ? queueIds.indexOf(remoteTrackId) : -1;
+        final idx =
+            remoteTrackId is String ? queueIds.indexOf(remoteTrackId) : -1;
         if (idx >= 0 && idx < tracks.length) {
           _ignoreSyncUntil = DateTime.now().add(const Duration(seconds: 2));
           await player.playFromQueue(List.from(tracks), idx);
@@ -342,7 +384,9 @@ class CastController extends StateNotifier<CastState> {
       final currentTrackId = handler.mediaItem.value?.id;
       if (currentTrackId != remoteTrackId) {
         try {
-          final track = await _ref.read(catalogRepositoryProvider).getTrack(remoteTrackId);
+          final track = await _ref
+              .read(catalogRepositoryProvider)
+              .getTrack(remoteTrackId);
           _ignoreSyncUntil = DateTime.now().add(const Duration(seconds: 2));
           await player.playTrack(track);
         } catch (_) {}

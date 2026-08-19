@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:harmonix_apps/features/bootstrap/presentation/splash_screen.dart';
@@ -6,8 +5,10 @@ import 'package:harmonix_apps/features/catalog/presentation/album_detail_screen.
 import 'package:harmonix_apps/features/catalog/presentation/catalog_screen.dart';
 import 'package:harmonix_apps/features/catalog/presentation/track_detail_screen.dart';
 import 'package:harmonix_apps/features/library/presentation/library_screen.dart';
+import 'package:harmonix_apps/features/home/presentation/home_screen.dart';
 import 'package:harmonix_apps/features/player/presentation/full_player_screen.dart';
 import 'package:harmonix_apps/features/search/presentation/search_screen.dart';
+import 'package:harmonix_apps/features/sessions/presentation/sessions_screen.dart';
 import 'package:harmonix_apps/features/settings/presentation/settings_screen.dart';
 import 'package:harmonix_apps/features/auth/presentation/login_screen.dart';
 import 'package:harmonix_apps/shared/widgets/app_shell.dart';
@@ -18,9 +19,8 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
     initialLocation: '/',
     debugLogDiagnostics: true,
     redirect: (context, state) {
-      if (!requireLogin) return null;
       final path = state.uri.path;
-      if (path != '/login' && path != '/') return '/login';
+      if (requireLogin && path != '/login') return '/login';
       return null;
     },
     routes: [
@@ -32,6 +32,11 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
+          GoRoute(
+            path: '/home',
+            name: RouteNames.home,
+            builder: (_, __) => const HomeScreen(),
+          ),
           GoRoute(
             path: '/catalog',
             name: RouteNames.catalog,
@@ -68,20 +73,22 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
             name: RouteNames.settings,
             builder: (_, __) => const SettingsScreen(),
           ),
+          GoRoute(
+            path: '/sessions',
+            name: RouteNames.sessions,
+            builder: (_, __) => const SessionsScreen(),
+          ),
+          GoRoute(
+            path: '/player',
+            name: RouteNames.player,
+            builder: (_, __) => const FullPlayerScreen(),
+          ),
         ],
       ),
       GoRoute(
         path: '/login',
         name: RouteNames.login,
         builder: (_, __) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/player',
-        name: RouteNames.player,
-        pageBuilder: (_, __) => const MaterialPage(
-          fullscreenDialog: true,
-          child: FullPlayerScreen(),
-        ),
       ),
     ],
   );

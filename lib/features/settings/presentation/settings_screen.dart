@@ -1,6 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -10,8 +10,8 @@ import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
-import 'package:harmonix_apps/features/cast/providers/cast_provider.dart';
 import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -23,302 +23,185 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _urlController;
-  final TextEditingController _riftSessionIdController =
-      TextEditingController();
-  final TextEditingController _riftCodeController = TextEditingController();
-  String _selectedRiftRole = 'listen';
-  ThemeMode _themeMode = ThemeMode.dark;
   UpdateInfo? _updateInfo;
   String? _updateError;
   bool _isCheckingUpdate = false;
 
-  static const Map<String, String> _roleLabels = {
-    'host': 'Hôte',
-    'control': 'Contrôle',
-    'listen': 'Écoute',
-  };
-
   @override
   void initState() {
     super.initState();
-    final settings = ref.read(settingsRepositoryProvider);
-    _urlController = TextEditingController(text: settings.serverUrl);
-    _themeMode = settings.themeMode;
+    _urlController = TextEditingController(
+      text: ref.read(settingsRepositoryProvider).serverUrl,
+    );
   }
 
   @override
   void dispose() {
     _urlController.dispose();
-    _riftSessionIdController.dispose();
-    _riftCodeController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authToken = ref.watch(authTokenProvider);
-    final castState = ref.watch(castProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final hasToken = authToken?.isNotEmpty ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Paramètres')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'Serveur',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _urlController,
-            decoration: const InputDecoration(
-              labelText: 'URL du serveur',
-              hintText: 'https://sonora.mhemery.fr',
-              border: OutlineInputBorder(),
-            ),
-            keyboardType: TextInputType.url,
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: () async {
-              final url = _urlController.text.trim();
-              if (url.isEmpty) return;
-              await ref.read(settingsRepositoryProvider).setServerUrl(url);
-              ref.invalidate(dioProvider);
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('URL mise à jour — relancez l\'app.')),
-                );
-              }
-            },
-            child: const Text('Enregistrer'),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Apparence',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          SegmentedButton<ThemeMode>(
-            segments: const [
-              ButtonSegment(
-                value: ThemeMode.light,
-                icon: Icon(Icons.light_mode_outlined),
-                label: Text('Clair'),
-              ),
-              ButtonSegment(
-                value: ThemeMode.dark,
-                icon: Icon(Icons.dark_mode_outlined),
-                label: Text('Sombre'),
-              ),
-              ButtonSegment(
-                value: ThemeMode.system,
-                icon: Icon(Icons.brightness_auto_outlined),
-                label: Text('Auto'),
-              ),
-            ],
-            selected: {_themeMode},
-            onSelectionChanged: (selection) async {
-              final mode = selection.first;
-              setState(() => _themeMode = mode);
-              await ref.read(settingsRepositoryProvider).setThemeMode(mode);
-            },
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Authentification',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          if (!hasToken)
-            FilledButton(
-              onPressed: () => context.goNamed(RouteNames.login),
-              child: const Text('Se connecter'),
-            )
-          else
-            TextButton(
-              onPressed: () async {
-                await ref.read(settingsRepositoryProvider).setAuthToken(null);
-                ref.invalidate(dioProvider);
-                ref.invalidate(authTokenProvider);
-                ref.read(requireLoginProvider.notifier).state = true;
-                if (!context.mounted) return;
-                context.goNamed(RouteNames.login);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Déconnecté.')),
-                );
-              },
-              child: const Text('Se déconnecter'),
-            ),
-          const SizedBox(height: 32),
-          const Divider(),
-          const SizedBox(height: 16),
-          Text(
-            'RIFT (écoute synchronisée)',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedRiftRole,
-            decoration: const InputDecoration(
-              labelText: 'Rôle',
-              border: OutlineInputBorder(),
-            ),
-            items: _roleLabels.entries
-                .map(
-                  (entry) => DropdownMenuItem(
-                      value: entry.key, child: Text(entry.value)),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value == null) return;
-              setState(() => _selectedRiftRole = value);
-            },
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _riftSessionIdController,
-            decoration: const InputDecoration(
-              labelText: 'ID de session',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _riftCodeController,
-            decoration: const InputDecoration(
-              labelText: 'Code invité (optionnel)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(title: const Text('Profil')),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
-              FilledButton(
-                onPressed: castState.connecting
-                    ? null
-                    : () => ref
-                        .read(castProvider.notifier)
-                        .start(role: _selectedRiftRole),
-                child: Text(
-                  castState.connecting ? 'Connexion...' : 'Créer une session',
+              const _ProfileHeader(),
+              const SizedBox(height: 18),
+              _ActionPanel(
+                children: [
+                  _ProfileAction(
+                    icon: Icons.favorite_outline_rounded,
+                    label: 'Favoris',
+                    onTap: () => context.go('/library'),
+                  ),
+                  _ProfileAction(
+                    icon: Icons.graphic_eq_rounded,
+                    label: 'Mes séances',
+                    onTap: () => context.go('/sessions'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Apparence'),
+              const SizedBox(height: 10),
+              _SettingsPanel(
+                child: _ThemeModeSelector(
+                  selected: themeMode,
+                  onSelected: (mode) =>
+                      ref.read(themeModeProvider.notifier).setMode(mode),
                 ),
               ),
-              FilledButton.tonal(
-                onPressed: castState.connecting
-                    ? null
-                    : () => ref.read(castProvider.notifier).join(
-                          sessionId: _riftSessionIdController.text.trim(),
-                          code: _riftCodeController.text.trim(),
-                          role: _selectedRiftRole,
+              const SizedBox(height: 24),
+              const _SectionTitle('Serveur Sonora'),
+              const SizedBox(height: 10),
+              _SettingsPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: _urlController,
+                      decoration: const InputDecoration(
+                        labelText: 'URL du serveur',
+                        hintText: 'https://sonora.mhemery.fr',
+                      ),
+                      keyboardType: TextInputType.url,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: _saveServerUrl,
+                      child: const Text('Enregistrer'),
+                    ),
+                  ],
+                ),
+              ),
+              if (!kIsWeb) ...[
+                const SizedBox(height: 24),
+                const _SectionTitle('Mises à jour'),
+                const SizedBox(height: 10),
+                _SettingsPanel(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _isCheckingUpdate ? null : _checkUpdate,
+                        icon: const Icon(Icons.system_update_alt_rounded),
+                        label: Text(
+                          _isCheckingUpdate
+                              ? 'Vérification…'
+                              : 'Vérifier les mises à jour',
                         ),
-                child: const Text('Rejoindre'),
-              ),
-              OutlinedButton(
-                onPressed: castState.isActive
-                    ? () => ref.read(castProvider.notifier).syncPlaybackState()
-                    : null,
-                child: const Text('Synchroniser maintenant'),
-              ),
-              OutlinedButton(
-                onPressed: castState.isActive
-                    ? () => ref.read(castProvider.notifier).setParticipantMode(
-                          _selectedRiftRole,
-                        )
-                    : null,
-                child: const Text('Appliquer ce rôle'),
-              ),
-              OutlinedButton(
-                onPressed: castState.isActive
-                    ? () => ref.read(castProvider.notifier).leave()
-                    : null,
-                child: const Text('Quitter session'),
-              ),
-              OutlinedButton(
-                onPressed: castState.isActive
-                    ? () => ref.read(castProvider.notifier).end()
-                    : null,
-                child: const Text('Terminer session'),
+                      ),
+                      if (_updateError != null) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          _updateError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ],
+                      if (_updateInfo != null) ...[
+                        const SizedBox(height: 10),
+                        _buildUpdateStatus(_updateInfo!),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              const _SectionTitle('Compte'),
+              const SizedBox(height: 10),
+              _SettingsPanel(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FutureBuilder<PackageInfo>(
+                      future: PackageInfo.fromPlatform(),
+                      builder: (context, snapshot) {
+                        final info = snapshot.data;
+                        final version = info == null
+                            ? 'Version…'
+                            : 'Version ${info.version}+${info.buildNumber}';
+                        return ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.info_outline_rounded),
+                          title: const Text('Harmonix'),
+                          subtitle: Text(version),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    if (!hasToken)
+                      FilledButton(
+                        onPressed: () => context.goNamed(RouteNames.login),
+                        child: const Text('Se connecter'),
+                      )
+                    else
+                      OutlinedButton.icon(
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Se déconnecter'),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
-          if (castState.sessionId != null) ...[
-            const SizedBox(height: 8),
-            Text('Session active: ${castState.sessionId}'),
-          ],
-          if (castState.sessionCode != null) ...[
-            const SizedBox(height: 4),
-            Text('Code session: ${castState.sessionCode}'),
-          ],
-          if (castState.role != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              'Rôle courant: ${_roleLabels[castState.role] ?? castState.role}',
-            ),
-          ],
-          const SizedBox(height: 8),
-          Text(
-            'Compat legacy: fallback auto vers /sync/* si /rift/* indisponible.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (castState.error != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              castState.error!,
-              style: const TextStyle(color: Colors.redAccent),
-            ),
-          ],
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 16),
-          Text(
-            'Mises à jour',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: _isCheckingUpdate ? null : _checkUpdate,
-            child: Text(_isCheckingUpdate ? 'Vérification...' : 'Vérifier'),
-          ),
-          if (_updateError != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                _updateError!,
-                style: const TextStyle(color: Colors.redAccent),
-              ),
-            ),
-          if (_updateInfo != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: _buildUpdateStatus(_updateInfo!),
-            ),
-          const SizedBox(height: 24),
-          Text(
-            'À propos',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 8),
-          FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
-            builder: (context, snapshot) {
-              final info = snapshot.data;
-              final version =
-                  info == null ? '...' : 'v${info.version}+${info.buildNumber}';
-              return ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Harmonix Apps'),
-                subtitle: Text(version),
-              );
-            },
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  Future<void> _saveServerUrl() async {
+    final url = _urlController.text.trim();
+    if (url.isEmpty) return;
+    await ref.read(settingsRepositoryProvider).setServerUrl(url);
+    ref.invalidate(dioProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Serveur Sonora mis à jour.')),
+    );
+  }
+
+  Future<void> _logout() async {
+    await ref.read(settingsRepositoryProvider).clearAuthSession();
+    ref.invalidate(dioProvider);
+    ref.invalidate(authTokenProvider);
+    ref.read(requireLoginProvider.notifier).state = true;
+    if (!mounted) return;
+    context.goNamed(RouteNames.login);
   }
 
   Future<void> _checkUpdate() async {
@@ -330,73 +213,201 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final info = await checkForUpdate(
         packageInfo: await PackageInfo.fromPlatform(),
       );
-      setState(() {
-        _updateInfo = info;
-      });
+      if (mounted) setState(() => _updateInfo = info);
     } catch (error) {
+      if (!mounted) return;
       setState(() {
         _updateError = error is UpdateCheckException
             ? error.message
             : 'Impossible de vérifier les mises à jour.';
       });
     } finally {
-      if (mounted) {
-        setState(() => _isCheckingUpdate = false);
-      }
+      if (mounted) setState(() => _isCheckingUpdate = false);
     }
   }
 
   Widget _buildUpdateStatus(UpdateInfo info) {
     final updateAvailable = info.updateAvailable;
-    final forceUpdate = info.forceUpdate;
-    final latest = info.latestVersion;
-    final downloadUrl = info.downloadUrl;
     final label = updateAvailable
-        ? (forceUpdate ? 'Mise à jour requise' : 'Mise à jour disponible')
-        : 'À jour';
+        ? (info.forceUpdate ? 'Mise à jour requise' : 'Mise à jour disponible')
+        : 'Harmonix est à jour';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
-        if (latest != null) Text('Dernière: $latest'),
-        if (info.releaseNotes != null && info.releaseNotes!.isNotEmpty)
-          Text(
-            info.releaseNotes!,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        if (downloadUrl != null && updateAvailable)
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        if (info.latestVersion != null)
+          Text('Dernière version : ${info.latestVersion}'),
+        if (info.releaseNotes?.isNotEmpty == true)
+          Text(info.releaseNotes!,
+              style: Theme.of(context).textTheme.bodySmall),
+        if (info.downloadUrl != null && updateAvailable)
           TextButton(
             onPressed: () async {
               if (isDesktopPlatform) {
                 final file = await showUpdateDownloadDialog(context, info);
                 if (file == null || !mounted) return;
-                final opened = await launchUrl(
+                await launchUrl(
                   Uri.file(file.path),
                   mode: LaunchMode.externalApplication,
                 );
-                if (!opened && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Mise à jour vérifiée (SHA-256 OK). Fichier : '
-                        '${file.path}',
-                      ),
-                    ),
-                  );
-                }
               } else {
-                final uri = Uri.tryParse(downloadUrl);
+                final uri = Uri.tryParse(info.downloadUrl!);
                 if (uri != null) {
-                  await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  );
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
                 }
               }
             },
             child: const Text('Télécharger'),
           ),
       ],
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  const Color(0xFF304E78),
+                ],
+              ),
+            ),
+            child: const Icon(Icons.person_rounded, size: 36),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Mon espace',
+                    style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(
+                  'Préférences et bibliothèque Harmonix',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeModeSelector extends StatelessWidget {
+  const _ThemeModeSelector({required this.selected, required this.onSelected});
+
+  final ThemeMode selected;
+  final ValueChanged<ThemeMode> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    const choices = [
+      (ThemeMode.light, Icons.light_mode_outlined, 'Clair'),
+      (ThemeMode.dark, Icons.dark_mode_outlined, 'Sombre'),
+      (ThemeMode.system, Icons.brightness_auto_outlined, 'Auto'),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final choice in choices)
+          ChoiceChip(
+            selected: selected == choice.$1,
+            onSelected: (_) => onSelected(choice.$1),
+            avatar: Icon(choice.$2, size: 18),
+            label: Text(choice.$3),
+          ),
+      ],
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(label, style: Theme.of(context).textTheme.titleLarge);
+  }
+}
+
+class _SettingsPanel extends StatelessWidget {
+  const _SettingsPanel({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _ActionPanel extends StatelessWidget {
+  const _ActionPanel({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _ProfileAction extends StatelessWidget {
+  const _ProfileAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      minTileHeight: 56,
+      leading: Icon(icon),
+      title: Text(label),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: onTap,
     );
   }
 }

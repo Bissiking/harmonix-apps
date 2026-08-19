@@ -9,4 +9,5 @@ abstract final class RouteNames {
   static const settings = 'settings';
   static const login = 'login';
   static const player = 'player';
+  static const sessions = 'sessions';
 }

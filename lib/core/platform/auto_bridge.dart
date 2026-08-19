@@ -13,6 +13,7 @@ import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
 import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/utils/image_url_builder.dart';
+import 'package:harmonix_apps/core/utils/stream_url_resolver.dart';
 import 'package:harmonix_apps/core/platform/platform_channel.dart';
 
 /// Registers the Flutter-side handler for Android Auto MethodChannel calls.
@@ -65,13 +66,24 @@ class AutoBridge {
             final items = tracks
                 .map((track) => _trackToMediaItem(baseUrl, track))
                 .toList();
-            final urls =
-                tracks.map((track) => _trackStreamUrl(baseUrl, track)).toList();
+            final rawUrls = tracks
+                .map((track) => _trackStreamUrl(baseUrl, track))
+                .toList();
+            final dio = ref.read(dioProvider);
+            final resolved = await Future.wait(
+              rawUrls.map(
+                (url) => resolvePlayableStreamUrl(
+                  url: url,
+                  headers: headers,
+                  dio: dio,
+                ),
+              ),
+            );
             await handler.loadQueue(
               items,
-              urls,
+              resolved.map((r) => r.url).toList(),
               initialIndex: initialIndex,
-              headers: headers,
+              headers: resolved[initialIndex].headers,
             );
             await handler.play();
             return null;
@@ -81,12 +93,18 @@ class AutoBridge {
         }
 
         final trackStreamUrl = streamUrl(baseUrl, trackId);
+        final dio = ref.read(dioProvider);
+        final resolved = await resolvePlayableStreamUrl(
+          url: trackStreamUrl,
+          headers: headers,
+          dio: dio,
+        );
         final mediaItem = await _findMediaItemForTrackId(ref, baseUrl, trackId);
         await handler.playFromTrackId(
           trackId,
-          trackStreamUrl,
+          resolved.url,
           initialMediaItem: mediaItem,
-          headers: headers,
+          headers: resolved.headers,
         );
 
       case 'play':

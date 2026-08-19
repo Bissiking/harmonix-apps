@@ -54,6 +54,27 @@ class CastRepository {
     await _postWithCompat('$_riftBase/$sessionId/join', payload);
   }
 
+  Future<String?> joinSessionByCode({
+    required String code,
+    required String deviceId,
+    String? userId,
+    String? role,
+  }) async {
+    final response = await _postWithCompat('$_riftBase/join', {
+      'code': code,
+      'device_id': deviceId,
+      if (userId != null && userId.isNotEmpty) 'user_id': userId,
+      if (role != null && role.isNotEmpty) 'role': role,
+    });
+    final data = response.data;
+    if (data is! Map<String, dynamic>) return null;
+    final payload = data['data'] is Map<String, dynamic>
+        ? data['data'] as Map<String, dynamic>
+        : data;
+    final sessionId = payload['session_id'] ?? payload['id'];
+    return sessionId is String && sessionId.isNotEmpty ? sessionId : null;
+  }
+
   Future<void> updateSession(
     String sessionId, {
     required Map<String, dynamic> state,
@@ -92,7 +113,8 @@ class CastRepository {
     await _deleteWithCompat('$_riftBase/$sessionId');
   }
 
-  Future<Response<dynamic>> _postWithCompat(String riftUrl, Object? data) async {
+  Future<Response<dynamic>> _postWithCompat(
+      String riftUrl, Object? data) async {
     try {
       return await _dio.post(riftUrl, data: data);
     } on DioException catch (e) {
@@ -104,7 +126,8 @@ class CastRepository {
     }
   }
 
-  Future<Response<dynamic>> _patchWithCompat(String riftUrl, Object? data) async {
+  Future<Response<dynamic>> _patchWithCompat(
+      String riftUrl, Object? data) async {
     try {
       return await _dio.patch(riftUrl, data: data);
     } on DioException catch (e) {

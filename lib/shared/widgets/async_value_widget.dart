@@ -9,18 +9,21 @@ class AsyncValueWidget<T> extends StatelessWidget {
     required this.value,
     required this.data,
     this.loading,
+    this.onRetry,
   });
 
   final AsyncValue<T> value;
   final Widget Function(T data) data;
   final Widget? loading;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
     return value.when(
       data: data,
-      loading: () => loading ?? const Center(child: CircularProgressIndicator()),
-      error: (e, _) => ErrorView(error: e),
+      loading: () =>
+          loading ?? const Center(child: CircularProgressIndicator()),
+      error: (e, _) => ErrorView(error: e, onRetry: onRetry),
     );
   }
 }

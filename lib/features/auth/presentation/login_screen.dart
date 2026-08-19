@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/session/auth_session_tokens.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
@@ -93,16 +94,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           response: response,
         );
       }
-      final token = data['access_token'] as String? ??
-          (data['session'] as Map?)?['access_token'] as String?;
-      if (token == null || token.isEmpty) {
+      final tokens = AuthSessionTokens.fromJson(
+        data['session'] is Map ? data['session'] : data,
+      );
+      if (tokens == null) {
         throw DioException(
           requestOptions: response.requestOptions,
           message: 'Token manquant',
         );
       }
 
-      await ref.read(settingsRepositoryProvider).setAuthToken(token);
+      await ref.read(settingsRepositoryProvider).setAuthSession(
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresInSeconds: tokens.expiresInSeconds,
+          );
       ref.invalidate(dioProvider);
       ref.invalidate(authTokenProvider);
       ref.invalidate(bootstrapProvider);
@@ -306,7 +312,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return ref.read(ssoProvider.notifier).start();
   }
 
-  Widget _buildServerSection(BuildContext context, SettingsRepository settings) {
+  Widget _buildServerSection(
+      BuildContext context, SettingsRepository settings) {
     final color = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -335,7 +342,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 4),
           CheckboxListTile(
             value: _changeServer,
-            onChanged: (value) => setState(() => _changeServer = value ?? false),
+            onChanged: (value) =>
+                setState(() => _changeServer = value ?? false),
             dense: true,
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,
