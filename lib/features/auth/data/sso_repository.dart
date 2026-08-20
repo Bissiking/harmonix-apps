@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:harmonix_apps/core/api/dio_provider.dart';
+import 'package:harmonix_apps/core/session/auth_session_tokens.dart';
 
 /// Client côté app pour le SSO OAuth2 via le relais web.
 ///
@@ -31,15 +32,14 @@ class SsoRepository {
   }
 
   /// Interroge le relais pour récupérer le token une fois le flow terminé.
-  Future<String?> getToken(String state) async {
+  Future<AuthSessionTokens?> getTokens(String state) async {
     final response = await _dio.get<dynamic>(
       '$_ssoBase/status',
       queryParameters: {'state': state},
     );
     final data = response.data;
     if (data is! Map<String, dynamic>) return null;
-    final token = data['access_token'] ?? data['token'];
-    return token is String && token.isNotEmpty ? token : null;
+    return AuthSessionTokens.fromJson(data);
   }
 }
 

@@ -6,6 +6,8 @@ part 'settings_repository.g.dart';
 
 const _keyServerUrl = 'server_url';
 const _keyAuthToken = 'auth_token';
+const _keyRefreshToken = 'refresh_token';
+const _keyTokenExpiresAt = 'token_expires_at';
 const _keyThemeJson = 'theme_json';
 const _keyThemeMode = 'theme_mode';
 const _keyRiftSessionId = 'rift_session_id';
@@ -23,12 +25,47 @@ class SettingsRepository {
 
   String? get authToken => _prefs.getString(_keyAuthToken) ?? _defaultAuthToken;
 
+  String? get refreshToken => _prefs.getString(_keyRefreshToken);
+
+  DateTime? get tokenExpiresAt {
+    final milliseconds = _prefs.getInt(_keyTokenExpiresAt);
+    return milliseconds == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(milliseconds);
+  }
+
   Future<void> setAuthToken(String? token) async {
     if (token == null || token.isEmpty) {
-      await _prefs.remove(_keyAuthToken);
+      await clearAuthSession();
       return;
     }
     await _prefs.setString(_keyAuthToken, token);
+  }
+
+  Future<void> setAuthSession({
+    required String accessToken,
+    String? refreshToken,
+    required int expiresInSeconds,
+  }) async {
+    final expiresAt = DateTime.now().add(
+      Duration(seconds: expiresInSeconds > 0 ? expiresInSeconds : 900),
+    );
+    await _prefs.setString(_keyAuthToken, accessToken);
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _prefs.setString(_keyRefreshToken, refreshToken);
+    } else {
+      await _prefs.remove(_keyRefreshToken);
+    }
+    await _prefs.setInt(
+      _keyTokenExpiresAt,
+      expiresAt.millisecondsSinceEpoch,
+    );
+  }
+
+  Future<void> clearAuthSession() async {
+    await _prefs.remove(_keyAuthToken);
+    await _prefs.remove(_keyRefreshToken);
+    await _prefs.remove(_keyTokenExpiresAt);
   }
 
   String? get themeJson => _prefs.getString(_keyThemeJson);

@@ -63,3 +63,13 @@ docker compose logs -f web
 ## Mettre à jour le déploiement
 git pull
 docker compose up -d --build
+
+## Vérifier le refresh de session avant déploiement
+# Déployer d'abord le backend Sonora, puis reconstruire Harmonix Web.
+cd ../sonora
+npm test
+cd ../harmonix-apps
+flutter analyze
+flutter test
+flutter build web --release --dart-define=HARMONIX_API_BASE_URL=https://sonora.mhemery.fr
+docker compose up -d --build

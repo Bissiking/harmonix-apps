@@ -3,8 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/api/auth_refresh_interceptor.dart';
 import 'package:harmonix_apps/core/api/harmonix_interceptor.dart';
 import 'package:harmonix_apps/core/api/retry_interceptor.dart';
+import 'package:harmonix_apps/core/session/auth_refresh_service.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
 
 part 'dio_provider.g.dart';
@@ -24,15 +26,12 @@ Dio dio(DioRef ref) {
   );
 
   dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) {
-        final token = settings.authToken;
-        if (token != null && token.isNotEmpty) {
-          options.headers['Authorization'] = 'Bearer $token';
-        } else {
-          options.headers.remove('Authorization');
-        }
-        handler.next(options);
+    AuthRefreshInterceptor(
+      dio: dio,
+      settings: settings,
+      refreshService: ref.watch(authRefreshServiceProvider),
+      onSessionExpired: () {
+        ref.read(requireLoginProvider.notifier).state = true;
       },
     ),
   );

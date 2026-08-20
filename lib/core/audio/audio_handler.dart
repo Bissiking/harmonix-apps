@@ -29,6 +29,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   final AudioPlayer _player = AudioPlayer();
   PlaybackEvent? _lastPlaybackEvent;
   DateTime _lastPlaybackLog = DateTime.fromMillisecondsSinceEpoch(0);
+  ConcatenatingAudioSource? _incrementalSource;
 
   AudioPlayer get player => _player;
 
@@ -47,6 +48,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
         );
 
     mediaItem.add(item);
+    _incrementalSource = null;
     assert(() {
       debugPrint(
         'AudioHandler.playFromTrackId url=$streamUrl headers=${headers?.keys.toList()}',
@@ -73,6 +75,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   }) async {
     assert(items.length == streamUrls.length);
 
+    _incrementalSource = null;
     queue.add(items);
     mediaItem.add(items.isNotEmpty ? items[initialIndex] : null);
 
@@ -91,6 +94,31 @@ class HarmonixAudioHandler extends BaseAudioHandler
         initialIndex: initialIndex,
       ),
     );
+  }
+
+  Future<void> loadQueueIncremental(
+    List<MediaItem> items,
+    String initialUrl, {
+    required int initialIndex,
+  }) async {
+    final item = items[initialIndex];
+    queue.add(items);
+    mediaItem.add(item);
+
+    _incrementalSource = ConcatenatingAudioSource(
+      children: [
+        AudioSource.uri(Uri.parse(initialUrl), tag: item),
+      ],
+    );
+    await _setAudioSourceWithRetry(
+      () => _player.setAudioSource(_incrementalSource!, initialIndex: 0),
+    );
+  }
+
+  Future<void> appendQueueItem(String url, MediaItem item) async {
+    final source = _incrementalSource;
+    if (source == null) return;
+    await source.add(AudioSource.uri(Uri.parse(url), tag: item));
   }
 
   // --------------------------------------------------- BaseAudioHandler API

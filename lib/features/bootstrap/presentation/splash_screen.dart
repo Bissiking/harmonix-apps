@@ -38,7 +38,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           if (!canContinue || !mounted) return;
         }
         _isNavigating = true;
-        if (context.mounted) context.go('/catalog');
+        if (context.mounted) context.go('/home');
       });
     });
 
@@ -49,20 +49,36 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                'assets/images/logo_harmonix.png',
-                width: 140,
-                height: 140,
-                fit: BoxFit.contain,
+              Container(
+                width: 96,
+                height: 96,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: HarmonixColors.accent.withValues(alpha: 0.12),
+                  border: Border.all(
+                    color: HarmonixColors.accent.withValues(alpha: 0.55),
+                  ),
+                ),
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                    HarmonixColors.accent,
+                    BlendMode.srcIn,
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo_harmonix.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
               const Text(
-                'harmonix',
+                'Harmonix',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: HarmonixColors.accent,
-                  letterSpacing: 3,
+                  letterSpacing: -0.4,
                 ),
               ),
               const SizedBox(height: 28),
@@ -87,7 +103,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: FilledButton.tonal(
-                    onPressed: () => context.go('/catalog'),
+                    onPressed: () => context.go('/home'),
                     child: const Text('Continuer hors ligne'),
                   ),
                 ),

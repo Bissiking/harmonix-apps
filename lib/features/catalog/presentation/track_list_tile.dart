@@ -11,10 +11,12 @@ class TrackListTile extends ConsumerWidget {
     super.key,
     required this.track,
     required this.onTap,
+    this.onRemove,
   });
 
   final Track track;
   final VoidCallback onTap;
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -55,9 +57,20 @@ class TrackListTile extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: Text(
-          track.durationMs > 0 ? formatMs(track.durationMs) : '--:--',
-          style: Theme.of(context).textTheme.bodySmall,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (onRemove != null)
+              IconButton(
+                tooltip: 'Retirer de la playlist',
+                icon: const Icon(Icons.remove_circle_outline, size: 20),
+                onPressed: onRemove,
+              ),
+            Text(
+              track.durationMs > 0 ? formatMs(track.durationMs) : '--:--',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
         ),
         onTap: onTap,
       ),

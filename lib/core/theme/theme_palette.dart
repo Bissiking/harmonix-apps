@@ -20,12 +20,12 @@ class ThemePalette {
   final bool isAmoled;
 
   static const ThemePalette fallback = ThemePalette(
-    accent: Color(0xFF7C4DFF),
-    secondary: Color(0xFF00E5FF),
-    text: Colors.white,
-    darkBackground: Color(0xFF0E0E14),
-    darkSurface: Color(0xFF1A1A24),
-    darkCard: Color(0xFF22223A),
+    accent: Color(0xFFA78BFA),
+    secondary: Color(0xFF67D7F0),
+    text: Color(0xFFF4F2FF),
+    darkBackground: Color(0xFF07101E),
+    darkSurface: Color(0xFF0D1727),
+    darkCard: Color(0xFF152033),
     isAmoled: false,
   );
 

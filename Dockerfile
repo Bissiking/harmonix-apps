@@ -9,7 +9,8 @@ COPY . .
 
 ARG HARMONIX_API_BASE_URL=https://sonora.mhemery.fr
 RUN flutter build web --release \
-    --dart-define=HARMONIX_API_BASE_URL=${HARMONIX_API_BASE_URL}
+    --dart-define=HARMONIX_API_BASE_URL=${HARMONIX_API_BASE_URL} \
+    && cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
 FROM busybox:1.37.0-musl
 

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-19T20:10:03Z",
+  "title": "Design System: Harmonix",
+  "extensions": {
+    "colorMeta": {
+      "listening-lavender": {
+        "role": "primary",
+        "displayName": "Lavande d’écoute",
+        "canonical": "#A78BFA",
+        "tonalRamp": ["oklch(15% 0.10 294)", "oklch(26% 0.13 294)", "oklch(38% 0.16 294)", "oklch(50% 0.18 294)", "oklch(64% 0.17 294)", "oklch(76% 0.13 294)", "oklch(87% 0.08 294)", "oklch(95% 0.03 294)"]
+      },
+      "signal-cyan": {
+        "role": "secondary",
+        "displayName": "Cyan de signal",
+        "canonical": "#67D7F0",
+        "tonalRamp": ["oklch(15% 0.05 210)", "oklch(26% 0.08 210)", "oklch(38% 0.10 210)", "oklch(50% 0.12 210)", "oklch(64% 0.13 210)", "oklch(76% 0.11 210)", "oklch(87% 0.07 210)", "oklch(95% 0.03 210)"]
+      },
+      "light-signal-cyan": {
+        "role": "secondary",
+        "displayName": "Cyan de signal clair",
+        "canonical": "#00BCD4",
+        "tonalRamp": ["oklch(15% 0.06 210)", "oklch(26% 0.09 210)", "oklch(38% 0.12 210)", "oklch(50% 0.15 210)", "oklch(64% 0.15 210)", "oklch(76% 0.12 210)", "oklch(87% 0.07 210)", "oklch(95% 0.03 210)"]
+      },
+      "midnight-ink": {
+        "role": "neutral",
+        "displayName": "Encre minuit",
+        "canonical": "#07101E",
+        "tonalRamp": ["oklch(15% 0.025 255)", "oklch(26% 0.025 255)", "oklch(38% 0.023 255)", "oklch(50% 0.020 255)", "oklch(64% 0.016 255)", "oklch(76% 0.012 255)", "oklch(87% 0.008 255)", "oklch(95% 0.004 255)"]
+      },
+      "slate-surface": {
+        "role": "neutral",
+        "displayName": "Ardoise de surface",
+        "canonical": "#0D1727",
+        "tonalRamp": ["oklch(15% 0.030 255)", "oklch(26% 0.030 255)", "oklch(38% 0.027 255)", "oklch(50% 0.023 255)", "oklch(64% 0.018 255)", "oklch(76% 0.013 255)", "oklch(87% 0.008 255)", "oklch(95% 0.004 255)"]
+      },
+      "raised-slate": {
+        "role": "neutral",
+        "displayName": "Ardoise relevée",
+        "canonical": "#152033",
+        "tonalRamp": ["oklch(15% 0.035 255)", "oklch(26% 0.035 255)", "oklch(38% 0.031 255)", "oklch(50% 0.026 255)", "oklch(64% 0.020 255)", "oklch(76% 0.014 255)", "oklch(87% 0.009 255)", "oklch(95% 0.004 255)"]
+      },
+      "night-glow": {
+        "role": "neutral",
+        "displayName": "Lueur nocturne",
+        "canonical": "#121D38",
+        "tonalRamp": ["oklch(15% 0.045 266)", "oklch(26% 0.045 266)", "oklch(38% 0.040 266)", "oklch(50% 0.033 266)", "oklch(64% 0.025 266)", "oklch(76% 0.017 266)", "oklch(87% 0.010 266)", "oklch(95% 0.005 266)"]
+      },
+      "moon-text": {
+        "role": "neutral",
+        "displayName": "Texte lunaire",
+        "canonical": "#F4F2FF",
+        "tonalRamp": ["oklch(15% 0.010 294)", "oklch(26% 0.012 294)", "oklch(38% 0.014 294)", "oklch(50% 0.016 294)", "oklch(64% 0.017 294)", "oklch(76% 0.016 294)", "oklch(87% 0.013 294)", "oklch(95% 0.008 294)"]
+      },
+      "light-canvas": {
+        "role": "neutral",
+        "displayName": "Canevas clair",
+        "canonical": "#FAFAFC",
+        "tonalRamp": ["oklch(15% 0.004 285)", "oklch(26% 0.004 285)", "oklch(38% 0.004 285)", "oklch(50% 0.004 285)", "oklch(64% 0.004 285)", "oklch(76% 0.004 285)", "oklch(87% 0.004 285)", "oklch(95% 0.004 285)"]
+      },
+      "light-panel": {
+        "role": "neutral",
+        "displayName": "Panneau clair",
+        "canonical": "#F0F0F4",
+        "tonalRamp": ["oklch(15% 0.005 285)", "oklch(26% 0.005 285)", "oklch(38% 0.005 285)", "oklch(50% 0.005 285)", "oklch(64% 0.005 285)", "oklch(76% 0.005 285)", "oklch(87% 0.005 285)", "oklch(95% 0.005 285)"]
+      },
+      "light-glow": {
+        "role": "neutral",
+        "displayName": "Lueur claire",
+        "canonical": "#F1EEFF",
+        "tonalRamp": ["oklch(15% 0.015 294)", "oklch(26% 0.020 294)", "oklch(38% 0.025 294)", "oklch(50% 0.030 294)", "oklch(64% 0.032 294)", "oklch(76% 0.028 294)", "oklch(87% 0.020 294)", "oklch(95% 0.010 294)"]
+      },
+      "amoled-surface": {
+        "role": "neutral",
+        "displayName": "Surface AMOLED",
+        "canonical": "#0A0A0A",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(50% 0 0)", "oklch(64% 0 0)", "oklch(76% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "amoled-panel": {
+        "role": "neutral",
+        "displayName": "Panneau AMOLED",
+        "canonical": "#111111",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(26% 0 0)", "oklch(38% 0 0)", "oklch(50% 0 0)", "oklch(64% 0 0)", "oklch(76% 0 0)", "oklch(87% 0 0)", "oklch(95% 0 0)"]
+      },
+      "profile-blue": {
+        "role": "tertiary",
+        "displayName": "Bleu profil",
+        "canonical": "#304E78",
+        "tonalRamp": ["oklch(15% 0.055 255)", "oklch(26% 0.075 255)", "oklch(38% 0.090 255)", "oklch(50% 0.095 255)", "oklch(64% 0.085 255)", "oklch(76% 0.065 255)", "oklch(87% 0.040 255)", "oklch(95% 0.018 255)"]
+      },
+      "discovery-green": {
+        "role": "tertiary",
+        "displayName": "Vert découverte",
+        "canonical": "#66D6A8",
+        "tonalRamp": ["oklch(15% 0.055 160)", "oklch(26% 0.080 160)", "oklch(38% 0.105 160)", "oklch(50% 0.125 160)", "oklch(64% 0.130 160)", "oklch(76% 0.105 160)", "oklch(87% 0.065 160)", "oklch(95% 0.025 160)"]
+      },
+      "together-amber": {
+        "role": "tertiary",
+        "displayName": "Ambre ensemble",
+        "canonical": "#FFB85C",
+        "tonalRamp": ["oklch(15% 0.060 70)", "oklch(26% 0.090 70)", "oklch(38% 0.125 70)", "oklch(50% 0.155 70)", "oklch(64% 0.175 70)", "oklch(76% 0.145 70)", "oklch(87% 0.090 70)", "oklch(95% 0.035 70)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {"displayName": "Display", "purpose": "Moments de forte emphase uniquement."},
+      "headline": {"displayName": "Headline", "purpose": "Titres d’écran éditoriaux et titre du morceau en lecture."},
+      "heading": {"displayName": "Heading", "purpose": "Titres compacts et barres d’application."},
+      "title": {"displayName": "Title", "purpose": "Titres de panneau et de section."},
+      "body": {"displayName": "Body", "purpose": "Descriptions et informations courantes."},
+      "supporting": {"displayName": "Supporting", "purpose": "Artistes, métadonnées et temps."},
+      "navigation-label": {"displayName": "Navigation label", "purpose": "Libellés des cinq destinations."}
+    },
+    "shadows": [
+      {"name": "relief-editorial", "value": "0 14px 30px rgba(0,0,0,0.20)", "purpose": "Morceau mis en avant et séance active."},
+      {"name": "artwork-immersive", "value": "0 20px 40px rgba(0,0,0,0.32)", "purpose": "Grande pochette du lecteur complet."},
+      {"name": "playback-command", "value": "0 10px 22px rgba(62,42,128,0.27)", "purpose": "Bouton circulaire lecture/pause."}
+    ],
+    "motion": [
+      {"name": "playback-icon-switch", "value": "180ms scale", "purpose": "Bascule entre les icônes lecture et pause du lecteur compact et complet."}
+    ],
+    "breakpoints": [
+      {"name": "album-grid-three", "value": "520px"},
+      {"name": "tablet-and-four-actions", "value": "720px"},
+      {"name": "album-grid-four", "value": "760px"},
+      {"name": "player-split", "value": "860px"},
+      {"name": "home-editorial-split", "value": "900px"},
+      {"name": "rail-extended-and-album-grid-five", "value": "1080px"},
+      {"name": "desktop", "value": "1100px"},
+      {"name": "album-grid-six", "value": "1400px"}
+    ]
+  },
+  "components": [
+    {
+      "name": "Filled Button",
+      "kind": "button",
+      "refersTo": "button-filled-dark",
+      "description": "Action Material 3 principale, lavande et souple.",
+      "html": "<button class=\"ds-btn-filled\">Écouter maintenant</button>",
+      "css": ".ds-btn-filled { min-height: 40px; padding: 0 20px; border: 0; border-radius: 14px; background: #A78BFA; color: #000; font: 600 14px system-ui, sans-serif; cursor: pointer; transition: filter 180ms; } .ds-btn-filled:hover { filter: brightness(1.06); } .ds-btn-filled:active { filter: brightness(0.94); } .ds-btn-filled:focus-visible { outline: 2px solid #67D7F0; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-btn-filled { color: #000; border-radius: 10px; } }"
+    },
+    {
+      "name": "Outlined Button",
+      "kind": "button",
+      "description": "Action secondaire sur fond ardoise, utilisée notamment pour quitter une séance ou se déconnecter.",
+      "html": "<button class=\"ds-btn-outlined\">Quitter</button>",
+      "css": ".ds-btn-outlined { min-height: 40px; padding: 0 20px; border: 1px solid rgba(255,255,255,.20); border-radius: 14px; background: transparent; color: #F4F2FF; font: 600 14px system-ui, sans-serif; cursor: pointer; } .ds-btn-outlined:hover { background: rgba(255,255,255,.055); } .ds-btn-outlined:active { background: rgba(255,255,255,.09); } .ds-btn-outlined:focus-visible { outline: 2px solid #A78BFA; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-btn-outlined { color: rgba(0,0,0,.87); border-color: rgba(0,0,0,.25); border-radius: 10px; } .ds-btn-outlined:hover { background: rgba(0,0,0,.04); } }"
+    },
+    {
+      "name": "Dark Text Field",
+      "kind": "input",
+      "refersTo": "input-dark",
+      "description": "Champ rempli sombre, sans trait au repos et souligné par la lavande au focus.",
+      "html": "<label class=\"ds-field-label\">URL du serveur<input class=\"ds-field\" value=\"https://sonora.mhemery.fr\"></label>",
+      "css": ".ds-field-label { display: grid; gap: 6px; color: rgba(244,242,255,.60); font: 400 12px system-ui, sans-serif; } .ds-field { height: 54px; padding: 0 16px; border: 1px solid transparent; border-radius: 14px; background: #152033; color: #F4F2FF; font: 400 14px system-ui, sans-serif; outline: none; } .ds-field:hover { background: #19253a; } .ds-field:focus-visible { border-color: #A78BFA; } @media (prefers-color-scheme: light) { .ds-field-label { color: rgba(0,0,0,.60); } .ds-field { background: #F0F0F4; color: rgba(0,0,0,.87); } }"
+    },
+    {
+      "name": "Adaptive Navigation",
+      "kind": "nav",
+      "refersTo": "navigation-bar-dark",
+      "description": "Cinq destinations, rail sur les écrans larges et barre basse sur les écrans compacts.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-nav-active\">⌂<span>Accueil</span></button><button class=\"ds-nav-item\">⌕<span>Explorer</span></button><button class=\"ds-nav-item\">▶<span>Lecteur</span></button><button class=\"ds-nav-item\">≋<span>Séances</span></button><button class=\"ds-nav-item\">●<span>Profil</span></button></nav>",
+      "css": ".ds-nav { display: flex; min-height: 72px; background: rgba(13,23,39,.96); border-top: 1px solid rgba(244,242,255,.07); } .ds-nav-item { flex: 1; display: grid; place-items: center; align-content: center; gap: 3px; min-width: 48px; border: 0; background: transparent; color: rgba(244,242,255,.58); font: 500 11px system-ui, sans-serif; cursor: pointer; } .ds-nav-item:hover { background: rgba(167,139,250,.08); } .ds-nav-item:focus-visible { outline: 2px solid #67D7F0; outline-offset: -3px; } .ds-nav-item:active, .ds-nav-active { color: #A78BFA; font-weight: 700; } .ds-nav-active::before { content: ''; position: absolute; width: 40px; height: 30px; border-radius: 999px; background: rgba(167,139,250,.18); z-index: -1; } .ds-nav-item { position: relative; z-index: 0; } @media (min-width: 1100px) { .ds-nav { width: 216px; min-height: 360px; flex-direction: column; border-top: 0; border-right: 1px solid rgba(255,255,255,.06); padding: 22px 12px; } .ds-nav-item { flex: 0 0 56px; grid-template-columns: 32px 1fr; justify-items: start; padding: 0 16px; font-size: 12px; } } @media (prefers-color-scheme: light) { .ds-nav { background: #fff; border-color: rgba(0,0,0,.12); } .ds-nav-item { color: rgba(0,0,0,.54); } .ds-nav-active { color: #A78BFA; } }"
+    },
+    {
+      "name": "Raised Panel",
+      "kind": "card",
+      "refersTo": "card-raised-dark",
+      "description": "Conteneur tonal à 16 px pour réglages, séances et file d’attente.",
+      "html": "<section class=\"ds-panel\"><strong>Séance active</strong><p>3 participants</p></section>",
+      "css": ".ds-panel { padding: 20px; border-radius: 16px; background: #152033; color: #F4F2FF; font: 400 14px system-ui, sans-serif; } .ds-panel strong { display: block; font-size: 18px; font-weight: 600; } .ds-panel p { margin: 8px 0 0; color: rgba(244,242,255,.85); } .ds-panel:hover { background: #18253a; } .ds-panel:focus-within { outline: 1px solid #A78BFA; outline-offset: 1px; } @media (prefers-color-scheme: light) { .ds-panel { background: #F0F0F4; color: rgba(0,0,0,.87); } .ds-panel p { color: rgba(0,0,0,.60); } }"
+    },
+    {
+      "name": "Mini Player",
+      "kind": "custom",
+      "refersTo": "mini-player-dark",
+      "description": "Contrôle de lecture persistant sous les destinations hors lecteur complet.",
+      "html": "<button class=\"ds-mini-player\"><span class=\"ds-mini-art\">♫</span><span class=\"ds-mini-copy\"><strong>Morceau en cours</strong><small>Artiste</small></span><span class=\"ds-mini-control\">◀</span><span class=\"ds-mini-play\">▶</span><span class=\"ds-mini-control\">▶</span></button>",
+      "css": ".ds-mini-player { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px; border: 0; border-top: 1px solid rgba(244,242,255,.07); background: #0D1727; color: #F4F2FF; text-align: left; cursor: pointer; } .ds-mini-player:hover { background: #111d30; } .ds-mini-player:active { background: #152033; } .ds-mini-player:focus-visible { outline: 2px solid #A78BFA; outline-offset: -2px; } .ds-mini-art { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px; border-radius: 6px; background: linear-gradient(135deg,#A78BFA,#304E78); } .ds-mini-copy { min-width: 0; flex: 1; display: grid; gap: 2px; font: 400 14px system-ui, sans-serif; } .ds-mini-copy strong,.ds-mini-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-mini-copy strong { font-weight: 600; } .ds-mini-copy small { color: rgba(244,242,255,.58); font-size: 12px; } .ds-mini-control { font-size: 18px; } .ds-mini-play { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; background: #A78BFA; color: #000; } @media (min-width: 1100px) { .ds-mini-player { min-height: 72px; } } @media (prefers-color-scheme: light) { .ds-mini-player { background: #fff; color: rgba(0,0,0,.87); border-color: rgba(0,0,0,.07); } .ds-mini-copy small { color: rgba(0,0,0,.58); } }"
+    },
+    {
+      "name": "Theme Choice Chip",
+      "kind": "chip",
+      "description": "Choix Material pour les modes Clair, Sombre et Auto.",
+      "html": "<button class=\"ds-chip ds-chip-selected\">☾ Sombre</button>",
+      "css": ".ds-chip { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(244,242,255,.055); color: #F4F2FF; font: 500 14px system-ui, sans-serif; cursor: pointer; } .ds-chip:hover { background: rgba(167,139,250,.13); } .ds-chip:active, .ds-chip-selected { background: rgba(167,139,250,.18); color: #A78BFA; } .ds-chip:focus-visible { outline: 2px solid #67D7F0; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-chip { background: #F0F0F4; color: rgba(0,0,0,.87); } .ds-chip-selected { background: rgba(167,139,250,.18); color: #6f4fd0; } }"
+    },
+    {
+      "name": "Featured Track",
+      "kind": "custom",
+      "description": "Point de départ éditorial de l’accueil, avec pochette immersive et action immédiate.",
+      "html": "<article class=\"ds-featured\"><div class=\"ds-featured-art\">♫</div><div class=\"ds-featured-copy\"><span>✦</span><h2>Titre à écouter</h2><p>Artiste</p><button>▶ Écouter maintenant</button></div></article>",
+      "css": ".ds-featured { position: relative; min-height: 280px; overflow: hidden; border-radius: 16px; background: #152033; color: #F4F2FF; box-shadow: 0 14px 30px rgba(0,0,0,.20); font-family: system-ui, sans-serif; } .ds-featured-art { position: absolute; inset: 0 0 0 42%; display: grid; place-items: center; background: linear-gradient(135deg,#304E78,#A78BFA); font-size: 72px; opacity: .68; } .ds-featured::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,#152033 0%,rgba(21,32,51,.72) 58%,rgba(21,32,51,0) 100%); } .ds-featured-copy { position: absolute; z-index: 1; inset: 24px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; } .ds-featured-copy > span { color: #67D7F0; } .ds-featured h2 { max-width: 60%; margin: 16px 0 4px; font-size: 28px; font-weight: 800; } .ds-featured p { margin: 0 0 18px; color: rgba(244,242,255,.85); font-size: 14px; } .ds-featured button { min-height: 40px; padding: 0 18px; border: 0; border-radius: 14px; background: #A78BFA; color: #000; font-weight: 600; cursor: pointer; } .ds-featured button:hover { filter: brightness(1.06); } .ds-featured button:active { filter: brightness(.94); } .ds-featured button:focus-visible { outline: 2px solid #67D7F0; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-featured { background: #F0F0F4; color: rgba(0,0,0,.87); } .ds-featured::after { background: linear-gradient(90deg,#F0F0F4 0%,rgba(240,240,244,.72) 58%,rgba(240,240,244,0) 100%); } .ds-featured p { color: rgba(0,0,0,.60); } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le salon d’écoute nocturne",
+    "overview": "Harmonix installe l’utilisateur dans un espace d’écoute continu : un fond bleu encre, des panneaux ardoise légèrement relevés et des accents lavande et cyan laissent les pochettes porter l’immersion. L’accueil est éditorial — une écoute mise en avant, des ajouts récents et des raccourcis d’humeur — tandis que le catalogue reste une destination de recherche, jamais la forme dominante de toute l’application.\n\nLa hiérarchie sert une histoire stable : retrouver sa musique, la lancer, la partager en séance et la reprendre partout. Le lecteur compact persiste au bas des destinations quand un morceau existe; le lecteur complet devient une scène dédiée, avec la pochette comme centre de gravité. Le thème sombre est la référence visuelle; le thème clair conserve les mêmes rôles et remplace l’encre par un canevas presque blanc avec une lueur lavande.",
+    "keyCharacteristics": [
+      "Univers nocturne bleu encre, panneaux ardoise et lueur radiale discrète.",
+      "Lavande pour l’action et l’état actif; cyan pour le signal et l’accompagnement.",
+      "Grandes pochettes immersives, recadrées dans des angles doux.",
+      "Navigation adaptative à cinq destinations et lecteur persistant.",
+      "Densité calme : marges de 20 px, panneaux de 16 px et sections séparées de 32 px."
+    ],
+    "rules": [
+      {"name": "The Two-Signal Rule", "body": "La lavande porte l’action et la sélection; le cyan porte le signal secondaire. Les accents vert et ambre ne quittent pas les raccourcis d’humeur de l’accueil.", "section": "colors"},
+      {"name": "The Palette Authority Rule", "body": "En thème sombre, les rôles accent, secondaire, texte, fond, surface et carte peuvent être fournis par la palette Sonora; les valeurs documentées sont le repli livré.", "section": "colors"},
+      {"name": "The Native Voice Rule", "body": "Conserver la famille système de la plateforme et exprimer la hiérarchie par la taille, la graisse et l’opacité déjà définies.", "section": "typography"},
+      {"name": "The Persistent Listening Rule", "body": "Le morceau en cours reste visible et contrôlable sous les destinations; seule la scène du lecteur complet remplace le mini-lecteur.", "section": "layout"},
+      {"name": "The Editorial First View Rule", "body": "Sur écran large, le premier regard rencontre le rail, l’accueil éditorial et le lecteur persistant — pas une grille catalogue générique.", "section": "layout"},
+      {"name": "The Tonal-First Rule", "body": "Utiliser les niveaux de surface pour la structure; réserver l’ombre aux éléments d’écoute qui avancent réellement vers l’utilisateur.", "section": "elevation"},
+      {"name": "The Soft Frame Rule", "body": "Les angles arrondis encadrent le contenu; les cercles sont réservés à l’identité, au profil et aux actions de lecture immédiates.", "section": "shapes"}
+    ],
+    "dos": [
+      "Do garder le lecteur compact visible sous chaque destination tant qu’un morceau est en cours.",
+      "Do utiliser les pochettes réelles comme matière immersive dans l’accueil et le lecteur.",
+      "Do faire évoluer la navigation, les colonnes et la file d’attente aux seuils observés sans changer l’histoire fonctionnelle.",
+      "Do traiter les thèmes sombre, clair et AMOLED comme des apparences nommées, avec leurs surfaces propres.",
+      "Do conserver les composants et états Material 3, les zones sûres et les cibles tactiles de plateforme."
+    ],
+    "donts": [
+      "Don't transformer l’accueil en grille de catalogue générique; la grille reste dans Explorer.",
+      "Don't utiliser le cyan comme action principale ni disperser le vert et l’ambre hors de leurs raccourcis d’humeur.",
+      "Don't ajouter des ombres à toutes les cartes; la séparation tonale est le comportement par défaut.",
+      "Don't masquer la pochette, la progression ou les contrôles essentiels derrière un traitement décoratif.",
+      "Don't figer les couleurs sombres quand une palette Sonora ou le mode AMOLED fournit les rôles actifs."
+    ]
+  }
+}

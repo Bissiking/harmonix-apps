@@ -9,14 +9,15 @@ abstract final class AppTheme {
         useMaterial3: true,
         colorScheme: HarmonixColors.darkFromPalette(palette),
         scaffoldBackgroundColor: palette.darkBackground,
+        canvasColor: palette.darkBackground,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: false,
           titleTextStyle: TextStyle(
             color: palette.text,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
           ),
           iconTheme: IconThemeData(color: palette.text),
         ),
@@ -26,6 +27,29 @@ abstract final class AppTheme {
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          height: 72,
+          backgroundColor: palette.darkSurface,
+          indicatorColor: palette.accent.withValues(alpha: 0.18),
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              color: states.contains(WidgetState.selected)
+                  ? palette.accent
+                  : palette.text.withValues(alpha: 0.58),
+              fontSize: 11,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+            ),
+          ),
+          iconTheme: WidgetStateProperty.resolveWith(
+            (states) => IconThemeData(
+              color: states.contains(WidgetState.selected)
+                  ? palette.accent
+                  : palette.text.withValues(alpha: 0.58),
+            ),
+          ),
         ),
         navigationRailTheme: NavigationRailThemeData(
           backgroundColor: palette.darkSurface,
@@ -42,7 +66,7 @@ abstract final class AppTheme {
           color: palette.darkSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
         dividerTheme: DividerThemeData(
@@ -61,10 +85,27 @@ abstract final class AppTheme {
           thumbColor: palette.accent,
           overlayColor: palette.accent.withValues(alpha: 0.2),
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: palette.darkCard,
+          hintStyle: TextStyle(color: palette.text.withValues(alpha: 0.45)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: palette.accent),
+          ),
+        ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),
@@ -72,7 +113,7 @@ abstract final class AppTheme {
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),
@@ -162,8 +203,10 @@ abstract final class AppTheme {
       );
 
   static TextTheme _textTheme(Color color) => TextTheme(
+        displaySmall:
+            TextStyle(fontWeight: FontWeight.w800, color: color, fontSize: 36),
         headlineMedium:
-            TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 24),
+            TextStyle(fontWeight: FontWeight.w800, color: color, fontSize: 28),
         headlineSmall:
             TextStyle(fontWeight: FontWeight.w700, color: color, fontSize: 20),
         titleLarge:

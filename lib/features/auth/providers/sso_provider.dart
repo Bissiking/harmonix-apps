@@ -92,12 +92,15 @@ class SsoController extends StateNotifier<SsoState> {
       return;
     }
     try {
-      final token =
-          await _ref.read(ssoRepositoryProvider).getToken(stateId);
-      if (token == null || token.isEmpty) return; // pas encore prêt
+      final tokens = await _ref.read(ssoRepositoryProvider).getTokens(stateId);
+      if (tokens == null) return; // pas encore prêt
       _stopPolling();
       _activeState = null;
-      await _ref.read(settingsRepositoryProvider).setAuthToken(token);
+      await _ref.read(settingsRepositoryProvider).setAuthSession(
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            expiresInSeconds: tokens.expiresInSeconds,
+          );
       _ref.invalidate(dioProvider);
       _ref.invalidate(authTokenProvider);
       _ref.invalidate(bootstrapProvider);

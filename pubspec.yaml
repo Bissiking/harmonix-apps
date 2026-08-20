@@ -1,7 +1,7 @@
 name: harmonix_apps
 description: Cross-platform music streaming app for Android, iOS, Android Auto, and Desktop.
 publish_to: 'none'
-version: 3.0.0+3000
+version: 3.1.0
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -37,6 +37,10 @@ dependencies:
 
   # Images
   cached_network_image: ^3.4.1
+  cached_network_image_platform_interface: ^4.1.1
+
+  # Web (blob URLs for authenticated audio on Flutter Web)
+  web: ^1.1.1
 
   # Storage
   shared_preferences: ^2.3.0

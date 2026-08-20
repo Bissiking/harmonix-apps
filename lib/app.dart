@@ -6,6 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'package:harmonix_apps/core/navigation/app_router_provider.dart';
 import 'package:harmonix_apps/core/audio/session_reconnect_provider.dart';
+import 'package:harmonix_apps/core/session/auth_refresh_service.dart';
 import 'package:harmonix_apps/core/platform/auto_bridge.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/theme/theme_provider.dart';
@@ -45,18 +46,20 @@ class _HarmonixAppState extends ConsumerState<HarmonixApp> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(sessionKeepAliveProvider);
     ref.watch(riftPlaybackSyncProvider);
     ref.watch(sessionReconnectProvider);
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final themePalette = ref.watch(themeControllerProvider);
+    final themeMode = ref.watch(themeModeProvider);
     final isDev = _isDevServer(settings.serverUrl);
     return MaterialApp.router(
       title: 'Harmonix',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark(themePalette),
-      themeMode: settings.themeMode,
+      themeMode: themeMode,
       routerConfig: router,
       builder: (context, child) {
         final content = child ?? const SizedBox.shrink();

@@ -70,9 +70,12 @@ class HarmonixInterceptor extends Interceptor {
       _ => UnknownException(err.message ?? 'unknown'),
     };
 
-    if (mapped is NetworkTimeoutException ||
-        mapped is NetworkException ||
-        mapped is UnauthorizedException) {
+    final suppressLoginRedirect =
+        err.requestOptions.extra['suppress_login_redirect'] == true;
+    if (!suppressLoginRedirect &&
+        (mapped is NetworkTimeoutException ||
+            mapped is NetworkException ||
+            mapped is UnauthorizedException)) {
       onConnectionFailure?.call(mapped);
     }
 

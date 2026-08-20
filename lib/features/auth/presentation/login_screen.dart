@@ -2,16 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
-
 import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
-import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/features/auth/providers/sso_provider.dart';
-import 'package:harmonix_apps/features/bootstrap/providers/bootstrap_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -23,10 +18,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   late final TextEditingController _urlController;
-  late final TextEditingController _identifierController;
-  late final TextEditingController _passwordController;
-  bool _isSubmitting = false;
-  bool _remember = true;
   bool _changeServer = false;
 
   @override
@@ -34,15 +25,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.initState();
     final settings = ref.read(settingsRepositoryProvider);
     _urlController = TextEditingController(text: settings.serverUrl);
-    _identifierController = TextEditingController();
-    _passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
     _urlController.dispose();
-    _identifierController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -55,90 +42,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ref.invalidate(dioProvider);
   }
 
-  Future<void> _login() async {
-    final identifier = _identifierController.text.trim();
-    final password = _passwordController.text;
-    if (identifier.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Identifiant et mot de passe requis.')),
-      );
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-    try {
-      await _saveServerIfChanged();
-      final dio = ref.read(dioProvider);
-      final response = await dio.post(
-        '/api/auth/login',
-        options: Options(contentType: Headers.jsonContentType),
-        data: {
-          'identifier': identifier,
-          'password': password,
-          'remember': _remember,
-        },
-      );
-      final data = response.data;
-      if (data is! Map<String, dynamic>) {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          message: 'Réponse inattendue',
-        );
-      }
-      if (data['ok'] != true) {
-        final code = data['code'] as String?;
-        throw DioException(
-          requestOptions: response.requestOptions,
-          message: code ?? 'auth_failed',
-          response: response,
-        );
-      }
-      final token = data['access_token'] as String? ??
-          (data['session'] as Map?)?['access_token'] as String?;
-      if (token == null || token.isEmpty) {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          message: 'Token manquant',
-        );
-      }
-
-      await ref.read(settingsRepositoryProvider).setAuthToken(token);
-      ref.invalidate(dioProvider);
-      ref.invalidate(authTokenProvider);
-      ref.invalidate(bootstrapProvider);
-      ref.read(requireLoginProvider.notifier).state = false;
-      TextInput.finishAutofillContext(shouldSave: true);
-      if (!mounted) return;
-      context.goNamed(RouteNames.splash);
-    } on DioException catch (error) {
-      if (!mounted) return;
-      final code = (error.response?.data is Map<String, dynamic>)
-          ? (error.response?.data['code'] as String?)
-          : null;
-      final friendly = switch (code) {
-        'unsupported_media_type' => 'Format non supporté.',
-        'missing_credentials' => 'Identifiants manquants.',
-        'invalid_credentials' => 'Identifiants invalides.',
-        'too_many_attempts' => 'Trop de tentatives, réessaie plus tard.',
-        'auth_failed' => 'Échec de l’authentification.',
-        _ => null,
-      };
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            friendly ?? 'Connexion échouée: ${error.message ?? 'erreur'}',
-          ),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsRepositoryProvider);
     final sso = ref.watch(ssoProvider);
+    final busy = sso.busy;
 
     ref.listen(ssoProvider, (previous, next) {
       if (next.phase == SsoPhase.done && previous?.phase != SsoPhase.done) {
@@ -152,149 +60,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Image.asset(
-                  'assets/images/logo_harmonix.png',
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Connexion',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Connecte-toi pour activer les API Harmonix.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.white70),
-                ),
-                const SizedBox(height: 24),
-                _buildServerSection(context, settings),
-                const SizedBox(height: 16),
-                AutofillGroup(
-                  child: Column(
-                    children: [
-                      TextField(
-                        controller: _identifierController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email ou pseudo',
-                          hintText: 'toi@exemple.com',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [
-                          AutofillHints.username,
-                          AutofillHints.email,
-                        ],
-                        textInputAction: TextInputAction.next,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'Mot de passe',
-                          border: OutlineInputBorder(),
-                        ),
-                        autofillHints: const [AutofillHints.password],
-                        textInputAction: TextInputAction.done,
-                        onSubmitted: (_) {
-                          if (!_isSubmitting) _login();
-                        },
-                        obscureText: true,
-                        autocorrect: false,
-                        enableSuggestions: false,
-                      ),
-                    ],
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/images/logo_harmonix.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.contain,
                   ),
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  value: _remember,
-                  onChanged: (value) => setState(() => _remember = value),
-                  title: const Text('Rester connecté'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _isSubmitting ? null : _login,
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Se connecter'),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    const Expanded(child: Divider(color: Colors.white24)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text(
-                        'ou',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: Colors.white54),
-                      ),
-                    ),
-                    const Expanded(child: Divider(color: Colors.white24)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.tonalIcon(
-                    onPressed:
-                        (_isSubmitting || sso.busy) ? null : () => _startSso(),
-                    icon: sso.busy
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.person_pin_outlined),
-                    label: Text(
-                      sso.phase == SsoPhase.waiting
-                          ? 'En attente du navigateur…'
-                          : 'Se connecter avec SSO',
-                    ),
-                  ),
-                ),
-                if (sso.error != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
                   Text(
-                    sso.error!,
+                    'Connexion',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Connecte-toi avec ton compte Kyros pour activer les API Harmonix.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent),
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium
+                        ?.copyWith(color: Colors.white70),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: busy ? null : _startSso,
+                      icon: busy
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.person_pin_outlined),
+                      label: Text(
+                        busy
+                            ? 'En attente du navigateur…'
+                            : 'Connexion avec Kyros',
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                  if (sso.error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      sso.error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  _buildServerSection(context, settings),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(ssoProvider.notifier).reset();
+                      ref.read(requireLoginProvider.notifier).state = false;
+                      context.goNamed(RouteNames.splash);
+                    },
+                    child: const Text('Retour'),
                   ),
                 ],
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    ref.read(ssoProvider.notifier).reset();
-                    ref.read(requireLoginProvider.notifier).state = false;
-                    context.goNamed(RouteNames.splash);
-                  },
-                  child: const Text('Retour'),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -302,11 +138,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Future<void> _startSso() {
+  Future<void> _startSso() async {
+    await _saveServerIfChanged();
     return ref.read(ssoProvider.notifier).start();
   }
 
-  Widget _buildServerSection(BuildContext context, SettingsRepository settings) {
+  Widget _buildServerSection(
+      BuildContext context, SettingsRepository settings) {
     final color = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -335,7 +173,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           const SizedBox(height: 4),
           CheckboxListTile(
             value: _changeServer,
-            onChanged: (value) => setState(() => _changeServer = value ?? false),
+            onChanged: (value) =>
+                setState(() => _changeServer = value ?? false),
             dense: true,
             controlAffinity: ListTileControlAffinity.leading,
             contentPadding: EdgeInsets.zero,

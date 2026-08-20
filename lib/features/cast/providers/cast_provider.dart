@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/features/catalog/data/catalog_repository.dart';
 import 'package:harmonix_apps/features/cast/data/cast_repository.dart';
@@ -62,6 +64,9 @@ class CastController extends StateNotifier<CastState> {
   Timer? _pollTimer;
   DateTime _lastSyncAt = DateTime.fromMillisecondsSinceEpoch(0);
   DateTime _ignoreSyncUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  String? _lastAppliedSessionId;
+  String? _lastAppliedSignature;
+  final Map<String, Track> _remoteTrackCache = {};
 
   Future<void> start({String role = 'host'}) async {
     final handler = _ref.read(audioHandlerProvider);
@@ -117,7 +122,8 @@ class CastController extends StateNotifier<CastState> {
             code: code,
             role: role,
           );
-      final session = await _ref.read(castRepositoryProvider).getSession(sessionId);
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
       state = state.copyWith(
         connecting: false,
         sessionId: sessionId,
@@ -131,6 +137,43 @@ class CastController extends StateNotifier<CastState> {
       state = state.copyWith(
         connecting: false,
         error: 'Impossible de rejoindre la session RIFT',
+      );
+    }
+  }
+
+  Future<void> joinByCode({
+    required String code,
+    String role = 'listen',
+  }) async {
+    final normalizedCode = code.trim().toUpperCase();
+    if (normalizedCode.isEmpty) {
+      state = state.copyWith(error: 'Saisis le code de la séance');
+      return;
+    }
+    state = state.copyWith(connecting: true, clearError: true);
+    try {
+      final sessionId =
+          await _ref.read(castRepositoryProvider).joinSessionByCode(
+                code: normalizedCode,
+                deviceId: _deviceId(_ref),
+                role: role,
+              );
+      if (sessionId == null) throw StateError('session_id_missing');
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
+      state = state.copyWith(
+        connecting: false,
+        sessionId: sessionId,
+        sessionCode: _readSessionCode(session) ?? normalizedCode,
+        role: role,
+        lastSession: session,
+      );
+      await _ref.read(settingsRepositoryProvider).setRiftSessionId(sessionId);
+      _startPolling();
+    } catch (_) {
+      state = state.copyWith(
+        connecting: false,
+        error: 'Code introuvable ou séance terminée',
       );
     }
   }
@@ -168,8 +211,12 @@ class CastController extends StateNotifier<CastState> {
             ),
           );
       state = state.copyWith(stateVersion: nextVersion, clearError: true);
-    } catch (_) {
-      state = state.copyWith(error: 'Synchronisation RIFT échouée');
+    } catch (error) {
+      if (_isSessionGone(error)) {
+        await _handleSessionGone();
+      } else {
+        state = state.copyWith(error: 'Synchronisation RIFT échouée');
+      }
     }
   }
 
@@ -177,7 +224,8 @@ class CastController extends StateNotifier<CastState> {
     final sessionId = state.sessionId;
     if (sessionId == null) return;
     try {
-      final session = await _ref.read(castRepositoryProvider).getSession(sessionId);
+      final session =
+          await _ref.read(castRepositoryProvider).getSession(sessionId);
       await _applyRemoteState(session);
       state = state.copyWith(
         lastSession: session,
@@ -185,8 +233,12 @@ class CastController extends StateNotifier<CastState> {
         role: _readMyRole(session) ?? state.role,
         clearError: true,
       );
-    } catch (_) {
-      state = state.copyWith(error: 'Lecture de session RIFT échouée');
+    } catch (error) {
+      if (_isSessionGone(error)) {
+        await _handleSessionGone();
+      } else {
+        state = state.copyWith(error: 'Lecture de session RIFT échouée');
+      }
     }
   }
 
@@ -222,7 +274,8 @@ class CastController extends StateNotifier<CastState> {
     required bool isPlaying,
     int? positionSeconds,
     String? trackId,
-  }) => _sendAction(
+  }) =>
+      _sendAction(
         'playback_state',
         payload: {
           'is_playing': isPlaying,
@@ -252,7 +305,8 @@ class CastController extends StateNotifier<CastState> {
     }
   }
 
-  Future<void> _sendAction(String action, {Map<String, dynamic>? payload}) async {
+  Future<void> _sendAction(String action,
+      {Map<String, dynamic>? payload}) async {
     final sessionId = state.sessionId;
     if (sessionId == null) return;
     try {
@@ -263,8 +317,12 @@ class CastController extends StateNotifier<CastState> {
             payload: payload,
           );
       state = state.copyWith(clearError: true);
-    } catch (_) {
-      state = state.copyWith(error: 'Action RIFT "$action" échouée');
+    } catch (error) {
+      if (_isSessionGone(error)) {
+        await _handleSessionGone();
+      } else {
+        state = state.copyWith(error: 'Action RIFT "$action" échouée');
+      }
     }
   }
 
@@ -291,10 +349,28 @@ class CastController extends StateNotifier<CastState> {
     _pollTimer = null;
   }
 
+  bool _isSessionGone(Object error) {
+    if (error is! DioException) return false;
+    final status = error.response?.statusCode;
+    return status == 404 || status == 405;
+  }
+
+  Future<void> _handleSessionGone() async {
+    _stopPolling();
+    await _ref.read(settingsRepositoryProvider).setRiftSessionId(null);
+    state = const CastState();
+  }
+
   Future<void> _applyRemoteState(Map<String, dynamic>? session) async {
     if (session == null) return;
     final myRole = _readMyRole(session) ?? state.role;
     if (myRole == 'host') return;
+
+    if (_lastAppliedSessionId != state.sessionId) {
+      _lastAppliedSessionId = state.sessionId;
+      _lastAppliedSignature = null;
+      _remoteTrackCache.clear();
+    }
 
     final rootPlayback = session['playback'];
     final statePlayback = (session['state'] as Map?)?['playback'];
@@ -323,16 +399,36 @@ class CastController extends StateNotifier<CastState> {
     final player = _ref.read(playerProvider.notifier);
     final handler = _ref.read(audioHandlerProvider);
 
+    final signature = [
+      queueIds.join('|'),
+      remoteTrackId is String ? remoteTrackId : '',
+      remoteIsPlaying,
+      remoteRepeat,
+      remoteShuffle,
+    ].join('~');
+
+    if (signature == _lastAppliedSignature) {
+      if (remotePos is num) {
+        final target = Duration(seconds: remotePos.toInt());
+        final current = handler.playbackState.value.updatePosition;
+        if ((target - current).abs() > const Duration(seconds: 5)) {
+          _ignoreSyncUntil = DateTime.now().add(const Duration(seconds: 2));
+          await player.seek(target);
+        }
+      }
+      return;
+    }
+    _lastAppliedSignature = signature;
+
     if (queueIds.isNotEmpty) {
-      final tracks = <dynamic>[];
+      final tracks = <Track>[];
       for (final id in queueIds) {
-        try {
-          final track = await _ref.read(catalogRepositoryProvider).getTrack(id);
-          tracks.add(track);
-        } catch (_) {}
+        final track = await _getOrFetchTrack(id);
+        if (track != null) tracks.add(track);
       }
       if (tracks.isNotEmpty) {
-        final idx = remoteTrackId is String ? queueIds.indexOf(remoteTrackId) : -1;
+        final idx =
+            remoteTrackId is String ? queueIds.indexOf(remoteTrackId) : -1;
         if (idx >= 0 && idx < tracks.length) {
           _ignoreSyncUntil = DateTime.now().add(const Duration(seconds: 2));
           await player.playFromQueue(List.from(tracks), idx);
@@ -342,7 +438,8 @@ class CastController extends StateNotifier<CastState> {
       final currentTrackId = handler.mediaItem.value?.id;
       if (currentTrackId != remoteTrackId) {
         try {
-          final track = await _ref.read(catalogRepositoryProvider).getTrack(remoteTrackId);
+          final track = await _getOrFetchTrack(remoteTrackId);
+          if (track == null) return;
           _ignoreSyncUntil = DateTime.now().add(const Duration(seconds: 2));
           await player.playTrack(track);
         } catch (_) {}
@@ -368,6 +465,18 @@ class CastController extends StateNotifier<CastState> {
       } else {
         await player.pause();
       }
+    }
+  }
+
+  Future<Track?> _getOrFetchTrack(String id) async {
+    final cached = _remoteTrackCache[id];
+    if (cached != null) return cached;
+    try {
+      final track = await _ref.read(catalogRepositoryProvider).getTrack(id);
+      _remoteTrackCache[id] = track;
+      return track;
+    } catch (_) {
+      return null;
     }
   }
 
