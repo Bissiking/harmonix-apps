@@ -8,6 +8,7 @@ import 'dart:math' as math;
 import 'package:harmonix_apps/core/utils/duration_formatter.dart';
 import 'package:harmonix_apps/features/cast/presentation/cast_sheet.dart';
 import 'package:harmonix_apps/features/cast/providers/google_cast_provider.dart';
+import 'package:harmonix_apps/features/player/presentation/lyrics_view.dart';
 import 'package:harmonix_apps/features/player/providers/now_playing_provider.dart';
 import 'package:harmonix_apps/features/player/providers/playback_position_provider.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
@@ -111,6 +112,12 @@ class FullPlayerScreen extends ConsumerWidget {
         ),
         title: const Text('Lecteur'),
         actions: [
+          if (!(MediaQuery.sizeOf(context).width >= 860))
+            IconButton(
+              tooltip: 'Paroles',
+              icon: const Icon(Icons.lyrics_outlined),
+              onPressed: () => showLyricsDialog(context, nowPlaying.id),
+            ),
           IconButton(
             tooltip: useCast
                 ? 'Cast vers ${cast.deviceName}'
@@ -152,8 +159,11 @@ class FullPlayerScreen extends ConsumerWidget {
                         const SizedBox(width: 16),
                         Expanded(
                           flex: 2,
-                          child: _QueuePanel(
-                              queue: queue, currentId: nowPlaying.id),
+                          child: _SidePanel(
+                            trackId: nowPlaying.id,
+                            queue: queue,
+                            currentId: nowPlaying.id,
+                          ),
                         ),
                       ],
                     )
@@ -360,9 +370,14 @@ class _NowPlayingPanel extends ConsumerWidget {
       };
 }
 
-class _QueuePanel extends StatelessWidget {
-  const _QueuePanel({required this.queue, required this.currentId});
+class _SidePanel extends StatelessWidget {
+  const _SidePanel({
+    required this.trackId,
+    required this.queue,
+    required this.currentId,
+  });
 
+  final String trackId;
   final List<MediaItem> queue;
   final String currentId;
 
@@ -373,54 +388,96 @@ class _QueuePanel extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-            child: Text(
-              'À suivre',
-              style: Theme.of(context).textTheme.titleMedium,
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: TabBar(
+                dividerColor: Colors.transparent,
+                tabs: [Tab(text: 'À suivre'), Tab(text: 'Paroles')],
+              ),
             ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.builder(
-              itemCount: queue.length,
-              itemBuilder: (_, i) {
-                final item = queue[i];
-                final isCurrent = item.id == currentId;
-                return ListTile(
-                  dense: true,
-                  title: Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    item.artist ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: isCurrent
-                      ? Icon(
-                          Icons.equalizer,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : (item.duration != null
-                          ? Text(
-                              formatMs(item.duration!.inMilliseconds),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            )
-                          : null),
-                );
-              },
+            const SizedBox(height: 4),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _QueueList(queue: queue, currentId: currentId),
+                  LyricsView(trackId: trackId),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+}
+
+class _QueueList extends StatelessWidget {
+  const _QueueList({required this.queue, required this.currentId});
+
+  final List<MediaItem> queue;
+  final String currentId;
+
+  @override
+  Widget build(BuildContext context) {
+    if (queue.isEmpty) {
+      return const Center(child: Text('File vide.'));
+    }
+    return ListView.builder(
+      itemCount: queue.length,
+      itemBuilder: (_, i) {
+        final item = queue[i];
+        final isCurrent = item.id == currentId;
+        return ListTile(
+          dense: true,
+          title: Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            item.artist ?? '',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: isCurrent
+              ? Icon(
+                  Icons.equalizer,
+                  color: Theme.of(context).colorScheme.primary,
+                )
+              : (item.duration != null
+                  ? Text(
+                      formatMs(item.duration!.inMilliseconds),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
+                  : null),
+        );
+      },
+    );
+  }
+}
+
+Future<void> showLyricsDialog(BuildContext context, String trackId) {
+  return showDialog<void>(
+    context: context,
+    builder: (context) => Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Paroles'),
+          leading: IconButton(
+            tooltip: 'Fermer',
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ),
+        body: LyricsView(trackId: trackId),
+      ),
+    ),
+  );
 }
 
 class _PlayPauseButton extends StatelessWidget {

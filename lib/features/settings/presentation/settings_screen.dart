@@ -68,8 +68,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   _ProfileAction(
                     icon: Icons.graphic_eq_rounded,
-                    label: 'Mes séances',
-                    onTap: () => context.go('/sessions'),
+                    label: 'Rift',
+                    onTap: () => context.go('/rift'),
                   ),
                 ],
               ),

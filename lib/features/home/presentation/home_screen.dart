@@ -354,7 +354,7 @@ class _QuickActions extends StatelessWidget {
       ),
       ('Albums', Icons.album_outlined, '/catalog', Color(0xFF67D7F0)),
       ('Recherche', Icons.travel_explore_rounded, '/search', Color(0xFF66D6A8)),
-      ('À plusieurs', Icons.groups_2_outlined, '/sessions', Color(0xFFFFB85C)),
+      ('Rift', Icons.groups_2_outlined, '/rift', Color(0xFFFFB85C)),
     ];
     return LayoutBuilder(
       builder: (context, constraints) {

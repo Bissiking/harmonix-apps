@@ -48,7 +48,7 @@ class AlbumDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '${a.tracks.length} pistes • ${formatMs(a.totalDurationMs)}',
+              '${a.tracks.isNotEmpty ? a.tracks.length : a.trackCount} pistes • ${formatMs(a.totalDurationMs)}',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -57,8 +57,11 @@ class AlbumDetailScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () =>
-                        ref.read(playerProvider.notifier).playFromQueue(a.tracks, 0),
+                    onPressed: a.tracks.isEmpty
+                        ? null
+                        : () => ref
+                            .read(playerProvider.notifier)
+                            .playFromQueue(a.tracks, 0),
                     icon: const Icon(Icons.play_arrow),
                     label: const Text('Lire'),
                   ),
@@ -66,10 +69,14 @@ class AlbumDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final shuffled = [...a.tracks]..shuffle(Random());
-                      await ref.read(playerProvider.notifier).playFromQueue(shuffled, 0);
-                    },
+                    onPressed: a.tracks.isEmpty
+                        ? null
+                        : () async {
+                            final shuffled = [...a.tracks]..shuffle(Random());
+                            await ref
+                                .read(playerProvider.notifier)
+                                .playFromQueue(shuffled, 0);
+                          },
                     icon: const Icon(Icons.shuffle),
                     label: const Text('Shuffle'),
                   ),
@@ -77,6 +84,8 @@ class AlbumDetailScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+            if (a.tracks.isEmpty)
+              const Center(child: Text('Aucune piste disponible.')),
             for (var i = 0; i < a.tracks.length; i++)
               TrackListTile(
                 track: a.tracks[i],

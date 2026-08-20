@@ -6,8 +6,9 @@ abstract final class RouteNames {
   static const albumDetail = 'album-detail';
   static const search = 'search';
   static const library = 'library';
+  static const playlistDetail = 'playlist-detail';
   static const settings = 'settings';
   static const login = 'login';
   static const player = 'player';
-  static const sessions = 'sessions';
+  static const rift = 'rift';
 }

@@ -8,3 +8,5 @@ Future<({String url, Map<String, String>? headers})>
 }) async {
   return (url: url, headers: headers);
 }
+
+void revokeBlobUrl(String url) {}

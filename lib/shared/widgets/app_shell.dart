@@ -15,8 +15,8 @@ class AppShell extends StatelessWidget {
         'Explorer', Icons.search_outlined, Icons.search_rounded, '/catalog'),
     _Destination('Lecteur', Icons.play_circle_outline_rounded,
         Icons.play_circle_fill_rounded, '/player'),
-    _Destination('Séances', Icons.graphic_eq_outlined, Icons.graphic_eq_rounded,
-        '/sessions'),
+    _Destination('Rift', Icons.graphic_eq_outlined, Icons.graphic_eq_rounded,
+        '/rift'),
     _Destination('Profil', Icons.person_outline_rounded, Icons.person_rounded,
         '/settings'),
   ];
@@ -82,7 +82,7 @@ class AppShell extends StatelessWidget {
       return 1;
     }
     if (location.startsWith('/player')) return 2;
-    if (location.startsWith('/sessions')) return 3;
+    if (location.startsWith('/rift')) return 3;
     if (location.startsWith('/settings')) return 4;
     return 0;
   }

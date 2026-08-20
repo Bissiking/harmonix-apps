@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -14,6 +16,7 @@ import 'package:harmonix_apps/core/utils/stream_url_resolver.dart';
 part 'player_provider.g.dart';
 
 int _webQueueGeneration = 0;
+StreamSubscription<dynamic>? _webQueueSub;
 
 @riverpod
 class Player extends _$Player {
@@ -22,6 +25,8 @@ class Player extends _$Player {
 
   Future<void> playTrack(Track track) async {
     _webQueueGeneration++;
+    await _webQueueSub?.cancel();
+    _webQueueSub = null;
     final handler = ref.read(audioHandlerProvider);
     final settings = ref.read(settingsRepositoryProvider);
     final baseUrl = settings.serverUrl;
@@ -85,6 +90,8 @@ class Player extends _$Player {
 
     _webQueueGeneration++;
     final generation = _webQueueGeneration;
+    await _webQueueSub?.cancel();
+    _webQueueSub = null;
 
     final rotated = [
       ...tracks.sublist(index),
@@ -105,38 +112,76 @@ class Player extends _$Player {
     await handler.loadQueueIncremental(items, initial.url, initialIndex: 0);
     await handler.play();
 
-    _resolveQueueInBackground(
+    _webQueueSub = _maintainWebQueueWindow(
       generation: generation,
       handler: handler,
       items: items,
       urls: urls,
       headers: headers,
       dio: dio,
+      initialBlobUrl: initial.url,
     );
   }
 
-  Future<void> _resolveQueueInBackground({
+  StreamSubscription<dynamic> _maintainWebQueueWindow({
     required int generation,
     required HarmonixAudioHandler handler,
     required List<MediaItem> items,
     required List<String> urls,
     required Map<String, String>? headers,
     required Dio dio,
-  }) async {
-    for (var i = 1; i < urls.length; i++) {
-      if (generation != _webQueueGeneration) return;
-      try {
-        final resolved = await resolvePlayableStreamUrl(
-          url: urls[i],
-          headers: headers,
-          dio: dio,
-        );
-        if (generation != _webQueueGeneration) return;
-        await handler.appendQueueItem(resolved.url, items[i]);
-      } catch (_) {
-        // Skip tracks that cannot be resolved; the queue stays playable.
+    required String initialBlobUrl,
+  }) {
+    const window = 12;
+    const keepBehind = 6;
+    var target = window + 1;
+    var maxResolved = 1;
+    final blobUrls = <int, String>{0: initialBlobUrl};
+
+    late StreamSubscription<dynamic> sub;
+    sub = handler.player.currentIndexStream.listen((index) async {
+      if (generation != _webQueueGeneration) {
+        await sub.cancel();
+        return;
+      }
+      final current = index ?? 0;
+      final nextTarget = current + window + 1;
+      if (nextTarget > target) target = nextTarget;
+
+      final revokeBefore = current - keepBehind;
+      for (final entry in blobUrls.entries.toList()) {
+        if (entry.key < revokeBefore) {
+          revokeBlobUrl(entry.value);
+          blobUrls.remove(entry.key);
+        }
+      }
+    });
+
+    Future<void> resolverLoop() async {
+      while (generation == _webQueueGeneration) {
+        if (maxResolved >= urls.length) return;
+        if (maxResolved < target) {
+          final i = maxResolved++;
+          try {
+            final resolved = await resolvePlayableStreamUrl(
+              url: urls[i],
+              headers: headers,
+              dio: dio,
+            );
+            if (generation != _webQueueGeneration) return;
+            await handler.appendQueueItem(resolved.url, items[i]);
+            blobUrls[i] = resolved.url;
+          } catch (_) {
+            // Skip unresolvable tracks; the queue stays playable.
+          }
+        } else {
+          await Future<void>.delayed(const Duration(milliseconds: 250));
+        }
       }
     }
+    unawaited(resolverLoop());
+
+    return sub;
   }
 
   String _resolveStreamUrl(String baseUrl, Track track) {

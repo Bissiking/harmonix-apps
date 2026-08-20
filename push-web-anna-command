@@ -1,3 +1,4 @@
-flutter build web --release --dart-define=HARMONIX_API_BASE_URL=https://sonora.mhemery.fr
+flutter build web --release --dart-define=HARMONIX_API_BASE_URL=https://sonora.mhemery.fr \
+  && cp web/flutter_service_worker.js build/web/flutter_service_worker.js
 
-scp -r build/web/* root@185.216.25.21:/opt/stack/harmonix
+rsync -a --delete build/web/ root@185.216.25.21:/opt/stack/harmonix/

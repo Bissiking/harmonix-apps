@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -45,6 +46,7 @@ class TrackArtwork extends ConsumerWidget {
             ? CachedNetworkImage(
                 imageUrl: url,
                 httpHeaders: headers ?? const {},
+                imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
