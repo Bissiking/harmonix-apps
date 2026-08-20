@@ -1,3 +1,3 @@
 flutter build web --release --dart-define=HARMONIX_API_BASE_URL=https://sonora.mhemery.fr
 
-scp -r build/web/* root:5Kd^qyGl9iqcG8D8$*zqshfn$8FLAwmHxGGGMxgJ2pWTlQoC3spx&ZrN6keCWun5pTQnoH2SoEN8xzLa53Hw2PqSrbD*B7^$pFW@lfuo257bgP&39g4y82p47oUo5gix@185.216.25.21:/opt/stack/harmonix
+scp -r build/web/* root@185.216.25.21:/opt/stack/harmonix
