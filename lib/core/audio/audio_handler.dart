@@ -20,8 +20,9 @@ class HarmonixAudioHandler extends BaseAudioHandler
     _player.loopModeStream.listen((_) => _rebroadcastState());
     _player.shuffleModeEnabledStream.listen((_) => _rebroadcastState());
     _player.processingStateStream.listen((state) {
-      if (state == ProcessingState.completed) {
-        skipToNext();
+      if (state == ProcessingState.completed && !_isSkipping) {
+        _isSkipping = true;
+        skipToNext().whenComplete(() => _isSkipping = false);
       }
     });
   }
@@ -30,6 +31,15 @@ class HarmonixAudioHandler extends BaseAudioHandler
   PlaybackEvent? _lastPlaybackEvent;
   DateTime _lastPlaybackLog = DateTime.fromMillisecondsSinceEpoch(0);
   ConcatenatingAudioSource? _incrementalSource;
+  bool _isSkipping = false;
+
+  /// Throttle for desktop: prevent _broadcastState from firing more than once
+  /// per [_broadcastMinInterval]. On mobile AudioService buffers events; on
+  /// desktop we use the raw handler so we must throttle ourselves.
+  DateTime _lastBroadcast = DateTime.fromMillisecondsSinceEpoch(0);
+  ProcessingState _lastBroadcastProcessingState = ProcessingState.idle;
+  bool _lastBroadcastPlaying = false;
+  static const Duration _broadcastMinInterval = Duration(milliseconds: 200);
 
   AudioPlayer get player => _player;
 
@@ -143,9 +153,9 @@ class HarmonixAudioHandler extends BaseAudioHandler
     if (_player.hasNext) {
       await _player.seekToNext();
       await _player.play();
-      final idx = _player.currentIndex ?? 0;
-      final q = queue.value;
-      if (idx < q.length) mediaItem.add(q[idx]);
+      // mediaItem is already updated by the currentIndexStream listener –
+      // no need to push it again here (avoids a redundant rebuild storm
+      // especially on desktop where there is no AudioService buffering).
     }
   }
 
@@ -154,9 +164,6 @@ class HarmonixAudioHandler extends BaseAudioHandler
     if (_player.hasPrevious) {
       await _player.seekToPrevious();
       await _player.play();
-      final idx = _player.currentIndex ?? 0;
-      final q = queue.value;
-      if (idx < q.length) mediaItem.add(q[idx]);
     }
   }
 
@@ -201,6 +208,23 @@ class HarmonixAudioHandler extends BaseAudioHandler
   // ---------------------------------------------------------- State broadcast
 
   void _broadcastState(PlaybackEvent event) {
+    // Throttle on desktop to avoid flooding the UI isolate with position
+    // updates (~4-5 Hz).  Important state changes (processingState, playing)
+    // are always broadcast immediately.
+    if (!kIsWeb) {
+      final now = DateTime.now();
+      final elapsed = now.difference(_lastBroadcast);
+      final sameProcessingState =
+          _player.processingState == _lastBroadcastProcessingState;
+      final samePlaying = _player.playing == _lastBroadcastPlaying;
+      if (elapsed < _broadcastMinInterval && sameProcessingState && samePlaying) {
+        return;
+      }
+      _lastBroadcast = now;
+      _lastBroadcastProcessingState = _player.processingState;
+      _lastBroadcastPlaying = _player.playing;
+    }
+
     final playing = _player.playing;
     playbackState.add(
       playbackState.value.copyWith(

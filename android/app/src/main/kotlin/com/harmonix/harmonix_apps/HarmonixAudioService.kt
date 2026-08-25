@@ -60,7 +60,9 @@ class HarmonixAudioService : MediaBrowserServiceCompat() {
         super.onCreate()
         Log.d(TAG, "onCreate()")
 
-        // Reuse a cached FlutterEngine if available (shared with MainActivity)
+        // Create a dedicated FlutterEngine for this service.
+        // This engine is separate from MainActivity's engine (managed by
+        // AudioServicePlugin) so each side has its own Dart isolate.
         flutterEngine = FlutterEngineCache.getInstance().get(ENGINE_ID)
             ?: FlutterEngine(this).also { engine ->
                 GeneratedPluginRegistrant.registerWith(engine)

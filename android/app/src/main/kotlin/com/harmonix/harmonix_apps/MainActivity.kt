@@ -1,20 +1,30 @@
 package com.harmonix.harmonix_apps
 
-import android.content.Context
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.embedding.engine.FlutterEngineCache
 
 class MainActivity : AudioServiceActivity() {
-    override fun provideFlutterEngine(context: Context): FlutterEngine? {
-        return FlutterEngineCache.getInstance().get(HarmonixAudioService.ENGINE_ID)
-            ?: super.provideFlutterEngine(context)
-    }
-
+    /**
+     * Do NOT cache this engine in [FlutterEngineCache] under
+     * [HarmonixAudioService.ENGINE_ID].
+     *
+     * Previously [configureFlutterEngine] stored the activity's engine under
+     * the same key the Android Auto service uses.  When Android Auto started
+     * *before* the user opened the app the service created an engine, executed
+     * Dart's `main()`, and cached it.  When the activity later started it
+     * received the *same* engine in a partially-initialised state (bootstrap
+     * stuck, providers not ready) → infinite loading screen on the phone and
+     * broken library in Android Auto.
+     *
+     * By NOT caching the activity engine under the service's key, each side
+     * gets its own engine and Dart isolate.  The service's MethodChannel
+     * bridge still works because AutoBridge only registers its handler when
+     * called from the activity's [HarmonixApp] (app.dart).
+     */
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        // Share the UI FlutterEngine with Android Auto service so both sides use
-        // the same MethodChannel registrations and app state/providers.
-        FlutterEngineCache.getInstance().put(HarmonixAudioService.ENGINE_ID, flutterEngine)
+        // Do NOT put this engine into FlutterEngineCache – the Android Auto
+        // service (HarmonixAudioService) maintains its own separate engine
+        // under ENGINE_ID = "harmonix_engine".
     }
 }
