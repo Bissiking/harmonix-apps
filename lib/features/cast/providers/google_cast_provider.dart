@@ -7,17 +7,17 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/utils/image_url_builder.dart';
 
 /// Media transformer for Harmonix streams.
 ///
-/// HLS content is proxied as-is (the proxy rewrites the playlist so every
-/// segment is fetched with the app's auth headers). Any other format
-/// (MP3/AAC/M4A...) is wrapped in a single-segment HLS playlist so the
-/// Default Media Receiver can report a correct duration.
+/// Registers the original URL with the proxy (which injects auth headers)
+/// and returns the proxy URL directly.  For HLS content the proxy rewrites
+/// the playlist so every segment is fetched with the app's auth headers.
+/// For all other formats (MP3/AAC/M4A...) the raw audio is served through
+/// the proxy — the Default Media Receiver handles direct audio URLs natively.
 class HarmonixCastMediaTransformer implements MediaTransformer {
   const HarmonixCastMediaTransformer();
 
@@ -33,13 +33,15 @@ class HarmonixCastMediaTransformer implements MediaTransformer {
       );
     }
 
-    final durationSecs = media.duration != null
-        ? media.duration!.inMilliseconds / 1000.0
-        : null;
-    final hlsUrl = proxy.wrapInHlsPlaylist(proxyUrl, duration: durationSecs);
+    // Non-HLS audio: serve directly through the proxy without HLS wrapping.
+    // The previous approach wrapped raw MP3 in a single-segment HLS playlist,
+    // but the Chromecast cannot demux raw MP3 bytes as MPEG-TS/fMP4 segments.
+    // By passing the proxy URL directly the receiver fetches the audio stream
+    // natively.  CastMediaType.mp4 is used because the Cast protocol's media
+    // channel accepts it for direct streaming.
     return TransformedMedia(
-      proxyUrl: hlsUrl,
-      effectiveType: CastMediaType.hls,
+      proxyUrl: proxyUrl,
+      effectiveType: CastMediaType.mp4,
     );
   }
 }
@@ -338,13 +340,29 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
         token != null && token.isNotEmpty ? {'Authorization': 'Bearer $token'} : null;
 
     final url = streamUrl(baseUrl, item.id);
-    final type = await _detectMediaType(url, headers);
+
+    // Use a clean Dio instance (no interceptors) for the media-type probe.
+    // The app's dioProvider has AuthRefreshInterceptor which would trigger
+    // side effects (token refresh, login redirect) during a simple HEAD check.
+    final probeDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 3),
+      receiveTimeout: const Duration(seconds: 5),
+    ));
+    final type = await _detectMediaType(url, headers, probeDio);
+
+    // Re-read the token in case _detectMediaType's caller refreshed it
+    // through a different path.  The proxy needs valid auth headers.
+    final freshSettings = _ref.read(settingsRepositoryProvider);
+    final freshToken = freshSettings.authToken;
+    final freshHeaders = freshToken != null && freshToken.isNotEmpty
+        ? {'Authorization': 'Bearer $freshToken'}
+        : headers;
 
     final startPosition = _pendingStartPosition;
     final media = CastMedia(
       url: url,
       type: type,
-      httpHeaders: headers ?? const {},
+      httpHeaders: freshHeaders ?? const {},
       title: item.title,
       imageUrl: _artUrlForItem(baseUrl, item),
       duration: item.duration,
@@ -363,6 +381,7 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
       await session.loadMedia(media);
     } catch (e) {
       _casting = false;
+      debugPrint('[Cast] loadMedia failed for "${item.title}": $e');
       state = state.copyWith(
         casting: false,
         error: 'Échec de lecture sur ${state.deviceName}: $e',
@@ -373,10 +392,10 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
   Future<CastMediaType> _detectMediaType(
     String url,
     Map<String, String>? headers,
+    Dio probeDio,
   ) async {
     try {
-      final dio = _ref.read(dioProvider);
-      final response = await dio.get<dynamic>(
+      final response = await probeDio.get<dynamic>(
         url,
         options: Options(
           responseType: ResponseType.stream,
@@ -401,8 +420,11 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
           url.toLowerCase().contains('.m3u8')) {
         return CastMediaType.hls;
       }
-    } catch (_) {
-      // Probe failed — assume a plain audio file wrapped in HLS.
+      debugPrint('[Cast] detected content-type: $contentType');
+    } catch (e) {
+      debugPrint('[Cast] media type probe failed: $e — defaulting to mp4');
+    } finally {
+      probeDio.close();
     }
     return CastMediaType.mp4;
   }
@@ -461,6 +483,7 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
 
   void _onSessionState(SessionState sessionState) {
     if (_session == null) return;
+    final previousState = state.sessionState;
     final isPlaying = sessionState == SessionState.playing ||
         sessionState == SessionState.buffering;
     state = state.copyWith(
@@ -469,7 +492,24 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
     );
 
     if (sessionState == SessionState.idle) {
-      _scheduleAutoAdvance();
+      // Auto-advance only when a track finished normally (was playing/buffering
+      // before going idle).  If the session went idle right after loading
+      // started, the Chromecast rejected the media — surface an error instead
+      // of cycling through the entire queue.
+      if (previousState == SessionState.playing ||
+          previousState == SessionState.buffering) {
+        _scheduleAutoAdvance();
+      } else if (_casting) {
+        debugPrint(
+          '[Cast] session went idle during $previousState — possible playback error',
+        );
+        _casting = false;
+        state = state.copyWith(
+          casting: false,
+          error:
+              'La lecture sur ${state.deviceName} a échoué. Vérifiez que l\'appareil est accessible.',
+        );
+      }
     }
   }
 
