@@ -40,19 +40,15 @@
             </intent-filter>
         </activity>
 
-        <!-- Audio service (background playback + Android Auto) -->
+        <!-- Single media session for background playback and Android Auto. -->
         <service
-            android:name="com.harmonix.harmonix_apps.HarmonixAudioService"
+            android:name="com.ryanheise.audioservice.AudioService"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-        <service
-            android:name="com.ryanheise.audioservice.AudioService"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

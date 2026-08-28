@@ -12,7 +12,7 @@ Application de streaming audio cross-platform : **Android**, **iOS**, **Android 
 | Audio | just_audio + audio_service |
 | HTTP | Dio 5 + Retrofit |
 | Modèles | freezed + json_serializable |
-| Android Auto | MediaBrowserServiceCompat (Kotlin) |
+| Android Auto | audio_service / MediaBrowserServiceCompat |
 | Desktop window | window_manager |
 
 ## Prérequis
@@ -78,13 +78,14 @@ lib/
 
 ## Android Auto
 
-L'intégration Android Auto utilise un `MediaBrowserServiceCompat` natif Kotlin (`HarmonixAudioService`) qui communique avec Flutter via un `MethodChannel` (`com.harmonix.apps/auto`).
+L'intégration Android Auto utilise directement le `MediaBrowserServiceCompat` fourni par `audio_service`. Android Auto et l'application partagent ainsi la même `MediaSession` et le même player.
 
 **Flux :**
-1. Android Auto se connecte au service → `onGetRoot()` autorise l'accès
-2. Auto demande le contenu → `onLoadChildren()` appelle Flutter `getQueue`
-3. L'utilisateur tape une piste → `AutoMediaCallback.onPlayFromMediaId()` appelle Flutter `playFromId`
-4. Flutter met à jour `HarmonixAudioHandler` → l'état `MediaSession` se propage
+1. Android Auto se connecte au service `audio_service`
+2. `HarmonixAudioHandler.getChildren()` fournit le catalogue
+3. `search()` retourne les résultats du serveur Harmonix
+4. `playFromMediaId()` et `playFromSearch()` utilisent le player normal de l'application
+5. L'état de lecture et les métadonnées se propagent sur l'unique `MediaSession`
 
 ## Configuration serveur
 
@@ -115,4 +116,3 @@ dart run build_runner watch --delete-conflicting-outputs
 | `PUT /api/harmonix/apps/playback/state` | Sauvegarder état |
 | `GET /api/harmonix/apps/playback/resume-active` | Reprise rapide |
 | `GET /api/harmonix/apps/playback/resume/:trackId` | Reprise piste |
-
