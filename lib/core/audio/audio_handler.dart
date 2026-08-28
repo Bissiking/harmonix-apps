@@ -32,6 +32,9 @@ class HarmonixAudioHandler extends BaseAudioHandler
   DateTime _lastPlaybackLog = DateTime.fromMillisecondsSinceEpoch(0);
   ConcatenatingAudioSource? _incrementalSource;
   bool _isSkipping = false;
+  Future<List<MediaItem>> Function()? _androidAutoCatalogLoader;
+  Future<List<MediaItem>> Function(String query)? _androidAutoSearch;
+  Future<void> Function(String mediaId)? _androidAutoPlayFromMediaId;
 
   /// Throttle for desktop: prevent _broadcastState from firing more than once
   /// per [_broadcastMinInterval]. On mobile AudioService buffers events; on
@@ -42,6 +45,18 @@ class HarmonixAudioHandler extends BaseAudioHandler
   static const Duration _broadcastMinInterval = Duration(milliseconds: 200);
 
   AudioPlayer get player => _player;
+
+  /// Connects Android Auto's browse/search commands to the app repositories.
+  /// The callbacks are installed once Riverpod is ready in [AutoBridge].
+  void configureAndroidAuto({
+    required Future<List<MediaItem>> Function() loadCatalog,
+    required Future<List<MediaItem>> Function(String query) search,
+    required Future<void> Function(String mediaId) playFromMediaId,
+  }) {
+    _androidAutoCatalogLoader = loadCatalog;
+    _androidAutoSearch = search;
+    _androidAutoPlayFromMediaId = playFromMediaId;
+  }
 
   // ------------------------------------------------------------------ Queue
 
@@ -134,6 +149,84 @@ class HarmonixAudioHandler extends BaseAudioHandler
   // --------------------------------------------------- BaseAudioHandler API
 
   @override
+  Future<List<MediaItem>> getChildren(
+    String parentMediaId, [
+    Map<String, dynamic>? options,
+  ]) async {
+    final loader = _androidAutoCatalogLoader;
+    if (loader == null) return queue.value;
+    try {
+      return await loader();
+    } catch (_) {
+      return queue.value;
+    }
+  }
+
+  @override
+  Future<List<MediaItem>> search(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) return getChildren('root');
+    final searchCatalog = _androidAutoSearch;
+    if (searchCatalog == null) {
+      final lowerQuery = normalizedQuery.toLowerCase();
+      return queue.value
+          .where(
+            (item) =>
+                item.title.toLowerCase().contains(lowerQuery) ||
+                (item.artist?.toLowerCase().contains(lowerQuery) ?? false) ||
+                (item.album?.toLowerCase().contains(lowerQuery) ?? false),
+          )
+          .toList();
+    }
+    try {
+      return await searchCatalog(normalizedQuery);
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  @override
+  Future<MediaItem?> getMediaItem(String mediaId) async {
+    for (final item in queue.value) {
+      if (item.id == mediaId) return item;
+    }
+    final catalog = await getChildren('root');
+    for (final item in catalog) {
+      if (item.id == mediaId) return item;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> playFromMediaId(
+    String mediaId, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final playTrack = _androidAutoPlayFromMediaId;
+    if (playTrack != null) {
+      await playTrack(mediaId);
+      return;
+    }
+
+    final index = queue.value.indexWhere((item) => item.id == mediaId);
+    if (index >= 0) await skipToQueueItem(index);
+  }
+
+  @override
+  Future<void> playFromSearch(
+    String query, [
+    Map<String, dynamic>? extras,
+  ]) async {
+    final results = await search(query, extras);
+    if (results.isNotEmpty) {
+      await playFromMediaId(results.first.id, extras);
+    }
+  }
+
+  @override
   Future<void> play() => _player.play();
 
   @override
@@ -217,7 +310,9 @@ class HarmonixAudioHandler extends BaseAudioHandler
       final sameProcessingState =
           _player.processingState == _lastBroadcastProcessingState;
       final samePlaying = _player.playing == _lastBroadcastPlaying;
-      if (elapsed < _broadcastMinInterval && sameProcessingState && samePlaying) {
+      if (elapsed < _broadcastMinInterval &&
+          sameProcessingState &&
+          samePlaying) {
         return;
       }
       _lastBroadcast = now;
