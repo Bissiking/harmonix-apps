@@ -13,6 +13,7 @@ void main() {
 
   test('refreshes once and replays a request rejected with 401', () async {
     SharedPreferences.setMockInitialValues({
+      'server_url': 'https://sonora.test',
       'auth_token': 'old-access',
       'refresh_token': 'old-refresh',
       'token_expires_at': DateTime.now()

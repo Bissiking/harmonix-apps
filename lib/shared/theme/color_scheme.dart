@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:harmonix_apps/core/theme/theme_palette.dart';
 
 abstract final class HarmonixColors {
-  static const accent = Color(0xFFA78BFA);
-  static const signal = Color(0xFF67D7F0);
-  static const darkBackground = Color(0xFF07101E);
-  static const darkSurface = Color(0xFF0D1727);
-  static const darkCard = Color(0xFF152033);
+  static const accent = Color(0xFF7B5CFF);
+  static const signal = Color(0xFF5EE6FF);
+  static const darkBackground = Color(0xFF0A0F2B);
+  static const darkSurface = Color(0xFF121735);
+  static const darkCard = Color(0xFF1C2242);
 
   static const dark = ColorScheme.dark(
     primary: accent,
@@ -20,7 +20,7 @@ abstract final class HarmonixColors {
   static const light = ColorScheme.light(
     primary: accent,
     onPrimary: Colors.black,
-    secondary: Color(0xFF00BCD4),
+    secondary: Color(0xFF006779),
   );
 
   static ColorScheme darkFromPalette(ThemePalette palette) => ColorScheme.dark(

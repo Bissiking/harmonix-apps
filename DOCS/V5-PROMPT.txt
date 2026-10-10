@@ -1,0 +1,1520 @@
+# PROMPT MASTER : HARMONIX 4.0.0 — FLOW EDITION
+
+## 0. RÔLE ET MISSION
+
+Tu es un ingénieur logiciel senior spécialisé dans Flutter, Dart, architecture multiplateforme, expérience utilisateur, interfaces musicales et développement Android TV.
+
+Tu interviens sur le dépôt GitHub :
+
+**https://github.com/Bissiking/harmonix-apps**
+
+Backend musical associé :
+
+**https://github.com/Bissiking/sonora**
+
+L'objectif est de concevoir et développer **Harmonix 4.0.0**, une évolution majeure de l'application musicale personnelle LUMA.
+
+Cette version doit apporter :
+
+- Une reconstruction complète de l'interface utilisateur.
+- Une nouvelle identité visuelle officielle.
+- Un design system maintenable.
+- Une compatibilité mobile, tablette, PC, web et Android TV.
+- Une bibliothèque musicale hybride.
+- Un fonctionnement hors connexion.
+- Des playlists mixtes synchronisées.
+- Un lecteur musical amélioré.
+- Des thèmes dynamiques suivant les pochettes.
+- Un espace Harmonix Night.
+- Un moteur Night Sense privé et local.
+- Une gestion améliorée du stockage et des téléchargements.
+- La conservation et l'amélioration des fonctionnalités existantes.
+
+**IMPORTANT : il ne s'agit PAS d'un simple lifting graphique.**
+
+Il faut transformer l'application en profondeur tout en réutilisant le code métier fiable.
+
+L'ancienne interface n'est pas la référence artistique de cette nouvelle version.
+
+---
+
+# 1. AUDIT OBLIGATOIRE AVANT DÉVELOPPEMENT
+
+Avant toute modification :
+
+1. Examiner l'arborescence complète du dépôt.
+2. Identifier les dépendances réellement utilisées.
+3. Examiner les routes, providers, modèles et services.
+4. Étudier le lecteur audio actuel.
+5. Vérifier les systèmes de playlists et favoris.
+6. Examiner l'intégration Sonora.
+7. Vérifier l'authentification Kyros.
+8. Étudier les implémentations Android Auto et Chromecast.
+9. Identifier les fonctionnalités spécifiques aux plateformes.
+10. Recenser les tests existants.
+11. Identifier les composants réutilisables et les composants obsolètes.
+12. Examiner les limites techniques concernant Android TV et le fonctionnement hors ligne.
+
+La version documentée est actuellement Harmonix 3.1.2, mais il faut vérifier la version réelle dans le dépôt.
+
+La cible est **4.0.0**.
+
+Ne jamais supprimer une fonctionnalité existante sans justification technique documentée.
+
+Ne jamais inventer de routes API ou considérer qu'une fonctionnalité est disponible sans l'avoir vérifiée.
+
+Produire un diagnostic et une stratégie de migration avant les modifications majeures.
+
+---
+
+# 2. DIRECTION ARTISTIQUE OFFICIELLE
+
+## 2.1. Changement radical de l'interface
+
+**Instruction prioritaire : ABANDONNER LES CONTRAINTES GRAPHIQUES DE L'ANCIENNE INTERFACE.**
+
+Ne pas conserver artificiellement :
+
+- L'ancien arrangement de l'accueil.
+- Les proportions de l'ancienne sidebar.
+- Les anciennes cartes musicales.
+- Les grands espaces vides.
+- Les anciennes hiérarchies visuelles.
+- Les composants qui produisent des répétitions inutiles.
+- Les anciennes dimensions fixes.
+- Les vieux comportements responsive.
+- Les styles historiques qui empêchent la nouvelle direction artistique.
+
+Le logo, les couleurs et la structure peuvent être entièrement reconstruits.
+
+Il faut conserver les fonctionnalités, pas les défauts graphiques.
+
+Ne pas simplement modifier les couleurs des composants existants.
+
+Ne pas reproduire une interface Spotify, Apple Music ou Tidal.
+
+S'inspirer de leur ergonomie tout en construisant une identité Harmonix reconnaissable.
+
+## 2.2. Philosophie Harmonix Flow
+
+L'interface doit être :
+
+- Premium.
+- Moderne.
+- Immersive.
+- Musicale.
+- Élégante.
+- Épurée.
+- Fluide.
+- Responsive.
+- Accessible.
+- Cohérente sur tous les appareils.
+
+L'utilisateur doit immédiatement comprendre où trouver sa musique et comment la lire.
+
+La musique doit être l'élément principal de l'expérience.
+
+## 2.3. Identité du logo officiel
+
+Adopter la direction visuelle **Moon Resonance**, validée comme référence artistique.
+
+### Logo Harmonix
+
+Le symbole principal est un **H stylisé construit à partir de deux formes verticales reliées par une onde musicale fluide**.
+
+Caractéristiques :
+
+- Formes arrondies et élégantes.
+- Onde centrale continue.
+- Dégradé violet vers cyan.
+- Géométrie simple et reconnaissable.
+- Aspect moderne sans surcharge.
+- Fonctionnement en monochrome.
+- Lisibilité à très petite taille.
+- Adaptation aux favicons, icônes système et applications mobiles.
+
+Ne pas revenir à l'ancien symbole de note musicale entourée d'un cercle.
+
+Créer les déclinaisons nécessaires à partir d'un master vectoriel cohérent.
+
+### Harmonix Night
+
+Conserver le H ondulé de Harmonix.
+
+Ajouter un croissant de lune discret sur la partie supérieure droite du symbole.
+
+Appliquer une ambiance plus nocturne, avec violet feutré, lavande et cyan lunaire.
+
+**Harmonix et Harmonix Night doivent appartenir visuellement à la même famille.**
+
+Prévoir des versions adaptées aux écrans clairs, sombres et monochromes.
+
+### Assets attendus
+
+Créer et intégrer :
+
+- Logo principal Harmonix.
+- Logo Harmonix Night.
+- Logotypes avec texte.
+- Symboles seuls.
+- Variantes monochromes.
+- Icônes Android adaptatives.
+- Icônes iOS.
+- Icônes desktop.
+- Favicon web.
+- Ressources spécifiques Android TV si nécessaires.
+- Splash screen cohérent.
+
+La référence visuelle est la planche de branding Harmonix / Harmonix Night avec le H ondulé et le croissant lunaire fournie lors de la conception.
+
+Si les images de référence ne sont pas accessibles dans l'environnement de développement, suivre strictement la description ci-dessus et demander les assets manquants plutôt que conserver l'ancien logo par défaut.
+
+---
+
+# 3. PALETTE ET THÈMES
+
+## 3.1. Palette fondamentale
+
+Couleurs officielles recommandées :
+
+| Couleur | Hexadécimal | Usage |
+|---|---|---|
+| Midnight Navy | #0A0F2B | Identité sombre |
+| Violet | #7B5CFF | Accent principal |
+| Lavender | #C8B4FF | Accent doux |
+| Moonlight Cyan | #5EE6FF | Accent secondaire |
+
+Créer les autres nuances nécessaires pour :
+
+- Surfaces.
+- Élévations.
+- Textes.
+- Bordures.
+- États désactivés.
+- Erreurs.
+- Avertissements.
+- Succès.
+- Éléments interactifs.
+
+Garantir des contrastes accessibles.
+
+## 3.2. Thèmes officiels
+
+Créer quatre expériences visuelles.
+
+### Harmonix Midnight
+
+Thème sombre principal.
+
+Bleu nuit profond, violet et cyan.
+
+C'est le thème par défaut.
+
+### Harmonix Aurora
+
+Thème sombre davantage lumineux, avec accents cyan et violet et dégradés plus présents.
+
+### Harmonix Daylight
+
+Thème clair moderne.
+
+Surfaces claires légèrement bleutées, textes sombres et identité Harmonix préservée.
+
+### Harmonix Night
+
+Thème spécial du mode sommeil.
+
+Bleu nuit plus profond, violet doux, lavande, animations ralenties et luminosité visuelle réduite.
+
+Ce thème doit privilégier le confort de lecture et éviter les effets lumineux agressifs.
+
+## 3.3. Thème dynamique basé sur les pochettes
+
+Développer un système **Harmonix Dynamic Colors**.
+
+Lorsqu'une musique démarre :
+
+1. Analyser les couleurs dominantes de sa pochette.
+2. Sélectionner une palette compatible.
+3. Générer des accents secondaires.
+4. Appliquer un halo discret autour de la pochette.
+5. Adapter les couleurs d'ambiance du lecteur.
+6. Effectuer une transition fluide lorsque le titre change.
+
+IMPORTANT :
+
+- Ne pas recolorer brutalement toute l'interface.
+- Préserver les contrastes et la lisibilité.
+- Conserver des surfaces fondamentales stables.
+- Limiter la saturation.
+- Ne jamais faire dépendre la lisibilité d'une pochette particulière.
+- Mettre en cache les palettes extraites.
+- Prévoir un fallback pour les pochettes manquantes.
+- Permettre de désactiver totalement cette fonction.
+- Respecter les préférences de réduction des animations.
+- Prévoir une version économique en énergie.
+
+Les couleurs dynamiques doivent enrichir l'expérience, pas la rendre instable.
+
+---
+
+# 4. DESIGN SYSTEM HARMONIX
+
+Créer une bibliothèque centralisée de composants.
+
+Elle doit fournir :
+
+- Tokens de couleurs.
+- Typographie.
+- Espacements.
+- Rayons des bordures.
+- Élévations.
+- Animations.
+- Boutons.
+- Cartes.
+- Champs de recherche.
+- Listes.
+- Menus contextuels.
+- Modales.
+- Panneaux coulissants.
+- Indicateurs de progression.
+- États de chargement.
+- États vides.
+- Notifications internes.
+- Composants de lecture.
+- Composants de téléchargements.
+- Composants de bibliothèques.
+
+Éviter les styles dispersés dans les écrans.
+
+Centraliser les thèmes, les breakpoints et les règles d'interface.
+
+Utiliser les capacités Flutter adaptées, sans rajouter de dépendances superflues.
+
+Tous les composants doivent fonctionner au clavier et, lorsque nécessaire, à la télécommande.
+
+---
+
+# 5. ARCHITECTURE RESPONSIVE
+
+L'application doit proposer des dispositions adaptées, et non une interface desktop simplement réduite.
+
+## 5.1. Mobile
+
+Cible : Android et iOS.
+
+Interface :
+
+- Navigation inférieure.
+- Accueil personnalisé.
+- Bibliothèque.
+- Recherche.
+- Harmonix Night.
+- Profil accessible facilement.
+- Mini-lecteur permanent.
+- Lecteur plein écran.
+- Menus contextuels tactiles.
+- Carrousels adaptés au toucher.
+
+Prendre en charge les zones de sécurité, petites résolutions et différentes densités d'affichage.
+
+## 5.2. Tablette
+
+Créer une interface adaptée aux orientations portrait et paysage.
+
+Prévoir :
+
+- Navigation latérale compacte si l'espace le permet.
+- Grilles musicales adaptatives.
+- Lecteur persistant.
+- Panneaux secondaires facultatifs.
+- Gestes tactiles et support clavier éventuel.
+
+## 5.3. Desktop
+
+Cibles : Windows, macOS et Linux, selon les capacités du projet.
+
+Disposition de référence :
+
+**Sidebar gauche + contenu principal + panneau droit facultatif + lecteur inférieur permanent.**
+
+Sidebar :
+
+- Accueil.
+- Bibliothèque.
+- Recherche.
+- Harmonix Night.
+- Rift.
+- Playlists et favoris.
+- Téléchargements.
+- Paramètres.
+
+La recherche doit rester accessible globalement.
+
+Le panneau droit présente selon le contexte :
+
+- File d'attente.
+- Détails du morceau.
+- Informations album.
+- Détails de session Night.
+
+Prévoir les raccourcis clavier utiles et le redimensionnement de fenêtre.
+
+## 5.4. Web
+
+Préserver la cohérence avec les applications natives.
+
+Gérer les différences techniques :
+
+- Autorisations navigateur.
+- Audio en arrière-plan.
+- Stockage persistant.
+- Accès aux fichiers locaux.
+- Limitations du mode hors connexion.
+- Actualisation de page.
+- Navigation et historique navigateur.
+
+Ne pas promettre des fonctionnalités natives impossibles à garantir sur web.
+
+---
+
+# 6. COMPATIBILITÉ ANDROID TV
+
+**Android TV est une cible officielle de Harmonix 4.0.0.**
+
+Ne pas considérer Android TV comme une tablette Android avec un grand écran.
+
+Créer une véritable expérience **10-foot UI**, conçue pour une télévision regardée à distance.
+
+## 6.1. Support D-pad et navigation par focus
+
+Implémenter une navigation complète via :
+
+- Haut.
+- Bas.
+- Gauche.
+- Droite.
+- Validation / OK.
+- Retour.
+- Lecture / Pause.
+- Touches multimédias compatibles.
+
+Exigences :
+
+- Focus visible et identifiable.
+- Déplacement prévisible du focus.
+- Aucun élément important inaccessible sans tactile.
+- Restauration du focus après fermeture d'un panneau.
+- Défilement automatique vers l'élément sélectionné.
+- Gestion des grilles, menus et modales.
+- Comportement correct après retour arrière.
+
+Utiliser les mécanismes de focus Flutter appropriés.
+
+Tester avec une télécommande et un émulateur Android TV.
+
+## 6.2. Interface catalogue optimisée TV
+
+Créer une présentation spécifique :
+
+- Grandes pochettes.
+- Carrousels horizontaux.
+- Titres lisibles à distance.
+- Espaces tactiles remplacés par de grandes zones de focus.
+- Navigation par catégories.
+- Bibliothèque organisée.
+- Accès rapide aux favoris.
+- Albums et playlists clairement distingués.
+
+La navigation inférieure mobile ne doit pas être réutilisée telle quelle sur TV.
+
+## 6.3. Lecteur TV
+
+Créer une interface de lecture dédiée comprenant :
+
+- Pochette de grande taille.
+- Titre et artiste lisibles.
+- Barre de progression adaptée.
+- Contrôles accessibles au D-pad.
+- File d'attente.
+- Actions favorites et playlists.
+- Indication de source et de qualité.
+- Affichage sobre en lecture prolongée.
+
+Prévoir un mode immersif réduisant progressivement les contrôles inutilisés.
+
+Ne pas imposer des animations permanentes susceptibles de favoriser le marquage sur certains écrans OLED.
+
+## 6.4. Recherche Android TV
+
+Prévoir :
+
+- Clavier virtuel compatible.
+- Navigation au focus.
+- Suggestions musicales.
+- Résultats accessibles au D-pad.
+- Gestion correcte de la touche Retour.
+- Recherche vocale uniquement si une intégration fiable et compatible est réellement possible.
+
+## 6.5. Performances Android TV
+
+Optimiser :
+
+- Mémoire.
+- Chargement des images.
+- Mise en cache des pochettes.
+- Taille des listes.
+- Décodage audio.
+- Animations.
+- Requêtes Sonora.
+- Pagination et virtualisation.
+- Consommation réseau.
+
+Adapter les effets graphiques aux capacités du matériel.
+
+Ne pas utiliser de flous lourds ou de grands shaders animés sur toutes les surfaces.
+
+## 6.6. Intégration Android TV
+
+Étudier et implémenter les éléments nécessaires :
+
+- Configuration Android appropriée.
+- Compatibilité Leanback / launcher TV.
+- Manifest et déclarations compatibles.
+- Icônes et bannières TV.
+- Orientation.
+- Commandes média.
+- Audio en arrière-plan lorsque supporté.
+- Gestion du cycle de vie.
+- Retour à l'accueil.
+- Reprise de session.
+
+Ne déclarer le support Android TV terminé qu'après validation réelle des parcours à la télécommande.
+
+---
+
+# 7. BIBLIOTHÈQUE HYBRIDE
+
+Harmonix utilise Sonora comme bibliothèque musicale centrale.
+
+La version 4 doit permettre d'ajouter des fichiers locaux propres à chaque appareil.
+
+## Sources musicales
+
+Trois types doivent être représentés :
+
+1. Morceau Sonora distant.
+2. Morceau Sonora téléchargé localement.
+3. Morceau personnel local.
+
+Un morceau Sonora téléchargé doit rester une seule entrée logique dans la bibliothèque.
+
+La disponibilité et la source réelle de lecture sont des propriétés distinctes.
+
+## Importation locale
+
+Prévoir :
+
+- Sélection manuelle de fichiers.
+- Sélection de dossiers lorsque possible.
+- Analyse automatique facultative.
+- Extraction des métadonnées.
+- Récupération des pochettes embarquées.
+- Recherche et tri.
+- Gestion des fichiers supprimés ou déplacés.
+- Détection de doublons.
+- Indexation locale.
+
+Aucune analyse intrusive par défaut.
+
+Respecter les permissions propres à chaque plateforme.
+
+Aucun fichier local ne doit être téléversé automatiquement vers Sonora.
+
+---
+
+# 8. MODE HORS CONNEXION COMPLET
+
+Harmonix doit être utilisable sans connexion Internet après initialisation préalable.
+
+## 8.1. Lecture
+
+Supporter :
+
+- Musiques personnelles locales.
+- Musiques Sonora téléchargées.
+- Albums téléchargés.
+- Playlists téléchargées.
+- File d'attente locale.
+- Historique conservé.
+- Favoris accessibles localement.
+- Harmonix Night hors ligne.
+
+Ne pas bloquer la navigation sur une requête réseau indisponible.
+
+## 8.2. Téléchargements
+
+Permettre :
+
+- Télécharger un morceau.
+- Télécharger un album.
+- Télécharger une playlist.
+- Choisir la qualité audio.
+- Voir la progression.
+- Mettre en pause.
+- Reprendre.
+- Annuler.
+- Supprimer le téléchargement.
+- Vérifier l'intégrité du fichier.
+
+Gérer les téléchargements interrompus et les erreurs réseau.
+
+## 8.3. Playlists hors ligne automatiques
+
+L'utilisateur peut activer :
+
+**Maintenir cette playlist disponible hors connexion.**
+
+Les nouveaux morceaux Sonora sont téléchargés automatiquement selon les préférences réseau et stockage.
+
+Fonction désactivée par défaut.
+
+Le paramètre est propre à chaque appareil.
+
+Les fichiers locaux d'un autre appareil ne sont jamais téléchargés depuis Sonora.
+
+## 8.4. Cache intelligent
+
+Créer un cache musical temporaire, limité et configurable.
+
+Fonctions :
+
+- Réutilisation des morceaux déjà écoutés.
+- Limite d'espace disque.
+- Nettoyage automatique.
+- Affichage de l'espace occupé.
+- Suppression manuelle.
+- Désactivation possible.
+
+Ne jamais supprimer automatiquement les téléchargements explicitement conservés hors ligne.
+
+Séparer strictement le cache temporaire des téléchargements permanents.
+
+Ne pas considérer une entrée partiellement mise en cache comme un téléchargement hors ligne fiable.
+
+## 8.5. Stockage local
+
+Utiliser une solution persistante adaptée pour :
+
+- Métadonnées.
+- Index musical.
+- Playlists.
+- Favoris.
+- Historique.
+- États de téléchargement.
+- Modifications en attente.
+- Préférences.
+- Night Sense.
+
+SQLite est une piste recommandée sur les plateformes natives, à confirmer selon l'architecture existante.
+
+Éviter d'utiliser SharedPreferences comme base de données principale.
+
+---
+
+# 9. PLAYLISTS MIXTES SYNCHRONISÉES
+
+Permettre une playlist contenant simultanément :
+
+- Titres Sonora.
+- Titres téléchargés.
+- Titres locaux.
+
+La composition de la playlist peut être synchronisée entre appareils.
+
+Les fichiers personnels ne sont pas transférés automatiquement.
+
+## Identification
+
+Chaque entrée possède un identifiant stable et une référence à sa source musicale.
+
+Prévoir des empreintes permettant de retrouver une copie locale identique sur un autre appareil.
+
+Une correspondance incertaine doit être validée par l'utilisateur.
+
+Ne pas utiliser les chemins de fichiers comme identifiants globaux.
+
+## Morceaux indisponibles
+
+Si un titre local n'est pas présent sur un appareil :
+
+- Conserver son entrée.
+- Afficher sa disponibilité.
+- Permettre la recherche d'une copie.
+- Le sauter pendant la lecture si nécessaire.
+- Ne pas le supprimer silencieusement.
+
+## Synchronisation différée
+
+Conserver les modifications effectuées sans réseau.
+
+Synchroniser au retour de connexion.
+
+Prévoir :
+
+- Versions et révisions.
+- Identifiants d'opérations.
+- Protection contre les doublons.
+- Résolution des conflits.
+- Traitement des modifications simultanées.
+- Préservation de l'ordre des pistes.
+- Stratégies de migration.
+
+Ne jamais écraser silencieusement une playlist entière à cause d'un client hors ligne.
+
+---
+
+# 10. REFONTE DES PAGES PRINCIPALES
+
+## Accueil
+
+Afficher prioritairement :
+
+- Reprendre l'écoute.
+- Écoutés récemment.
+- Favoris.
+- Playlists.
+- Albums récemment ajoutés.
+- Bibliothèque locale.
+- Téléchargements.
+- Accès Harmonix Night.
+
+Ne pas reproduire l'ancien accueil avec un grand bloc promotionnel occupant inutilement l'espace.
+
+Adapter les sections au contenu réel.
+
+## Bibliothèque
+
+Créer une interface unifiée avec :
+
+- Albums.
+- Artistes.
+- Morceaux.
+- Playlists.
+- Favoris.
+- Sources musicales.
+- Téléchargements.
+
+Filtres :
+
+- Tout.
+- Sonora.
+- Cet appareil.
+- Téléchargé.
+
+Modes d'affichage grille et liste lorsque pertinents.
+
+## Recherche
+
+Recherche globale dans les sources disponibles.
+
+Supporter les résultats locaux hors ligne.
+
+Regrouper clairement :
+
+- Morceaux.
+- Albums.
+- Artistes.
+- Playlists.
+
+## Albums et artistes
+
+Créer de véritables pages détaillées avec :
+
+- Pochettes.
+- Informations.
+- Liste des morceaux.
+- Durées.
+- Lecture.
+- Aléatoire.
+- Favoris.
+- Téléchargement.
+- Ajout playlist.
+
+Éviter les informations publiques fictives ou les fonctions sociales non prises en charge par Sonora.
+
+## Playlists
+
+Gérer :
+
+- Création.
+- Modification du nom.
+- Suppression.
+- Ajout/retrait de titres.
+- Réorganisation.
+- Lecture.
+- Aléatoire.
+- Mise hors ligne.
+- Disponibilité des morceaux.
+
+## Téléchargements
+
+Afficher :
+
+- Titres téléchargés.
+- Albums.
+- Playlists.
+- Transferts actifs.
+- Transferts en erreur.
+- Espace disque utilisé.
+- Paramètres de qualité et réseau.
+
+---
+
+# 11. LECTEUR AUDIO HARMONIX FLOW
+
+Le lecteur doit être central dans l'expérience.
+
+## Mini-lecteur
+
+Accessible pendant la navigation.
+
+Afficher :
+
+- Pochette.
+- Titre.
+- Artiste.
+- Lecture/pause.
+- Progression.
+- Accès au lecteur complet.
+
+## Lecteur complet
+
+Créer un design immersif comprenant :
+
+- Grande pochette.
+- Fond et halo dérivés des couleurs de la pochette.
+- Métadonnées.
+- Barre de progression.
+- Commandes complètes.
+- Favoris.
+- File d'attente.
+- Source musicale.
+- Qualité audio.
+- Téléchargement.
+- Menu contextuel.
+
+## Moteur audio
+
+Conserver autant que possible l'infrastructure existante `just_audio` et `audio_service`.
+
+Garantir :
+
+- Lecture continue pendant la navigation.
+- Gestion du cycle de vie.
+- Commandes système.
+- Lecture arrière-plan native.
+- File d'attente unifiée.
+- Transition entre sources disponibles.
+- Gestion des erreurs.
+
+Ne jamais créer plusieurs lecteurs audio concurrents pour une seule session.
+
+Conserver les intégrations Android Auto et Chromecast existantes, après audit et tests.
+
+---
+
+# 12. HARMONIX NIGHT
+
+Créer un véritable espace dédié nommé **Harmonix Night**.
+
+Identité :
+
+- Déclinaison lunaire du logo Harmonix.
+- Palette nocturne.
+- Interface apaisée.
+- Animations discrètes.
+- Navigation simplifiée.
+
+## 12.1. Bibliothèque Night
+
+Créer une bibliothèque spécifique au mode Night.
+
+Les morceaux marqués `Night Only` ne doivent pas encombrer la bibliothèque principale.
+
+Le genre musical et l'affectation à Night sont deux propriétés différentes.
+
+Prévoir les catégories :
+
+- Lo-Fi.
+- Ambient.
+- Chill.
+- Piano.
+- Nature.
+- Instrumental.
+- Mélange relaxant.
+
+Les créations Suno importées via Sonora pourront être affectées à cette bibliothèque.
+
+Prévoir l'ajout manuel de morceaux locaux à Night.
+
+Les titres Night doivent rester accessibles par les mécanismes de lecture autorisés, même s'ils sont masqués de la vue principale.
+
+## 12.2. Sessions Night
+
+Paramètres par défaut retenus :
+
+- Ambiance : Mélange relaxant.
+- Durée : 45 minutes.
+- Fade-out progressif.
+- Démarrage manuel.
+
+Permettre de modifier ces valeurs.
+
+Prévoir :
+
+- Minuteur personnalisé.
+- Arrêt à une heure précise.
+- Arrêt à la fin du morceau.
+- Réduction progressive du volume.
+- Préparation hors connexion.
+- Sélection de playlists autorisées.
+
+Les sessions doivent fonctionner sans Sonora lorsque les médias sont accessibles localement.
+
+## 12.3. Calm Engine
+
+Créer un moteur de sélection de morceaux relaxants.
+
+Critères possibles :
+
+- Genre.
+- BPM.
+- Niveau sonore.
+- Variations d'intensité.
+- Transitoires.
+- Caractéristiques rythmiques.
+- Présence et caractéristiques de voix.
+- Préférences personnelles.
+
+Le moteur attribue une estimation de calme avec un niveau de confiance.
+
+Ne pas considérer ce score comme une mesure scientifique du sommeil.
+
+Les morceaux à voix douces peuvent être autorisés.
+
+Les voix agressives peuvent être écartées si la détection est suffisamment fiable.
+
+Ne pas inventer une classification vocale fiable à partir des seuls tags musicaux.
+
+Commencer par des règles déterministes, des métadonnées et une validation manuelle.
+
+Une analyse plus avancée peut être ajoutée si elle est techniquement justifiée.
+
+## 12.4. Contrôle manuel
+
+Chaque morceau peut être :
+
+- Automatique.
+- Toujours autorisé pour Night.
+- Toujours exclu de Night.
+
+Une exclusion explicite est prioritaire sur le classement automatique.
+
+## 12.5. Night Audio Guard
+
+Prévoir :
+
+- Transitions douces.
+- Limitation prudente des pics audio.
+- Normalisation sans amplification surprise.
+- Réduction progressive du volume.
+- Évitement des morceaux présentant de fortes variations lorsque l'analyse est disponible.
+
+Le volume du système d'exploitation ne doit pas être modifié arbitrairement.
+
+---
+
+# 13. NIGHT SENSE
+
+Créer un moteur d'apprentissage local appelé **Night Sense**.
+
+Son rôle est d'observer volontairement et localement l'utilisation du mode Night pour proposer des rappels pertinents.
+
+## Données possibles
+
+- Jours d'utilisation.
+- Heures de démarrage.
+- Durées de session.
+- Paramètres choisis.
+- Notifications acceptées.
+- Notifications ignorées.
+- Reports demandés.
+
+Ne pas espionner les autres applications.
+
+Ne pas suivre la localisation.
+
+Ne pas prétendre détecter l'heure réelle d'endormissement.
+
+## Algorithme
+
+Commencer par un algorithme déterministe :
+
+- Médiane des horaires.
+- Habitudes par jour.
+- Différenciation semaine/week-end.
+- Pondération des observations récentes.
+- Seuil minimum de données.
+- Ajustement selon les réactions.
+
+Ne pas ajouter de modèle d'IA externe pour une fonctionnalité réalisable localement.
+
+## Notifications
+
+Le moteur peut proposer une notification :
+
+« C'est bientôt l'heure de ta session Night. »
+
+Actions :
+
+- Ouvrir Night.
+- Reporter.
+- Ignorer.
+
+Aucun démarrage musical automatique.
+
+Limiter les notifications répétitives.
+
+Respecter les permissions Android et iOS.
+
+## Alarmes Android et Samsung
+
+Prévoir éventuellement une suggestion fondée sur la prochaine alarme accessible par les API officielles Android.
+
+Ne pas supposer que les horaires de coucher Samsung sont accessibles par une API publique.
+
+Créer une intégration facultative et dégradée proprement si une information est inaccessible.
+
+## Confidentialité
+
+Night Sense fonctionne localement par défaut.
+
+Les données restent dans l'espace privé de l'application.
+
+Prévoir :
+
+- Activation/désactivation.
+- Visualisation des habitudes détectées.
+- Correction manuelle.
+- Suppression de l'historique.
+- Réinitialisation de l'apprentissage.
+
+Les données ne doivent pas quitter l'appareil sans consentement explicite.
+
+---
+
+# 14. SONORA : COMPATIBILITÉ ET ÉVOLUTIONS
+
+Sonora reste le backend musical central.
+
+Sa version documentée est 6.1.0, à vérifier.
+
+Il expose déjà des fonctions de catalogue, streaming, favoris, playlists, reprise et Rift.
+
+Examiner le contrat API réel avant toute modification.
+
+La version 4 d'Harmonix doit préserver la compatibilité avec les fonctionnalités Sonora existantes.
+
+## API
+
+Conserver et exploiter les endpoints existants lorsqu'ils conviennent.
+
+Ne pas inventer une API v3 ou v4 simplement parce que Harmonix passe en version 4.0.0.
+
+Les nouveaux besoins peuvent nécessiter :
+
+- Références locales dans les playlists.
+- Synchronisation incrémentale.
+- Révisions.
+- Opérations idempotentes.
+- Métadonnées Night.
+- Classification musicale.
+- Informations de téléchargement.
+- Compatibilité avec la synchronisation hors ligne.
+
+Si un changement backend est indispensable :
+
+1. Identifier précisément les endpoints concernés.
+2. Préparer un contrat d'évolution.
+3. Préserver les anciennes routes autant que possible.
+4. Prévoir les migrations.
+5. Ajouter des tests de compatibilité.
+6. Documenter les changements requis côté Sonora.
+
+Si seul le dépôt Harmonix est disponible, ne pas simuler la présence de ces endpoints. Produire une spécification d'intégration Sonora et un comportement de repli explicite.
+
+---
+
+# 15. AUTHENTIFICATION KYROS
+
+Conserver le fonctionnement SSO Kyros actuellement supporté.
+
+Vérifier les contrats existants avant toute adaptation.
+
+Ne pas confondre :
+
+- Harmonix 4.0.0.
+- Le protocole SSO Kyros v4.
+- Le futur Kyros v5.
+
+Les versions sont indépendantes.
+
+Les sessions doivent être gérées correctement sur mobile, desktop, web et Android TV.
+
+Sur Android TV, prévoir un parcours d'authentification adapté à la télécommande, avec une alternative sécurisée de connexion depuis un autre appareil si nécessaire.
+
+Ne pas inventer de flux de connexion non supporté par Kyros.
+
+Les médias téléchargés doivent rester accessibles hors connexion conformément aux règles de session locale décidées.
+
+Protéger les jetons et séparer les données par compte.
+
+---
+
+# 16. CONFIDENTIALITÉ ET FUTUR KYROS VAULT
+
+Harmonix V4 prépare une intégration future avec **Kyros Vault**.
+
+Cependant, cette intégration ne doit pas bloquer le développement.
+
+Les nouvelles données comportementales sont locales par défaut.
+
+Distinguer :
+
+- Les données de compte déjà synchronisées via Sonora.
+- Les données de bibliothèque.
+- Les données de lecture.
+- Les statistiques facultatives.
+- Les habitudes Night Sense.
+
+Prévoir une architecture capable d'ajouter ultérieurement :
+
+- Synchronisation privée.
+- Autorisations granulaires.
+- Partage avec les modules LUMA.
+- Export.
+- Suppression.
+- Révocation.
+
+Ne pas ajouter de transfert comportemental caché.
+
+Aucune activation automatique de la collecte facultative.
+
+Tant que Kyros Vault n'est pas disponible, conserver les fonctionnalités correspondantes en local, sans fausse synchronisation.
+
+---
+
+# 17. RIFT
+
+Rift est une fonctionnalité existante importante.
+
+La préserver.
+
+Refondre son interface selon le nouveau design system.
+
+Conserver :
+
+- Création de session.
+- Participation.
+- Code d'invitation.
+- File partagée.
+- Synchronisation de lecture.
+- Interactions existantes.
+
+Pour la V4, les morceaux locaux restent exclus des Rifts partagés tant qu'un mécanisme sécurisé et compatible n'existe pas.
+
+Éviter de casser le fonctionnement collaboratif pendant la migration du lecteur.
+
+---
+
+# 18. PARAMÈTRES DE L'APPLICATION
+
+Réorganiser complètement les paramètres.
+
+Sections suggérées :
+
+### Apparence
+
+- Thème.
+- Couleurs dynamiques.
+- Animations.
+- Accessibilité.
+
+### Lecture
+
+- Qualité.
+- Fondu entre morceaux si supporté.
+- Normalisation.
+- Comportement du lecteur.
+- Sortie audio.
+
+### Bibliothèque
+
+- Sources musicales.
+- Dossiers locaux.
+- Analyse automatique.
+- Indexation.
+
+### Hors connexion
+
+- Téléchargements.
+- Wi-Fi uniquement.
+- Qualité.
+- Limite du cache.
+- Nettoyage du stockage.
+
+### Harmonix Night
+
+- Durée de session.
+- Fade-out.
+- Sélection musicale.
+- Calm Engine.
+- Night Sense.
+- Notifications.
+
+### Compte et confidentialité
+
+- Compte Kyros.
+- Sessions.
+- Gestion des données locales.
+- Préférences de synchronisation disponibles.
+- Effacement de l'apprentissage.
+
+### À propos
+
+- Version.
+- Informations techniques.
+- Diagnostic.
+- Licences.
+- Informations Sonora.
+
+---
+
+# 19. QUALITÉ, PERFORMANCE ET ACCESSIBILITÉ
+
+Objectifs :
+
+- Animations fluides.
+- Aucun débordement responsive.
+- Navigation rapide.
+- Gestion des grandes bibliothèques.
+- Requêtes paginées.
+- Chargement progressif.
+- Images mises en cache.
+- Gestion correcte des états hors ligne.
+- Pas de boucle de rafraîchissement excessive.
+- Pas de reconstruction Flutter inutile.
+
+Accessibilité :
+
+- Contrastes corrects.
+- Labels accessibles.
+- Navigation clavier.
+- Navigation focus.
+- Zones interactives adaptées.
+- Réduction des animations.
+- Textes redimensionnables.
+- États de chargement compréhensibles.
+
+Créer des placeholders cohérents pour les albums sans pochette.
+
+Ne pas masquer les erreurs derrière des animations infinies.
+
+---
+
+# 20. TESTS OBLIGATOIRES
+
+## Tests unitaires
+
+Tester :
+
+- Sources musicales.
+- Gestion des identifiants.
+- Sélection audio.
+- Playlists mixtes.
+- Résolution des conflits.
+- Cache.
+- Téléchargements.
+- Calculs du minuteur.
+- Night Sense.
+- Classification manuelle.
+
+## Tests Flutter
+
+Tester :
+
+- Navigation.
+- Responsive.
+- Thèmes.
+- Composants.
+- États vides.
+- États d'erreur.
+- Affichage des sources.
+- Transitions de lecteur.
+
+## Tests d'intégration
+
+Scénarios indispensables :
+
+1. Connexion Kyros.
+2. Chargement Sonora.
+3. Lecture distante.
+4. Lecture locale.
+5. Téléchargement puis lecture hors ligne.
+6. Fermeture et réouverture sans réseau.
+7. Création d'une playlist mixte.
+8. Modification hors ligne.
+9. Retour réseau et synchronisation.
+10. Protection contre les doublons.
+11. Session Harmonix Night de courte durée pour test.
+12. Fade-out.
+13. Cache et nettoyage.
+14. Conservation des préférences après redémarrage.
+15. Rift existant toujours fonctionnel.
+16. Android Auto toujours fonctionnel.
+17. Android TV navigable sans souris.
+
+## Tests Android TV
+
+Valider particulièrement :
+
+- Navigation D-pad.
+- Focus initial.
+- Retour.
+- Défilement.
+- Recherche.
+- Ouverture des albums.
+- Lecture.
+- Pause.
+- File d'attente.
+- Navigation pendant lecture.
+- Mise en veille et reprise.
+- Résolutions TV.
+- Performances sur matériel limité.
+
+Ne jamais déclarer une plateforme validée sans l'avoir réellement testée.
+
+Lorsque l'environnement de test manque, le signaler clairement.
+
+---
+
+# 21. ORGANISATION DU DÉVELOPPEMENT
+
+Découper le projet en phases maîtrisées.
+
+## Phase 1 : Audit et architecture
+
+- Diagnostic.
+- Plan de migration.
+- Structure des modules.
+- Contrats existants.
+- Dépendances backend.
+
+## Phase 2 : Identité et design system
+
+- Logos.
+- Palette.
+- Thèmes.
+- Composants.
+- Navigation responsive.
+
+## Phase 3 : Refonte des écrans
+
+- Accueil.
+- Bibliothèque.
+- Recherche.
+- Albums.
+- Artistes.
+- Playlists.
+- Paramètres.
+
+## Phase 4 : Lecteur
+
+- Mini-player.
+- Full player.
+- Thème dynamique.
+- Queue.
+- Sources audio unifiées.
+
+## Phase 5 : Bibliothèque hybride
+
+- Musique locale.
+- Indexation.
+- Reconnaissance.
+- Importation.
+
+## Phase 6 : Offline
+
+- Base locale.
+- Téléchargements.
+- Cache intelligent.
+- Lecture hors connexion.
+
+## Phase 7 : Synchronisation
+
+- Playlists mixtes.
+- Conflits.
+- Synchronisation différée.
+- Compatibilité Sonora.
+
+## Phase 8 : Harmonix Night
+
+- Bibliothèque dédiée.
+- Calm Engine.
+- Minuteur.
+- Audio Guard.
+- Night Sense.
+
+## Phase 9 : Android TV
+
+- Configuration plateforme.
+- Interface 10-foot.
+- Focus D-pad.
+- Lecteur TV.
+- Recherche TV.
+- Performances.
+
+## Phase 10 : Stabilisation
+
+- Tests.
+- Régressions.
+- Optimisations.
+- Documentation.
+- Version finale 4.0.0.
+
+Les étapes peuvent être parallélisées lorsqu'elles sont indépendantes.
+
+Ne pas livrer de fonctionnalités factices pour remplir artificiellement la roadmap.
+
+---
+
+# 22. RÈGLES DE DÉVELOPPEMENT
+
+Respecter impérativement :
+
+1. Conserver Flutter comme base principale.
+2. Favoriser les technologies déjà présentes.
+3. Ne pas multiplier les moteurs audio.
+4. Ne pas introduire de backend parallèle inutile.
+5. Ne pas inventer d'endpoints Sonora.
+6. Ne pas dépendre obligatoirement de Kyros Vault.
+7. Préserver les données existantes.
+8. Prévoir des migrations réversibles lorsque cela est réalisable.
+9. Ne jamais supprimer des données utilisateur pendant une mise à jour.
+10. Ne pas utiliser de contenus fictifs dans les parcours de production.
+11. Éviter les écrans vides sans explication.
+12. Garder les secrets hors du dépôt.
+13. Écrire des tests sur les fonctionnalités importantes.
+14. Ne pas mentir sur l'état de développement.
+15. Documenter les fonctionnalités partielles ou dépendantes du backend.
+16. Maintenir la cohérence graphique sur tous les écrans.
+17. Ne pas réutiliser les anciens widgets si leur structure contredit la nouvelle DA.
+18. Mettre à jour la documentation et le versionnement.
+19. Commenter clairement le nom du fichier sur la première ligne lorsque la syntaxe du fichier le permet.
+20. Conserver la possibilité de faire évoluer Harmonix après la V4 sans nouvelle refonte générale.
+
+---
+
+# 23. CRITÈRES DE VALIDATION DE LA DIRECTION ARTISTIQUE
+
+Avant de considérer la refonte UX terminée, vérifier :
+
+- Le logo principal est bien le nouveau H ondulé.
+- Le logo Night est une déclinaison cohérente.
+- L'ancien langage graphique a réellement disparu.
+- L'accueil a une nouvelle hiérarchie.
+- La sidebar est réorganisée.
+- Le lecteur est visuellement reconstruit.
+- La bibliothèque n'est plus secondaire.
+- Les thèmes sont distincts et cohérents.
+- Les couleurs dynamiques restent lisibles.
+- Night possède sa propre identité.
+- Mobile n'est pas une réduction du desktop.
+- Tablette dispose d'une disposition adaptée.
+- Android TV dispose de sa propre ergonomie.
+- Les cartes et composants partagent des règles communes.
+- Aucune page n'utilise accidentellement l'ancien style.
+- Les animations ne nuisent pas à la navigation.
+- Les composants ont été testés avec des contenus de tailles variées.
+
+**Si l'application finale ressemble encore majoritairement à Harmonix 3.x, considérer la refonte artistique comme non terminée.**
+
+---
+
+# 24. LIVRABLES ATTENDUS
+
+À la fin du travail, fournir :
+
+1. Résumé de l'audit initial.
+2. Liste des changements architecturaux.
+3. Nouveau design system.
+4. Inventaire des assets et logos.
+5. Liste des écrans refondus.
+6. Détail des fonctionnalités hybrides.
+7. État du système Offline.
+8. État des playlists mixtes.
+9. État de Harmonix Night.
+10. État de Night Sense.
+11. État de la compatibilité Android TV.
+12. Liste des éventuelles évolutions Sonora requises.
+13. État de l'authentification et des intégrations existantes.
+14. Résultats des tests.
+15. Limitations restantes.
+16. Instructions de build et déploiement.
+17. Notes de migration.
+18. Changelog de la version 4.0.0.
+
+Produire des captures ou preuves visuelles des interfaces si l'environnement le permet.
+
+Déclarer explicitement ce qui est terminé, partiel, bloqué ou non testé.
+
+---
+
+# 25. OBJECTIF FINAL
+
+Harmonix 4.0.0 doit devenir une application musicale personnelle complète.
+
+Elle doit permettre d'écouter sa musique partout :
+
+- Sur téléphone.
+- Sur tablette.
+- Sur ordinateur.
+- Dans un navigateur.
+- Sur Android TV.
+- Dans une voiture via les intégrations compatibles.
+- Avec ou sans connexion réseau, dans les limites de chaque plateforme.
+
+Elle doit combiner la puissance de Sonora, la liberté des fichiers locaux et une interface réellement agréable.
+
+**La V4 doit marquer une rupture visuelle nette avec l'ancienne génération.**
+
+L'identité Harmonix doit être immédiatement reconnaissable.
+
+La bibliothèque doit être claire.
+
+Le lecteur doit être fluide.
+
+Night doit être une expérience dédiée.
+
+Android TV doit être utilisable à la télécommande.
+
+Le mode hors connexion doit réellement fonctionner.
+
+Les données personnelles facultatives doivent rester sous le contrôle de l'utilisateur.
+
+L'objectif n'est pas d'accumuler des fonctionnalités.
+
+L'objectif est de créer un produit cohérent, maintenable, fiable et abouti.
+
+**Commence par auditer le dépôt, établir le plan d'exécution et identifier les dépendances Sonora. Ensuite, réalise les changements par étapes vérifiables, jusqu'à la livraison de Harmonix 4.0.0.**

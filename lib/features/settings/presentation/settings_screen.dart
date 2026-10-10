@@ -10,9 +10,15 @@ import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
-import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/core/update/update_checker.dart';
 import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
+import 'package:harmonix_apps/core/theme/flow_appearance.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
+import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/features/night/providers/night_provider.dart';
+import 'package:harmonix_apps/shared/widgets/flow_components.dart';
+import 'package:harmonix_apps/features/cast/providers/cast_provider.dart';
+import 'package:harmonix_apps/features/cast/providers/google_cast_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -44,12 +50,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final authToken = ref.watch(authTokenProvider);
-    final themeMode = ref.watch(themeModeProvider);
     final hasToken = authToken?.isNotEmpty ?? false;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(title: const Text('Paramètres')),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
@@ -58,6 +63,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
             children: [
               const _ProfileHeader(),
+              if (ref
+                  .watch(settingsRepositoryProvider)
+                  .sessionStorageUnavailable)
+                const ListTile(
+                    leading: Icon(Icons.key_off),
+                    title: Text('Stockage sécurisé indisponible'),
+                    subtitle: Text(
+                        'La bibliothèque locale reste accessible. Déverrouille le coffre système puis redémarre Harmonix pour enregistrer une nouvelle connexion.')),
               const SizedBox(height: 18),
               _ActionPanel(
                 children: [
@@ -77,12 +90,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const _SectionTitle('Apparence'),
               const SizedBox(height: 10),
               _SettingsPanel(
-                child: _ThemeModeSelector(
-                  selected: themeMode,
-                  onSelected: (mode) =>
-                      ref.read(themeModeProvider.notifier).setMode(mode),
-                ),
+                child: Column(children: [
+                  DropdownButtonFormField<FlowAppearance>(
+                      initialValue: ref.watch(appearanceProvider),
+                      decoration:
+                          const InputDecoration(labelText: 'Thème Harmonix'),
+                      items: [
+                        for (final a in FlowAppearance.values)
+                          DropdownMenuItem(value: a, child: Text(a.label))
+                      ],
+                      onChanged: (a) {
+                        if (a != null) {
+                          ref.read(appearanceProvider.notifier).select(a);
+                        }
+                      }),
+                  SwitchListTile(
+                      title:
+                          const Text('Couleurs des pochettes dans le lecteur'),
+                      value:
+                          ref.watch(settingsRepositoryProvider).dynamicColors,
+                      onChanged: (value) async {
+                        await ref
+                            .read(settingsRepositoryProvider)
+                            .setDynamicColors(value);
+                        ref.read(appearanceRevisionProvider.notifier).state++;
+                        if (mounted) setState(() {});
+                      }),
+                  SwitchListTile(
+                      title: const Text('Réduire les animations'),
+                      value: ref.watch(settingsRepositoryProvider).reduceMotion,
+                      onChanged: (value) async {
+                        await ref
+                            .read(settingsRepositoryProvider)
+                            .setReduceMotion(value);
+                        ref.read(appearanceRevisionProvider.notifier).state++;
+                        if (mounted) setState(() {});
+                      }),
+                ]),
               ),
+              const SizedBox(height: 24),
+              const _SectionTitle('Hors connexion'),
+              SwitchListTile(
+                  title: const Text('Utiliser uniquement cet appareil'),
+                  subtitle: const Text(
+                      'Catalogue mémorisé, imports et téléchargements.'),
+                  value: ref.watch(offlineModeProvider),
+                  onChanged: (value) =>
+                      ref.read(offlineModeProvider.notifier).setEnabled(value)),
+              ListTile(
+                  leading: const Icon(Icons.download_outlined),
+                  title: const Text('Téléchargements et stockage'),
+                  onTap: () => context.go('/downloads')),
+              ListTile(
+                  leading: const Icon(Icons.nightlight_outlined),
+                  title: const Text(
+                      'Harmonix Night et confidentialité Night Sense'),
+                  onTap: () => context.go('/night')),
               const SizedBox(height: 24),
               const _SectionTitle('Serveur Sonora'),
               const SizedBox(height: 10),
@@ -187,21 +250,49 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _saveServerUrl() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) return;
-    await ref.read(settingsRepositoryProvider).setServerUrl(url);
-    ref.invalidate(dioProvider);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Serveur Sonora mis à jour.')),
-    );
+    await runFlowAction(context, () async {
+      await _stopAccountPlayback();
+      await ref.read(settingsRepositoryProvider).setServerUrl(url);
+      ref.invalidate(dioProvider);
+      ref.invalidate(authTokenProvider);
+      ref.invalidate(offlineModeProvider);
+      ref.invalidate(transfersProvider);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Serveur Sonora mis à jour.')));
+    });
   }
 
   Future<void> _logout() async {
+    await _stopAccountPlayback();
     await ref.read(settingsRepositoryProvider).clearAuthSession();
+    await ref.read(settingsRepositoryProvider).setRiftSessionId(null);
+    await ref.read(offlineModeProvider.notifier).setEnabled(false);
+    ref.invalidate(transfersProvider);
     ref.invalidate(dioProvider);
     ref.invalidate(authTokenProvider);
     ref.read(requireLoginProvider.notifier).state = true;
     if (!mounted) return;
     context.goNamed(RouteNames.login);
+  }
+
+  Future<void> _stopAccountPlayback() async {
+    if (ref.read(castProvider).isActive) {
+      try {
+        await ref.read(castProvider.notifier).leave();
+      } catch (_) {
+        /* The local Rift session is cleared even without network. */
+      }
+    }
+    await ref.read(nightSessionProvider.notifier).finish(pause: true);
+    final handler = ref.read(audioHandlerProvider);
+    await handler.stop();
+    handler.queue.add([]);
+    handler.mediaItem.add(null);
+    if (ref.read(googleCastProvider).connected) {
+      await ref.read(googleCastProvider.notifier).stopCasting();
+      await ref.read(googleCastProvider.notifier).disconnect();
+    }
   }
 
   Future<void> _checkUpdate() async {
@@ -310,35 +401,6 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ThemeModeSelector extends StatelessWidget {
-  const _ThemeModeSelector({required this.selected, required this.onSelected});
-
-  final ThemeMode selected;
-  final ValueChanged<ThemeMode> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    const choices = [
-      (ThemeMode.light, Icons.light_mode_outlined, 'Clair'),
-      (ThemeMode.dark, Icons.dark_mode_outlined, 'Sombre'),
-      (ThemeMode.system, Icons.brightness_auto_outlined, 'Auto'),
-    ];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final choice in choices)
-          ChoiceChip(
-            selected: selected == choice.$1,
-            onSelected: (_) => onSelected(choice.$1),
-            avatar: Icon(choice.$2, size: 18),
-            label: Text(choice.$3),
-          ),
-      ],
     );
   }
 }

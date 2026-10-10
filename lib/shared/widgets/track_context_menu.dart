@@ -8,6 +8,13 @@ import 'package:harmonix_apps/core/navigation/route_names.dart';
 import 'package:harmonix_apps/features/catalog/providers/albums_provider.dart';
 import 'package:harmonix_apps/features/library/providers/favorites_provider.dart';
 import 'package:harmonix_apps/features/library/providers/playlists_provider.dart';
+import 'package:harmonix_apps/features/player/providers/player_provider.dart';
+import 'package:harmonix_apps/features/library/data/device_files.dart';
+import 'package:harmonix_apps/features/library/domain/music_source.dart';
+import 'package:harmonix_apps/features/night/presentation/night_screen.dart';
+import 'package:harmonix_apps/features/night/providers/night_provider.dart';
+import 'package:harmonix_apps/features/night/domain/night_engine.dart';
+import 'package:harmonix_apps/shared/widgets/flow_components.dart';
 
 /// Affiche le menu contextuel d'une piste (clic droit sur desktop,
 /// pression longue sur tactile).
@@ -20,8 +27,7 @@ Future<void> showTrackContextMenu(
 }) async {
   final favorites = ref.read(favoritesProvider).valueOrNull ?? const <Track>[];
   final isFavorite = favorites.any((t) => t.id == track.id);
-  final overlay =
-      Overlay.of(context).context.findRenderObject()! as RenderBox;
+  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
   final relative = RelativeRect.fromRect(
     tapPosition & const Size(1, 1),
     Offset.zero & overlay.size,
@@ -32,6 +38,15 @@ Future<void> showTrackContextMenu(
     position: relative,
     constraints: const BoxConstraints(minWidth: 220, maxWidth: 280),
     items: [
+      if (supportsDeviceFiles && !isPersonalTrack(track.id))
+        const PopupMenuItem(
+            value: 'download',
+            child: _Item(icon: Icons.download, label: 'Garder hors connexion')),
+      const PopupMenuItem(
+          value: 'night',
+          child: _Item(
+              icon: Icons.nightlight_outlined,
+              label: 'Configurer Harmonix Night')),
       const PopupMenuItem(
         value: 'play',
         child: _Item(
@@ -72,6 +87,20 @@ Future<void> showTrackContextMenu(
   );
 
   switch (action) {
+    case 'download':
+      if (context.mounted) {
+        await runFlowAction(context,
+            () => ref.read(playerProvider.notifier).downloadTrack(track));
+      }
+    case 'night':
+      if (context.mounted) {
+        await configureNightTrack(
+            context,
+            ref,
+            track,
+            ref.read(nightMetadataProvider).valueOrNull?[track.id] ??
+                const NightMetadata());
+      }
     case 'play':
       onPlay();
     case 'favorite':
@@ -85,6 +114,14 @@ Future<void> showTrackContextMenu(
         }
       }
     case 'playlist':
+      if (isPersonalTrack(track.id)) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Ajoute ce fichier depuis Bibliothèque → Playlists mixtes.')));
+        }
+        return;
+      }
       if (context.mounted) {
         await _showAddToPlaylistSheet(context, ref, track);
       }
@@ -176,9 +213,8 @@ Future<void> _showAddToPlaylistSheet(
     final name = await _promptPlaylistName(context);
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     try {
-      final created = await ref
-          .read(playlistsActionsProvider.notifier)
-          .create(name.trim());
+      final created =
+          await ref.read(playlistsActionsProvider.notifier).create(name.trim());
       playlistId = created.id;
     } catch (_) {
       if (context.mounted) {

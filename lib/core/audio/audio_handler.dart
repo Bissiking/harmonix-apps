@@ -1,3 +1,5 @@
+// audio_handler.dart
+import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
@@ -89,7 +91,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
         ),
       ),
     );
-    await _player.play();
+    unawaited(_player.play());
   }
 
   Future<void> loadQueue(
@@ -97,6 +99,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     List<String> streamUrls, {
     int initialIndex = 0,
     Map<String, String>? headers,
+    List<Map<String, String>?>? sourceHeaders,
   }) async {
     assert(items.length == streamUrls.length);
 
@@ -109,7 +112,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
       (i) => AudioSource.uri(
         Uri.parse(streamUrls[i]),
         tag: items[i],
-        headers: headers,
+        headers: sourceHeaders == null ? headers : sourceHeaders[i],
       ),
     );
 
@@ -227,7 +230,9 @@ class HarmonixAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    unawaited(_player.play());
+  }
 
   @override
   Future<void> pause() => _player.pause();
@@ -245,7 +250,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   Future<void> skipToNext() async {
     if (_player.hasNext) {
       await _player.seekToNext();
-      await _player.play();
+      unawaited(_player.play());
       // mediaItem is already updated by the currentIndexStream listener –
       // no need to push it again here (avoids a redundant rebuild storm
       // especially on desktop where there is no AudioService buffering).
@@ -256,7 +261,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
   Future<void> skipToPrevious() async {
     if (_player.hasPrevious) {
       await _player.seekToPrevious();
-      await _player.play();
+      unawaited(_player.play());
     }
   }
 
@@ -265,7 +270,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     await _player.seek(Duration.zero, index: index);
     final q = queue.value;
     if (index < q.length) mediaItem.add(q[index]);
-    await _player.play();
+    unawaited(_player.play());
   }
 
   @override

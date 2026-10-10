@@ -5,8 +5,8 @@ import 'package:harmonix_apps/core/api/api_exception.dart';
 class HarmonixInterceptor extends Interceptor {
   HarmonixInterceptor({this.onConnectionFailure});
 
-  /// Appelé quand une requête échoue pour une raison de connexion
-  /// (réseau, timeout, 401, erreur serveur) afin de rediriger vers le login.
+  /// Only an authentication rejection may request login. Network loss keeps
+  /// the existing session and the local library available.
   final void Function(ApiException mapped)? onConnectionFailure;
 
   @override
@@ -72,10 +72,7 @@ class HarmonixInterceptor extends Interceptor {
 
     final suppressLoginRedirect =
         err.requestOptions.extra['suppress_login_redirect'] == true;
-    if (!suppressLoginRedirect &&
-        (mapped is NetworkTimeoutException ||
-            mapped is NetworkException ||
-            mapped is UnauthorizedException)) {
+    if (!suppressLoginRedirect && mapped is UnauthorizedException) {
       onConnectionFailure?.call(mapped);
     }
 

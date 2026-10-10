@@ -6,6 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/settings/auth_token_provider.dart';
 import 'package:harmonix_apps/core/utils/image_url_builder.dart' as url_builder;
+import 'package:harmonix_apps/features/library/data/device_library.dart';
+import 'package:harmonix_apps/core/utils/trusted_origin.dart';
+import 'package:harmonix_apps/shared/widgets/local_artwork_native.dart'
+    if (dart.library.js_interop) 'package:harmonix_apps/shared/widgets/local_artwork_web.dart';
 
 class TrackArtwork extends ConsumerWidget {
   const TrackArtwork({
@@ -14,46 +18,55 @@ class TrackArtwork extends ConsumerWidget {
     this.coverUrl,
     this.size = 56,
     this.borderRadius = 8,
+    this.trackId,
   });
 
   final String? coverFile;
   final String? coverUrl;
   final double size;
   final double borderRadius;
+  final String? trackId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsRepositoryProvider);
     final baseUrl = settings.serverUrl;
     final token = ref.watch(authTokenProvider);
-    final headers = token != null && token.isNotEmpty
-        ? {'Authorization': 'Bearer $token'}
-        : null;
     final coverPath = coverFile ?? coverUrl;
+    final artwork = trackId == null
+        ? null
+        : ref.watch(deviceTracksProvider.select((files) => files.valueOrNull
+            ?.where((file) => file.track.id == trackId)
+            .firstOrNull
+            ?.artworkPath));
     final url =
         coverPath == null ? null : url_builder.coverUrl(baseUrl, coverPath);
-    assert(() {
-      if (url != null) {
-        debugPrint('TrackArtwork url=$url hasAuth=${token != null}');
-      }
-      return true;
-    }());
-
     return RepaintBoundary(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: url != null
-            ? CachedNetworkImage(
-                imageUrl: url,
-                httpHeaders: headers ?? const {},
-                imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
+        child: artwork != null
+            ? Image(
+                image: localArtworkProvider(artwork),
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => _placeholder(size),
-                errorWidget: (_, __, ___) => _placeholder(size),
-              )
-            : _placeholder(size),
+                errorBuilder: (_, __, ___) => _placeholder(size))
+            : url != null
+                ? CachedNetworkImage(
+                    imageUrl: url,
+                    httpHeaders: serverHeaders(baseUrl, url, token) ?? const {},
+                    imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    memCacheWidth:
+                        (size * MediaQuery.devicePixelRatioOf(context))
+                            .ceil()
+                            .clamp(48, 1024),
+                    placeholder: (_, __) => _placeholder(size),
+                    errorWidget: (_, __, ___) => _placeholder(size),
+                  )
+                : _placeholder(size),
       ),
     );
   }

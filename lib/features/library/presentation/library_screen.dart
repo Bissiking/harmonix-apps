@@ -11,6 +11,8 @@ import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/layout/content_constraints.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
+import 'package:harmonix_apps/features/library/presentation/device_library_screen.dart';
+import 'package:harmonix_apps/features/library/presentation/library_groups.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -18,19 +20,31 @@ class LibraryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
-      length: 2,
+      length: 6,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Bibliothèque'),
           bottom: const TabBar(
             dividerColor: Colors.transparent,
-            tabs: [Tab(text: 'Favoris'), Tab(text: 'Playlists')],
+            isScrollable: true,
+            tabs: [
+              Tab(text: 'Morceaux'),
+              Tab(text: 'Albums'),
+              Tab(text: 'Artistes'),
+              Tab(text: 'Favoris'),
+              Tab(text: 'Playlists Sonora'),
+              Tab(text: 'Playlists mixtes')
+            ],
           ),
         ),
         body: const TabBarView(
           children: [
+            DeviceLibraryScreen(),
+            LibraryAlbumsTab(),
+            LibraryArtistsTab(),
             _FavoritesTab(),
             _PlaylistsTab(),
+            DevicePlaylistsTab(),
           ],
         ),
       ),
@@ -90,9 +104,16 @@ class _PlaylistsTab extends ConsumerWidget {
             constraints: const BoxConstraints(maxWidth: contentMaxWidth),
             child: items.isEmpty
                 ? ListView(
-                    children: const [
-                      SizedBox(height: 120),
-                      Center(child: Text('Aucune playlist pour l\'instant.')),
+                    children: [
+                      Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: FilledButton.tonalIcon(
+                              onPressed: () => _createPlaylist(context, ref),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Créer une playlist'))),
+                      const SizedBox(height: 80),
+                      const Center(
+                          child: Text('Aucune playlist pour l\'instant.')),
                     ],
                   )
                 : ListView.builder(
@@ -125,9 +146,8 @@ class _PlaylistsTab extends ConsumerWidget {
     );
     if (name == null || name.trim().isEmpty || !context.mounted) return;
     try {
-      final playlist = await ref
-          .read(playlistsActionsProvider.notifier)
-          .create(name.trim());
+      final playlist =
+          await ref.read(playlistsActionsProvider.notifier).create(name.trim());
       if (context.mounted) {
         context.pushNamed(
           RouteNames.playlistDetail,

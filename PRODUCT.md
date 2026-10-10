@@ -8,48 +8,64 @@ adaptive
 
 ## Users
 
-Harmonix s'adresse aux personnes qui écoutent leur bibliothèque Sonora sur téléphone, navigateur et ordinateur, avec une continuité de lecture entre leurs appareils.
+Personnes qui écoutent leur bibliothèque personnelle Sonora et leurs fichiers
+musicaux sur téléphone, ordinateur, navigateur et Android TV.
 
 ## Product Purpose
 
-Harmonix permet de parcourir un catalogue musical public, rechercher des pistes et albums, lancer et reprendre une lecture, gérer ses favoris, rejoindre des séances d'écoute partagées et régler l'application depuis une interface cohérente sur chaque plateforme.
+Harmonix réunit catalogue Sonora, copies téléchargées et fichiers personnels,
+avec un lecteur partagé, playlists, favoris, paroles, Chromecast, Android Auto,
+Rift et Harmonix Night. Les capacités livrées sont dans `DOCS/V4-DELIVERY.md`.
 
 ## Positioning
 
-Une seule application Flutter relie le catalogue auto-hébergé Sonora, la lecture locale ou castée et les séances Rift, avec une session Kyros commune et renouvelée à chaud.
+Une application Flutter personnelle et multiplateforme. Sonora reste le backend
+musical ; l’appareil conserve son index et ses médias locaux. Aucun fichier
+personnel n’est envoyé au serveur. Les compositions de playlists mixtes peuvent
+être synchronisées sans transporter leurs fichiers.
 
 ## Operating Context
 
-L'application est utilisée sur mobile, web, Windows et macOS. Sur mobile, les destinations principales restent accessibles au pouce. Sur les écrans larges, un rail latéral libère l'espace pour le catalogue et la file de lecture. Le backend Sonora reste la source de vérité des morceaux, albums, favoris, états de lecture, thèmes et séances Rift.
+Mobile tactile ; tablette tactile et clavier ; desktop redimensionnable ; web
+avec contraintes navigateur ; TV à distance et D-pad. Le mode local n’impose pas
+de disponibilité réseau. Le SSO utilise le relais Sonora et le protocole Kyros
+réel, dont la version est indépendante du numéro Harmonix.
 
 ## Capabilities and Constraints
 
-- Conserver Flutter et Riverpod comme socle partagé.
-- Utiliser uniquement les morceaux publics dans Harmonix.
-- Préserver l'authentification Kyros, le refresh à chaud et les contrats Sonora existants lorsque possible.
-- Les destinations principales confirmées sont Accueil, Explorer, Lecteur, Séances et Profil.
-- La navigation doit s'adapter entre barre inférieure mobile et rail latéral web/desktop.
-- Toute modification backend nécessaire est autorisée dans le dépôt Sonora adjacent.
+- Flutter, Riverpod, Dio, just_audio et audio_service restent le socle.
+- Un seul moteur audio ; préserver Android Auto, Chromecast et Rift.
+- Fichiers privés et données métier isolés par compte et serveur.
+- Sonora expose son catalogue musical public à Harmonix.
+- SQLite conserve les données métier ; SharedPreferences garde les réglages.
+- Night Sense reste volontaire et local, sans mesure du sommeil.
+- Le web conserve des métadonnées ; les imports et téléchargements audio
+  persistants de cette implémentation nécessitent l’application native.
+- Un contrat proposé ne doit jamais apparaître comme un service Kyros disponible.
+- Les changements Sonora nécessaires sont autorisés ; Studio ne nécessite pas
+  de modification pour le nouveau relais SSO.
 
 ## Brand Commitments
 
-Le nom Harmonix et son logo existant sont conservés. La référence visuelle fournie par l'utilisateur est contraignante : univers nocturne bleu encre, surfaces légèrement relevées, accents violet/lavande et cyan, grandes pochettes immersives et iconographie sobre.
+Moon Resonance : H ondulé violet/cyan, déclinaison lunaire Night, Midnight Navy
+#0A0F2B, violet #7B5CFF, lavande #C8B4FF et cyan #5EE6FF. La stabilité et la
+modularité priment ; le raffinement artistique reste évolutif.
 
 ## Evidence on Hand
 
-- Logo : `assets/images/logo_harmonix.png`.
-- Données et parcours réels présents dans les dépôts `harmonix-apps` et `sonora`.
-- Maquette multi-plateforme fournie dans la conversation comme référence de composition et de niveau de finition.
-- Aucun témoignage, prix ou argument commercial ne doit être inventé.
+`DOCS/V5-PROMPT.txt`, `DOCS/codex-infos.txt`, `DOCS/New Logo/new_logo.png` ; code
+Harmonix et checkouts Sonora 6.1.0 et Studio 0.2.0 fournis par l’utilisateur.
+Audit, tests et captures documentés dans DOCS.
 
 ## Product Principles
 
-- La musique en cours reste visible et contrôlable depuis toutes les destinations.
-- La même hiérarchie fonctionnelle s'adapte aux conventions de chaque taille d'écran.
-- Les données réelles remplacent tout contenu décoratif fictif de la maquette.
-- Une interruption réseau ne doit pas casser brutalement l'écoute ou la session.
-- L'interface privilégie la lisibilité, les gestes familiers et les cibles tactiles accessibles.
+La musique reste contrôlable pendant la navigation. Les téléchargements ne
+créent pas de doublons Sonora. Les conflits conservent les données locales jusqu’à
+résolution explicite. Une interruption réseau conserve la session ; une
+expiration confirmée demande une reconnexion. Aucun transfert comportemental
+caché. Les préférences de conservation hors ligne restent propres à l’appareil.
 
 ## Accessibility & Inclusion
 
-Respecter les zones sûres, les gestes Retour natifs, des cibles tactiles d'au moins 48 dp sur Android et 44 pt sur iOS, le redimensionnement du texte, le contraste en thème sombre et la réduction des animations du système.
+Contraste, clavier, focus visible, texte redimensionnable, zones sûres et
+réduction des animations. La validation TV nécessite des parcours matériels.

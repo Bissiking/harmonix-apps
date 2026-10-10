@@ -12,6 +12,8 @@ import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/widgets/error_view.dart';
 import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
+import 'package:harmonix_apps/shared/widgets/harmonix_mark.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -26,6 +28,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(offlineModeProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/library');
+      });
+      return const Scaffold(body: Center(child: HarmonixMark(size: 96)));
+    }
     final bootstrap = ref.watch(bootstrapProvider);
 
     bootstrap.whenData((_) {
@@ -103,7 +111,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: FilledButton.tonal(
-                    onPressed: () => context.go('/home'),
+                    onPressed: () =>
+                        ref.read(offlineModeProvider.notifier).setEnabled(true),
                     child: const Text('Continuer hors ligne'),
                   ),
                 ),

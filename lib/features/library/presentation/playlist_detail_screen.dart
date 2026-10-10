@@ -1,3 +1,4 @@
+import 'package:harmonix_apps/shared/widgets/flow_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,12 +22,12 @@ class PlaylistDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Playlist'),
         actions: [
-          IconButton(
+          FlowIconButton(
             tooltip: 'Renommer',
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => _rename(context, ref),
           ),
-          IconButton(
+          FlowIconButton(
             tooltip: 'Supprimer',
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _delete(context, ref),
@@ -117,7 +118,9 @@ class PlaylistDetailScreen extends ConsumerWidget {
     );
     if (name == null || name.isEmpty || !context.mounted) return;
     try {
-      await ref.read(playlistsActionsProvider.notifier).rename(playlistId, name);
+      await ref
+          .read(playlistsActionsProvider.notifier)
+          .rename(playlistId, name);
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -201,7 +204,8 @@ class PlaylistDetailScreen extends ConsumerWidget {
                   allTracks.where((t) => !currentIds.contains(t.id)).toList();
               return candidates.isEmpty
                   ? const Center(
-                      child: Text('Tous les titres sont déjà dans la playlist.'),
+                      child:
+                          Text('Tous les titres sont déjà dans la playlist.'),
                     )
                   : ListView.builder(
                       itemCount: candidates.length,

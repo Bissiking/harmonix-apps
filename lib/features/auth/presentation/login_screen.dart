@@ -8,6 +8,7 @@ import 'package:harmonix_apps/core/session/session_controller.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/features/auth/providers/sso_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -120,6 +121,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ],
                   const SizedBox(height: 24),
                   _buildServerSection(context, settings),
+                  TextButton.icon(
+                      onPressed: () async {
+                        await ref
+                            .read(offlineModeProvider.notifier)
+                            .setEnabled(true);
+                        if (context.mounted) context.go('/library');
+                      },
+                      icon: const Icon(Icons.cloud_off),
+                      label: const Text('Écouter hors connexion')),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () {

@@ -25,6 +25,9 @@ abstract class Track with _$Track {
     @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
     @Default(false)
     bool isFavorite,
+    @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
+    @Default(false)
+    bool nightEligible,
   }) = _Track;
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
@@ -64,8 +67,7 @@ Object? readStreamUrl(Map json, String key) =>
 
 String? stringFromJson(Object? value) => value is String ? value : null;
 
-String stringFromJsonOrEmpty(Object? value) =>
-    value is String ? value : '';
+String stringFromJsonOrEmpty(Object? value) => value is String ? value : '';
 
 Object? readDurationMs(Map json, String key) {
   if (json['duration_ms'] != null) {
@@ -99,6 +101,9 @@ int durationMsFromJson(Object? value) {
 
 Object? readIsFavorite(Map json, String key) =>
     json['isFavorite'] ?? json['is_favorite'] ?? json['favorite'];
+
+Object? readNightEligible(Map json, String key) =>
+    json['nightEligible'] ?? json['night_eligible'];
 
 bool boolFromJson(Object? value) {
   if (value is bool) return value;

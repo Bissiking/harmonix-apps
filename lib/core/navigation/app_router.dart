@@ -14,6 +14,10 @@ import 'package:harmonix_apps/features/search/presentation/search_screen.dart';
 import 'package:harmonix_apps/features/settings/presentation/settings_screen.dart';
 import 'package:harmonix_apps/features/auth/presentation/login_screen.dart';
 import 'package:harmonix_apps/shared/widgets/app_shell.dart';
+import 'package:harmonix_apps/features/night/presentation/night_screen.dart';
+import 'package:harmonix_apps/features/library/presentation/downloads_screen.dart';
+import 'package:harmonix_apps/features/library/presentation/device_library_screen.dart';
+import 'package:harmonix_apps/features/library/presentation/library_groups.dart';
 import 'package:harmonix_apps/core/navigation/route_names.dart';
 
 Page<void> _smoothPage(Widget child, {String? name}) {
@@ -23,6 +27,7 @@ Page<void> _smoothPage(Widget child, {String? name}) {
     transitionDuration: const Duration(milliseconds: 280),
     reverseTransitionDuration: const Duration(milliseconds: 240),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.disableAnimationsOf(context)) return child;
       final curved = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,
@@ -52,6 +57,7 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
       return null;
     },
     routes: [
+      GoRoute(path: '/sso-complete', redirect: (_, __) => '/login'),
       GoRoute(
         path: '/',
         name: RouteNames.splash,
@@ -60,6 +66,18 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [
+          GoRoute(
+              path: '/artists/:name',
+              pageBuilder: (_, state) => _smoothPage(
+                  ArtistScreen(artist: state.pathParameters['name']!))),
+          GoRoute(
+              path: '/night',
+              name: 'night',
+              pageBuilder: (_, __) => _smoothPage(const NightScreen())),
+          GoRoute(
+              path: '/downloads',
+              name: 'downloads',
+              pageBuilder: (_, __) => _smoothPage(const DownloadsScreen())),
           GoRoute(
             path: '/home',
             name: RouteNames.home,
@@ -100,6 +118,10 @@ GoRouter buildAppRouter({bool requireLogin = false}) {
             name: RouteNames.library,
             pageBuilder: (_, __) => _smoothPage(const LibraryScreen()),
             routes: [
+              GoRoute(
+                  path: 'mixed/:id',
+                  pageBuilder: (_, state) => _smoothPage(
+                      DevicePlaylistScreen(id: state.pathParameters['id']!))),
               GoRoute(
                 path: 'playlist/:id',
                 name: RouteNames.playlistDetail,

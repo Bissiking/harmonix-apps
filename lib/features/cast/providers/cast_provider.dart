@@ -522,13 +522,19 @@ Map<String, dynamic> _buildRiftState({
       'host': role == 'host',
     },
     'playback': {
-      'track_id': nowPlaying?.id,
+      'track_id':
+          nowPlaying?.id.startsWith('local:') == true ? null : nowPlaying?.id,
       'position_seconds': playback.updatePosition.inMilliseconds ~/ 1000,
-      'is_playing': playback.playing,
+      'is_playing': nowPlaying?.id.startsWith('local:') == true
+          ? false
+          : playback.playing,
       'repeat': playback.repeatMode.name,
       'shuffle': playback.shuffleMode.name != 'none',
     },
-    'queue': queue.map((item) => item.id).toList(),
+    'queue': queue
+        .where((item) => !item.id.startsWith('local:'))
+        .map((item) => item.id)
+        .toList(),
     if (lastCommand != null) 'last_command': lastCommand,
   };
 }

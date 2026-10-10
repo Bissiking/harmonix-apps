@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:harmonix_apps/app.dart';
 import 'package:harmonix_apps/core/audio/audio_handler.dart';
@@ -13,10 +14,9 @@ import 'package:harmonix_apps/core/settings/settings_repository.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Optimisation latence d'affichage : cache d'images en mémoire élargi
-  // pour les grilles d'albums / pochettes (desktop, tablette, mobile).
-  PaintingBinding.instance.imageCache.maximumSize = 800;
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 256 << 20;
+  // Bound decoded artwork memory for mobile and entry-level televisions.
+  PaintingBinding.instance.imageCache.maximumSize = 240;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 64 << 20;
 
   // Desktop window setup
   if (!kIsWeb &&
@@ -53,12 +53,14 @@ Future<void> main() async {
   }
 
   final prefs = await SharedPreferences.getInstance();
+  final settings = SettingsRepository(prefs);
+  await settings.initializeSecureSession(const FlutterSecureStorage());
 
   runApp(
     ProviderScope(
       overrides: [
         audioHandlerProvider.overrideWithValue(audioHandler),
-        settingsRepositoryProvider.overrideWithValue(SettingsRepository(prefs)),
+        settingsRepositoryProvider.overrideWithValue(settings),
       ],
       child: const HarmonixApp(),
     ),

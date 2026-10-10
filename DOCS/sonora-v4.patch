@@ -1,0 +1,262 @@
+diff --git a/core/kyrosClient.js b/core/kyrosClient.js
+index 2e9832a..babc1e5 100644
+--- a/core/kyrosClient.js
++++ b/core/kyrosClient.js
+@@ -218,9 +218,13 @@ function sweepAppSso() {
+   }
+ }
+ 
+-export function registerAppSso(state) {
++export function registerAppSso(state, { platform = null } = {}) {
+   sweepAppSso();
+-  appSso.set(String(state), { tokens: null, createdAt: Date.now() });
++  appSso.set(String(state), { tokens: null, platform, createdAt: Date.now() });
++}
++
++export function getAppSsoPlatform(state) {
++  return appSso.get(String(state))?.platform ?? null;
+ }
+ 
+ export function isAppSsoPending(state) {
+diff --git a/routes/auth.js b/routes/auth.js
+index 8f141ad..9adb970 100644
+--- a/routes/auth.js
++++ b/routes/auth.js
+@@ -12,6 +12,7 @@ import {
+   getSession,
+   getStudioBaseUrl,
+   isAppSsoPending,
++  getAppSsoPlatform,
+   newOAuthState,
+   parseCookies,
+   cookieHeader,
+@@ -24,6 +25,8 @@ import {
+   validateAuthorizationResponseIssuer,
+ } from "../core/kyrosClient.js";
+ 
++import { appSsoCompletionPage } from "../core/appSsoCompletion.js";
++
+ const router = express.Router();
+ 
+ router.get("/config", (_req, res) => res.json({ provider: "kyros", ...getKyrosPublicConfig() }));
+@@ -92,15 +95,13 @@ router.get("/callback", async (req, res) => {
+       return res.status(502).send("exchange_failed");
+     }
+     setAppSsoToken(String(state), tokens);
+-    return res
+-      .set("Content-Type", "text/html; charset=utf-8")
+-      .send(
+-        "<!doctype html><html lang='fr'><head><meta charset='utf-8'>" +
+-          "<title>Harmonix</title></head>" +
+-          "<body style='font-family:system-ui;background:#0E0E14;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0'>" +
+-          "<div style='text-align:center'><p style='font-size:22px'>Connecté ✅</p>" +
+-          "<p>Tu peux retourner sur l'application Harmonix.</p></div></body></html>",
+-      );
++    const completion = appSsoCompletionPage(getAppSsoPlatform(state));
++    return res.set({
++      "Content-Type": "text/html; charset=utf-8",
++      "Cache-Control": "no-store",
++      "Referrer-Policy": "no-referrer",
++      "Content-Security-Policy": completion.csp,
++    }).send(completion.html);
+   }
+ 
+   const stateCookie = parseCookies(req.headers.cookie)[STATE_COOKIE];
+diff --git a/routes/harmonix.js b/routes/harmonix.js
+index 9ba710e..c10e76f 100644
+--- a/routes/harmonix.js
++++ b/routes/harmonix.js
+@@ -18,7 +18,10 @@ import {
+   registerAppSso,
+ } from "../core/kyrosClient.js";
+ 
++import { mixedPlaylistsRouter } from "./mixed-playlists.js";
++
+ const router = express.Router();
++router.use("/v2/mixed-playlists", mixedPlaylistsRouter);
+ 
+ const DEFAULT_PALETTE = {
+   theme_colors: {
+@@ -516,7 +519,7 @@ router.get("/v2/sso/start", (req, res) => {
+   if (!/^[a-zA-Z0-9_-]{16,128}$/.test(state)) return fail(res, 400, "invalid_state");
+   return buildAuthorizeUrl(state)
+     .then((authorizeUrl) => {
+-      registerAppSso(state);
++      registerAppSso(state, { platform: String(req.query.platform || "") });
+       return ok(res, { authorize_url: authorizeUrl, state });
+     })
+     .catch((error) => {
+@@ -546,6 +549,7 @@ router.get("/v2/bootstrap", (req, res) => {
+       catalog: true,
+       albums: true,
+       playlists: true,
++      mixed_playlists: true,
+       lyrics: true,
+       search: true,
+       favorites: true,
+diff --git a/core/appSsoCompletion.js b/core/appSsoCompletion.js
+new file mode 100644
+--- /dev/null
++++ b/core/appSsoCompletion.js
+@@ -0,0 +1,22 @@
++// appSsoCompletion.js
++import { randomBytes } from "node:crypto";
++
++export function appSsoCompletionPage(platform) {
++  const nonce = randomBytes(18).toString("base64");
++  // Fixed allowlist, never reflect an arbitrary return URL or OAuth tokens.
++  const mobile = platform === "android" || platform === "ios";
++  const returnUrl = mobile ? "harmonix://auth/sso-complete" : null;
++  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8">
++    <meta name="viewport" content="width=device-width,initial-scale=1"><title>Harmonix — connexion réussie</title>
++    <style nonce="${nonce}">body{font:17px system-ui;background:#0A0F2B;color:#F2F1FA;margin:0;min-height:100vh;display:grid;place-items:center}main{max-width:30rem;padding:2rem;text-align:center}a,button{display:inline-block;background:#7B5CFF;color:#000;border:0;border-radius:12px;padding:14px 20px;text-decoration:none;font:inherit;margin:12px}p{line-height:1.6}</style></head>
++    <body><main><h1>Connexion réussie</h1><p>Harmonix récupère ta session. Tu peux reprendre ton écoute.</p>
++    ${returnUrl ? `<a href="${returnUrl}">Revenir dans Harmonix</a>` : ""}
++    <button id="close">Fermer cet onglet</button><p>Si ton navigateur garde cet onglet ouvert, reviens dans Harmonix : la connexion continue automatiquement.</p>
++    </main><script nonce="${nonce}">
++      history.replaceState(null, '', location.pathname);
++      document.getElementById('close').onclick = () => window.close();
++      ${returnUrl ? `setTimeout(() => { location.href = ${JSON.stringify(returnUrl)}; }, 250);` : ""}
++      if (window.opener) setTimeout(() => window.close(), 1000);
++    </script></body></html>`;
++  return { html, csp: `default-src 'none'; style-src 'nonce-${nonce}'; script-src 'nonce-${nonce}'; base-uri 'none'; frame-ancestors 'none'` };
++}
+diff --git a/routes/mixed-playlists.js b/routes/mixed-playlists.js
+new file mode 100644
+--- /dev/null
++++ b/routes/mixed-playlists.js
+@@ -0,0 +1,66 @@
++// mixed-playlists.js — additive Harmonix v2 contract, no personal audio transfer
++import express from 'express';
++import { getDB } from '../db/init.js';
++import { actorId, requirePermission } from '../middlewares/authorize.js';
++
++const schemas = new WeakMap();
++export async function ensureMixedPlaylistSchema(db) {
++  if (!schemas.has(db)) schemas.set(db, db.exec(`
++    CREATE TABLE IF NOT EXISTS harmonix_mixed_playlists (
++      owner TEXT NOT NULL, id TEXT NOT NULL, revision INTEGER NOT NULL,
++      operation_id TEXT NOT NULL, data TEXT NOT NULL,
++      PRIMARY KEY(owner,id));
++  `));
++  await schemas.get(db);
++}
++export function normalizeMixedPlaylist(id, body) {
++  if (!/^device:[a-f0-9]{32}$/.test(id)) throw new Error('invalid_id');
++  if (!Number.isSafeInteger(body.baseRevision) || body.baseRevision < 0 ||
++      typeof body.operationId !== 'string' || !/^[a-zA-Z0-9:_-]{16,160}$/.test(body.operationId)) throw new Error('invalid_revision');
++  const name = String(body.name || '').trim();
++  if (!name || name.length > 200 || !Array.isArray(body.entries) || body.entries.length > 2000) throw new Error('invalid_playlist');
++  const seen = new Set();
++  const entries = body.entries.map(entry => {
++    if (typeof entry.trackId !== 'string' || entry.trackId.length > 200 || seen.has(entry.trackId)) throw new Error('invalid_entry');
++    seen.add(entry.trackId);
++    if (!['sonora', 'local'].includes(entry.source)) throw new Error('invalid_source');
++    if (entry.source === 'local' && (!/^[a-f0-9]{64}$/.test(entry.fingerprint || '') || entry.trackId !== `local:${entry.fingerprint}`)) throw new Error('invalid_fingerprint');
++    if (entry.source === 'sonora' && entry.trackId.startsWith('local:')) throw new Error('invalid_source');
++    // Allowlisted metadata only. Paths, URLs and audio bytes never persist.
++    return { trackId: entry.trackId, source: entry.source,
++      ...(entry.source === 'local' ? { fingerprint: entry.fingerprint } : {}),
++      title: String(entry.title || '').slice(0, 500), artist: String(entry.artist || '').slice(0, 300),
++      album: String(entry.album || '').slice(0, 300), durationMs: Math.max(0, Math.min(Number(entry.durationMs) || 0, 86400000)) };
++  });
++  return { id, name, entries, deleted: body.deleted === true };
++}
++
++export async function saveMixedPlaylist(db, owner, id, body) {
++  const data = normalizeMixedPlaylist(id, body);
++  await ensureMixedPlaylistSchema(db);
++  const serialized = JSON.stringify(data);
++  // Atomic compare-and-swap; no shared-connection BEGIN spanning awaits.
++  if (body.baseRevision === 0) {
++    await db.run('INSERT OR IGNORE INTO harmonix_mixed_playlists(owner,id,revision,operation_id,data) VALUES(?,?,1,?,?)', [owner,id,body.operationId,serialized]);
++  } else {
++    await db.run('UPDATE harmonix_mixed_playlists SET revision=revision+1,operation_id=?,data=? WHERE owner=? AND id=? AND revision=? AND operation_id<>?',
++      [body.operationId,serialized,owner,id,body.baseRevision,body.operationId]);
++  }
++  const row = await db.get('SELECT * FROM harmonix_mixed_playlists WHERE owner=? AND id=?', [owner,id]);
++  if (row?.operation_id === body.operationId && row.data === serialized) return { conflict: false, playlist: { ...data, revision: row.revision } };
++  return { conflict: true, playlist: row ? { ...JSON.parse(row.data), revision: row.revision } : null };
++}
++export const mixedPlaylistsRouter = express.Router();
++mixedPlaylistsRouter.get('/', requirePermission('playlists:read'), async (req,res) => {
++  const db = getDB(); await ensureMixedPlaylistSchema(db);
++  const rows = await db.all('SELECT revision,data FROM harmonix_mixed_playlists WHERE owner=?', [actorId(req)]);
++  res.json({ ok: true, data: rows.map(row => ({ ...JSON.parse(row.data), revision: row.revision })) });
++});
++mixedPlaylistsRouter.put('/:id', requirePermission('playlists:own'), async (req,res) => {
++  let result;
++  try { normalizeMixedPlaylist(req.params.id, req.body || {}); }
++  catch(error) { return res.status(400).json({ok:false,error:error.message}); }
++  result = await saveMixedPlaylist(getDB(), actorId(req), req.params.id, req.body);
++  if(result.conflict) return res.status(409).json({ ok:false,error:'playlist_conflict',current:result.playlist });
++  res.json({ok:true,data:result.playlist});
++});
+diff --git a/test/app-sso-completion.test.js b/test/app-sso-completion.test.js
+new file mode 100644
+--- /dev/null
++++ b/test/app-sso-completion.test.js
+@@ -0,0 +1,26 @@
++// app-sso-completion.test.js
++import test from "node:test";
++import assert from "node:assert/strict";
++import { appSsoCompletionPage } from "../core/appSsoCompletion.js";
++import { registerAppSso, getAppSsoPlatform, setAppSsoToken, consumeAppSsoToken } from "../core/kyrosClient.js";
++
++test("mobile SSO returns to the fixed Harmonix scheme without exposing tokens", () => {
++  for (const platform of ["android", "ios"]) {
++    const page = appSsoCompletionPage(platform);
++    assert.match(page.html, /harmonix:\/\/auth\/sso-complete/);
++    assert.match(page.csp, /frame-ancestors 'none'/);
++    assert.doesNotMatch(page.html, /access_token|refresh_token/);
++  }
++});
++test("untrusted platforms cannot inject a redirect or executable HTML", () => {
++  const page = appSsoCompletionPage('<script>alert(1)</script>');
++  assert.doesNotMatch(page.html, /harmonix:\/\/|alert\(1\)/);
++  assert.match(page.html, /window.close/);
++});
++test("the relay remembers the platform and still delivers the token exactly once", () => {
++  registerAppSso('completion-platform-test', { platform: 'android' });
++  assert.equal(getAppSsoPlatform('completion-platform-test'), 'android');
++  setAppSsoToken('completion-platform-test', { access_token: 'test-token' });
++  assert.deepEqual(consumeAppSsoToken('completion-platform-test'), { access_token: 'test-token' });
++  assert.equal(getAppSsoPlatform('completion-platform-test'), null);
++});
+diff --git a/test/mixed-playlists.test.js b/test/mixed-playlists.test.js
+new file mode 100644
+--- /dev/null
++++ b/test/mixed-playlists.test.js
+@@ -0,0 +1,32 @@
++// mixed-playlists.test.js
++import test from 'node:test';
++import assert from 'node:assert/strict';
++import { open } from 'sqlite';
++import sqlite3 from 'sqlite3';
++import { saveMixedPlaylist, normalizeMixedPlaylist } from '../routes/mixed-playlists.js';
++const id = 'device:' + 'a'.repeat(32);
++const initial = { baseRevision:0,operationId:'operation-create-0001',name:'Mix',entries:[
++  {trackId:'sonora-1',source:'sonora',title:'Remote'},
++  {trackId:'local:'+'b'.repeat(64),source:'local',fingerprint:'b'.repeat(64),title:'Personal',path:'C:/private/audio.mp3'}] };
++test('mixed playlists preserve local references without transferring paths', () => {
++  const normalized = normalizeMixedPlaylist(id,initial);
++  assert.equal(normalized.entries.length,2);
++  assert.equal(normalized.entries[1].path,undefined);
++  assert.throws(() => normalizeMixedPlaylist(id,{...initial,entries:[{trackId:'local:x',source:'local',fingerprint:'x'}]}));
++});
++test('revision conflicts and replayed operations never duplicate or overwrite edits', async () => {
++  const db = await open({filename:':memory:',driver:sqlite3.Database});
++  try {
++    assert.equal((await saveMixedPlaylist(db,'owner',id,initial)).playlist.revision,1);
++    assert.equal((await saveMixedPlaylist(db,'owner',id,initial)).playlist.revision,1);
++    const update = {...initial,baseRevision:1,operationId:'operation-update-0002',name:'Updated'};
++    const results = await Promise.all([
++      saveMixedPlaylist(db,'owner',id,update),
++      saveMixedPlaylist(db,'owner',id,{...update,operationId:'operation-stale-0003',name:'Stale'})]);
++    assert.equal(results.filter(r => !r.conflict).length,1);
++    const replay = await saveMixedPlaylist(db,'owner',id,initial);
++    assert.equal(replay.conflict,true);
++    assert.equal(replay.playlist.revision,2);
++    assert.equal((await saveMixedPlaylist(db,'another-owner',id,initial)).playlist.revision,1);
++  } finally { await db.close(); }
++});

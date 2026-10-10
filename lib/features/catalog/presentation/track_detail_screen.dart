@@ -67,8 +67,8 @@ class TrackDetailScreen extends ConsumerWidget {
                   child: Text(
                     t.album!,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      decoration: TextDecoration.underline,
-                    ),
+                          decoration: TextDecoration.underline,
+                        ),
                   ),
                 ),
               ],
@@ -79,8 +79,7 @@ class TrackDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: () =>
-                    ref.read(playerProvider.notifier).playTrack(t),
+                onPressed: () => ref.read(playerProvider.notifier).playTrack(t),
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Lire'),
                 style: FilledButton.styleFrom(

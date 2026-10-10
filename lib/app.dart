@@ -12,6 +12,9 @@ import 'package:harmonix_apps/core/settings/settings_repository.dart';
 import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/features/cast/providers/cast_provider.dart';
 import 'package:harmonix_apps/shared/theme/app_theme.dart';
+import 'package:harmonix_apps/core/theme/flow_appearance.dart';
+import 'package:harmonix_apps/features/library/data/mixed_playlist_sync.dart';
+import 'package:harmonix_apps/features/library/data/audio_cache.dart';
 
 class HarmonixApp extends ConsumerStatefulWidget {
   const HarmonixApp({super.key});
@@ -49,20 +52,33 @@ class _HarmonixAppState extends ConsumerState<HarmonixApp> {
     ref.watch(sessionKeepAliveProvider);
     ref.watch(riftPlaybackSyncProvider);
     ref.watch(sessionReconnectProvider);
+    ref.watch(mixedSyncLifecycleProvider);
+    ref.watch(keptPlaylistDownloadsProvider);
+    ref.watch(audioCacheLifecycleProvider);
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(settingsRepositoryProvider);
     final themePalette = ref.watch(themeControllerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final appearance = ref.watch(appearanceProvider);
+    ref.watch(appearanceRevisionProvider);
     final isDev = _isDevServer(settings.serverUrl);
     return MaterialApp.router(
       title: 'Harmonix',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark(themePalette),
-      themeMode: themeMode,
+      darkTheme: AppTheme.dark(appearance.palette),
+      themeMode: settings.appearance == null && themeMode == ThemeMode.system
+          ? ThemeMode.system
+          : appearance == FlowAppearance.daylight
+              ? ThemeMode.light
+              : ThemeMode.dark,
       routerConfig: router,
       builder: (context, child) {
-        final content = child ?? const SizedBox.shrink();
+        final content = MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+                disableAnimations: MediaQuery.disableAnimationsOf(context) ||
+                    settings.reduceMotion),
+            child: child ?? const SizedBox.shrink());
         if (!isDev) return content;
         return Banner(
           message: 'DEV',

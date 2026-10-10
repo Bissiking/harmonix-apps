@@ -9,6 +9,8 @@ import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
+import 'package:harmonix_apps/features/library/data/device_files.dart';
+import 'package:harmonix_apps/shared/widgets/flow_components.dart';
 
 class AlbumDetailScreen extends ConsumerWidget {
   const AlbumDetailScreen({super.key, required this.albumId});
@@ -84,12 +86,27 @@ class AlbumDetailScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
+            if (supportsDeviceFiles)
+              OutlinedButton.icon(
+                  onPressed: a.tracks.isEmpty
+                      ? null
+                      : () => runFlowAction(context, () async {
+                            for (final track in a.tracks) {
+                              await ref
+                                  .read(playerProvider.notifier)
+                                  .downloadTrack(track);
+                            }
+                          }),
+                  icon: const Icon(Icons.download),
+                  label: const Text('Garder cet album hors connexion')),
             if (a.tracks.isEmpty)
               const Center(child: Text('Aucune piste disponible.')),
             for (var i = 0; i < a.tracks.length; i++)
               TrackListTile(
                 track: a.tracks[i],
-                onTap: () => ref.read(playerProvider.notifier).playFromQueue(a.tracks, i),
+                onTap: () => ref
+                    .read(playerProvider.notifier)
+                    .playFromQueue(a.tracks, i),
               ),
           ],
         ),
