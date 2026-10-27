@@ -474,6 +474,15 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
 
   Future<void> skipToPrevious() => _advance(-1);
 
+  /// Selects a title by ID because the cast queue excludes personal files.
+  Future<void> skipToTrack(String trackId) async {
+    if (!_casting) return;
+    final index = _queue.indexWhere((item) => item.id == trackId);
+    if (index < 0) return;
+    _pendingStartPosition = null;
+    await _loadQueueItem(index);
+  }
+
   Future<void> _advance(int delta) async {
     final session = _session;
     if (session == null || !_casting || _queue.isEmpty) return;

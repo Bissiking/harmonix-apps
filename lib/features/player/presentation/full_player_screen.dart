@@ -43,11 +43,10 @@ class FullPlayerScreen extends ConsumerWidget {
     // A queue of a single title cannot advance: the controls are disabled
     // rather than left as dead buttons. Cast queues are driven by the
     // receiver, so they keep their own availability.
-    final canSkip = ref.watch(playerNavigationProvider
-        .select((state) => (
-              next: state.valueOrNull?.$1 ?? false,
-              previous: state.valueOrNull?.$2 ?? false,
-            )));
+    final canSkip = ref.watch(playerNavigationProvider.select((state) => (
+          next: state.valueOrNull?.$1 ?? false,
+          previous: state.valueOrNull?.$2 ?? false,
+        )));
     final cast = ref.watch(googleCastProvider.select((state) => (
           casting: state.casting,
           isPlaying: state.isPlaying,
@@ -478,14 +477,14 @@ class _SidePanel extends StatelessWidget {
   }
 }
 
-class _QueueList extends StatelessWidget {
+class _QueueList extends ConsumerWidget {
   const _QueueList({required this.queue, required this.currentId});
 
   final List<MediaItem> queue;
   final String currentId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (queue.isEmpty) {
       return const Center(child: Text('File vide.'));
     }
@@ -496,6 +495,13 @@ class _QueueList extends StatelessWidget {
         final isCurrent = item.id == currentId;
         return ListTile(
           dense: true,
+          selected: isCurrent,
+          onTap: () => runFlowAction(context, () {
+            if (ref.read(googleCastProvider).casting) {
+              return ref.read(googleCastProvider.notifier).skipToTrack(item.id);
+            }
+            return ref.read(playerProvider.notifier).skipToQueueItem(i);
+          }),
           title: Text(
             item.title,
             maxLines: 1,

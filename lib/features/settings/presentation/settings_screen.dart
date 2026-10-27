@@ -310,7 +310,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     title: const Text('Harmonix'),
                     subtitle: Text(info == null
                         ? 'Chargement de la version…'
-                        : 'Version ${info.version}+${info.buildNumber}'));
+                        : 'Version ${info.version}'));
               }),
           if (!kIsWeb) ...[
             const SizedBox(height: 24),

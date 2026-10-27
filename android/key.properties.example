@@ -1,0 +1,7 @@
+# Copier ce fichier vers android/key.properties et renseigner la cle existante.
+# Sous Windows, utiliser des / dans le chemin absolu.
+# Exemple : C:/Users/mathe/chemin/vers/harmonix-release.jks
+storeFile=
+storePassword=
+keyAlias=harmonix
+keyPassword=

@@ -350,6 +350,8 @@ class Player extends _$Player {
   Future<void> skipToNext() => ref.read(audioHandlerProvider).skipToNext();
   Future<void> skipToPrevious() =>
       ref.read(audioHandlerProvider).skipToPrevious();
+  Future<void> skipToQueueItem(int index) =>
+      ref.read(audioHandlerProvider).skipToQueueItem(index);
   Future<void> seek(Duration position) =>
       ref.read(audioHandlerProvider).seek(position);
 
