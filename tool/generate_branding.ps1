@@ -41,14 +41,25 @@ $icon = New-HarmonixBitmap $false $true
 $icon.Save((Join-Path $brandRoot 'harmonix-icon.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $night = New-HarmonixBitmap $true $false
 $night.Save((Join-Path $brandRoot 'harmonix-night-symbol.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+# Master raster 3D (assets/images/harmonix.png) -> derives systemes Android
+$master = [System.Drawing.Bitmap]::new((Join-Path $PSScriptRoot '../assets/images/harmonix.png'))
+$drawable = [System.Drawing.Bitmap]::new(1024, 1024)
+$lg = [System.Drawing.Graphics]::FromImage($drawable)
+$lg.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+$lg.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
+$lg.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
+$lg.Clear([System.Drawing.Color]::Transparent)
+$lg.DrawImage($master, 0, 0, 1024, 1024)
+$lg.Dispose()
+$drawable.Save((Join-Path $PSScriptRoot '../android/app/src/main/res/drawable/logo_harmonix.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $banner = [System.Drawing.Bitmap]::new(320,180)
 $canvas = [System.Drawing.Graphics]::FromImage($banner)
 $canvas.Clear([System.Drawing.ColorTranslator]::FromHtml('#0A0F2B'))
-$canvas.DrawImage($symbol,8,30,120,120)
+$canvas.DrawImage($master,8,30,120,120)
 $font = [System.Drawing.Font]::new('Segoe UI',24,[System.Drawing.FontStyle]::Bold)
 $canvas.DrawString('Harmonix',$font,[System.Drawing.Brushes]::White,128,65)
 $banner.Save((Join-Path $PSScriptRoot '../android/app/src/main/res/drawable/tv_banner.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-$canvas.Dispose(); $font.Dispose(); $banner.Dispose(); $symbol.Dispose(); $icon.Dispose(); $night.Dispose()
+$canvas.Dispose(); $font.Dispose(); $banner.Dispose(); $symbol.Dispose(); $icon.Dispose(); $night.Dispose(); $master.Dispose(); $drawable.Dispose()
 foreach($name in @('harmonix','harmonix-night')) {
     $master = Get-Content -Raw (Join-Path $brandRoot "$name.svg")
     $master.Replace('stroke="url(#flow)"','stroke="currentColor"').Replace('fill="#C8B4FF"','fill="currentColor"') | Set-Content (Join-Path $brandRoot "$name-mono.svg") -Encoding utf8

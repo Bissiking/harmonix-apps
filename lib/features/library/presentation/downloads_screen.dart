@@ -9,6 +9,8 @@ import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/widgets/flow_components.dart';
 import 'package:harmonix_apps/features/library/data/audio_cache.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/features/night/domain/night_visibility.dart';
+import 'package:harmonix_apps/features/night/providers/night_provider.dart';
 
 final _cacheSettingsRevisionProvider = StateProvider<int>((ref) => 0);
 
@@ -22,8 +24,12 @@ class DownloadsScreen extends ConsumerWidget {
     final cached = ref.watch(audioCacheEntriesProvider).valueOrNull ?? [];
     final cacheBytes =
         cached.fold<int>(0, (sum, row) => sum + (row['file']['bytes'] as int));
-    final downloads =
-        files.where((f) => f.source == MusicSource.downloaded).toList();
+    final metadata = ref.watch(nightMetadataProvider).valueOrNull ?? const {};
+    final downloads = files
+        .where((f) =>
+            f.source == MusicSource.downloaded &&
+            !isNightOnly(metadata, f.track.id, track: f.track))
+        .toList();
     final transfers = ref.watch(transfersProvider).values.toList();
     final bytes = downloads.fold<int>(0, (sum, file) => sum + file.bytes);
     return Scaffold(
@@ -140,8 +146,10 @@ class DownloadsScreen extends ConsumerWidget {
                       onTap: () => runFlowAction(
                           context,
                           () => ref
-                              .read(playerProvider.notifier)
-                              .playTrack(file.track)),
+                                  .read(playerProvider.notifier)
+                                  .playTrack(file.track, queue: [
+                                for (final download in downloads) download.track
+                              ])),
                       trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                         FlowIconButton(
                             tooltip: 'Vérifier l’intégrité locale',

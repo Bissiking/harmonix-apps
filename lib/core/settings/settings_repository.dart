@@ -17,6 +17,9 @@ const _keyThemeMode = 'theme_mode';
 const _keyRiftSessionId = 'rift_session_id';
 const _keyRiftDeviceId = 'rift_device_id';
 const _keyCastLastDevice = 'cast_last_device';
+const _keyShuffleEnabled = 'flow_shuffle';
+const _keyRepeatMode = 'flow_repeat';
+const _keyLibrarySort = 'library_sort';
 
 class SettingsRepository {
   SettingsRepository(this._prefs);
@@ -85,6 +88,23 @@ class SettingsRepository {
 
   bool get nightSenseEnabled =>
       _prefs.getBool('night_sense_$libraryScope') ?? false;
+
+  /// Last "Aléatoire" state, restored at startup so the choice survives an
+  /// app restart (and matches what Android Auto reports).
+  bool get shuffleEnabled => _prefs.getBool(_keyShuffleEnabled) ?? false;
+  Future<void> setShuffleEnabled(bool value) =>
+      _prefs.setBool(_keyShuffleEnabled, value);
+
+  /// Last "Boucle" state as an [AudioServiceRepeatMode] name:
+  /// `none` | `one` | `all` | `group`.
+  String get repeatMode => _prefs.getString(_keyRepeatMode) ?? 'none';
+  Future<void> setRepeatMode(String value) =>
+      _prefs.setString(_keyRepeatMode, value);
+
+  /// Order used by the Morceaux tab. Defaults to "Ajout récent".
+  String get librarySort => _prefs.getString(_keyLibrarySort) ?? 'recent';
+  Future<void> setLibrarySort(String value) =>
+      _prefs.setString(_keyLibrarySort, value);
   Future<void> setAppearance(String name) =>
       _prefs.setString('flow_appearance', name);
   Future<void> setDynamicColors(bool value) =>

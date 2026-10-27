@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:harmonix_apps/app.dart';
 import 'package:harmonix_apps/core/audio/audio_handler.dart';
 import 'package:harmonix_apps/core/audio/audio_handler_provider.dart';
+import 'package:harmonix_apps/core/audio/playback_modes.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
 
 Future<void> main() async {
@@ -55,6 +56,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final settings = SettingsRepository(prefs);
   await settings.initializeSecureSession(const FlutterSecureStorage());
+  await bindPlaybackModes(audioHandler, settings);
 
   runApp(
     ProviderScope(

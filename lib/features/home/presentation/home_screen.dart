@@ -9,7 +9,7 @@ import 'package:harmonix_apps/features/catalog/providers/albums_provider.dart';
 import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/features/tv/presentation/tv_surfaces.dart';
-import 'package:harmonix_apps/shared/widgets/harmonix_mark.dart';
+import 'package:harmonix_apps/shared/widgets/harmonix_logo.dart';
 import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
 import 'package:harmonix_apps/shared/widgets/flow_components.dart';
 
@@ -35,7 +35,7 @@ class HomeScreen extends ConsumerWidget {
                             Scaffold.maybeOf(context)?.openDrawer()))
                 : null,
             title: const Row(children: [
-              HarmonixMark(size: 28),
+              HarmonixLogo(size: 28),
               SizedBox(width: 8),
               Flexible(
                   child: Text('Harmonix',

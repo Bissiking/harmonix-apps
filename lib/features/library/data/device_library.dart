@@ -13,19 +13,70 @@ import 'package:harmonix_apps/features/library/data/device_files.dart';
 class DeviceLibrary {
   DeviceLibrary(this.store);
   final LocalStore store;
-  Future<List<DeviceTrack>> files() async =>
-      (await store.all('files')).map(DeviceTrack.fromJson).toList();
+  Future<List<DeviceTrack>> files() async {
+    final current = {for (final track in await catalog()) track.id: track};
+    return (await store.all('files')).map(DeviceTrack.fromJson).map((file) {
+      final track = current[file.track.id];
+      if (file.source == MusicSource.personal || track == null) return file;
+      // Refresh editorial flags even for audio downloaded before a Studio edit.
+      return DeviceTrack(
+          track: track,
+          source: file.source,
+          path: file.path,
+          fingerprint: file.fingerprint,
+          bytes: file.bytes,
+          artworkPath: file.artworkPath);
+    }).toList();
+  }
+
   Future<DeviceTrack?> file(String id) async {
     final data = await store.get('files', id);
     return data == null ? null : DeviceTrack.fromJson(data);
   }
 
-  Future<void> saveFile(DeviceTrack file) =>
-      store.put('files', file.track.id, file.toJson());
+  Future<void> saveFile(DeviceTrack file) async {
+    await store.put('files', file.track.id, file.toJson());
+    await stampAdded([file.track.id]);
+  }
+
   Future<List<Track>> catalog() async =>
       (await store.all('catalog')).map(Track.fromJson).toList();
-  Future<void> cacheCatalog(List<Track> tracks) =>
-      store.replace('catalog', {for (final t in tracks) t.id: t.toJson()});
+
+  Future<void> cacheCatalog(List<Track> tracks) async {
+    await store.replace('catalog', {for (final t in tracks) t.id: t.toJson()});
+    await stampAdded(tracks.map((track) => track.id));
+  }
+
+  /// Records when each title first appeared on this device. The catalogue has
+  /// no date of its own, so "Ajout récent" is built from this bucket: only
+  /// unseen ids are written, later refreshes never move a title's date.
+  Future<void> stampAdded(Iterable<String> ids) async {
+    final known = {
+      for (final row in await store.all('track_added'))
+        if (row['id'] is String) row['id'] as String,
+    };
+    final now = DateTime.now().toIso8601String();
+    for (final id in ids) {
+      if (known.add(id)) {
+        await store.put('track_added', id, {'id': id, 'at': now});
+      }
+    }
+  }
+
+  /// `id →` first time the title was seen on this device.
+  Future<Map<String, DateTime>> addedDates() async {
+    final dates = <String, DateTime>{};
+    for (final row in await store.all('track_added')) {
+      final id = row['id'];
+      final at = row['at'];
+      if (id is String && at is String) {
+        final parsed = DateTime.tryParse(at);
+        if (parsed != null) dates[id] = parsed;
+      }
+    }
+    return dates;
+  }
+
   Future<List<Track>> allTracks() async {
     final tracks = {for (final track in await catalog()) track.id: track};
     for (final file in await files()) {
@@ -77,6 +128,15 @@ final deviceLibraryProvider = FutureProvider<DeviceLibrary>(
     (ref) async => DeviceLibrary(await ref.watch(localStoreProvider.future)));
 final deviceTracksProvider = FutureProvider<List<DeviceTrack>>(
     (ref) async => (await ref.watch(deviceLibraryProvider.future)).files());
+
+/// `track id →` first time the title was seen on this device. Drives the
+/// "Ajout récent" order of the Morceaux tab.
+final trackAddedDatesProvider =
+    FutureProvider<Map<String, DateTime>>((ref) async {
+  ref.watch(libraryRevisionProvider);
+  final library = await ref.watch(deviceLibraryProvider.future);
+  return library.addedDates();
+});
 final mixedPlaylistsProvider = FutureProvider<List<MixedPlaylist>>(
     (ref) async => (await ref.watch(deviceLibraryProvider.future)).playlists());
 final libraryRevisionProvider = StateProvider<int>((ref) => 0);

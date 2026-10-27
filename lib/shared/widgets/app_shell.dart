@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:harmonix_apps/features/player/presentation/mini_player_bar.dart';
 import 'package:harmonix_apps/features/library/data/device_library.dart';
 import 'package:harmonix_apps/shared/layout/responsive_breakpoints.dart';
-import 'package:harmonix_apps/shared/widgets/harmonix_mark.dart';
+import 'package:harmonix_apps/shared/widgets/harmonix_logo.dart';
 import 'package:harmonix_apps/core/platform/platform_capabilities.dart';
 
 const flowDestinations = <({String label, IconData icon, String path})>[
@@ -33,11 +33,12 @@ class AppShell extends ConsumerWidget {
     final mobile = [
       flowDestinations[0],
       flowDestinations[1],
-      flowDestinations[2],
+      flowDestinations[6],
       flowDestinations[3],
       flowDestinations[7]
     ];
     var selected = mobile.indexWhere((d) => location.startsWith(d.path));
+    if (location.startsWith('/search')) selected = 2;
     if (selected < 0) selected = 0;
     final content = Column(children: [
       if (offline)
@@ -153,7 +154,7 @@ class _NavigationList extends StatelessWidget {
                         ? MainAxisAlignment.start
                         : MainAxisAlignment.center,
                     children: [
-                      const HarmonixMark(size: 48),
+                      const HarmonixLogo(size: 48),
                       if (extended) ...[
                         const SizedBox(width: 10),
                         Text('Harmonix',

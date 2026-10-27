@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/features/library/data/library_repository.dart';
+import 'package:harmonix_apps/features/night/domain/night_visibility.dart';
 import 'package:harmonix_apps/features/night/providers/night_provider.dart';
 
 part 'favorites_provider.g.dart';
@@ -11,9 +12,8 @@ class Favorites extends _$Favorites {
   @override
   Future<List<Track>> build() async {
     final metadata = await ref.watch(nightMetadataProvider.future);
-    return (await ref.watch(libraryRepositoryProvider).getFavorites())
-        .where((t) => metadata[t.id]?.nightOnly != true)
-        .toList();
+    return visibleInLibrary(
+        await ref.watch(libraryRepositoryProvider).getFavorites(), metadata);
   }
 
   /// Optimistic toggle: flips immediately, reverts on error.

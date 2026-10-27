@@ -34,6 +34,8 @@ mixin _$Track {
   bool get isFavorite;
   @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
   bool get nightEligible;
+  @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+  DateTime? get addedAt;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -65,17 +67,29 @@ mixin _$Track {
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
             (identical(other.nightEligible, nightEligible) ||
-                other.nightEligible == nightEligible));
+                other.nightEligible == nightEligible) &&
+            (identical(other.addedAt, addedAt) || other.addedAt == addedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, artist, album,
-      coverFile, coverUrl, streamUrl, durationMs, isFavorite, nightEligible);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      title,
+      artist,
+      album,
+      coverFile,
+      coverUrl,
+      streamUrl,
+      durationMs,
+      isFavorite,
+      nightEligible,
+      addedAt);
 
   @override
   String toString() {
-    return 'Track(id: $id, title: $title, artist: $artist, album: $album, coverFile: $coverFile, coverUrl: $coverUrl, streamUrl: $streamUrl, durationMs: $durationMs, isFavorite: $isFavorite, nightEligible: $nightEligible)';
+    return 'Track(id: $id, title: $title, artist: $artist, album: $album, coverFile: $coverFile, coverUrl: $coverUrl, streamUrl: $streamUrl, durationMs: $durationMs, isFavorite: $isFavorite, nightEligible: $nightEligible, addedAt: $addedAt)';
   }
 }
 
@@ -102,7 +116,9 @@ abstract mixin class $TrackCopyWith<$Res> {
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       bool isFavorite,
       @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-      bool nightEligible});
+      bool nightEligible,
+      @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+      DateTime? addedAt});
 }
 
 /// @nodoc
@@ -127,6 +143,7 @@ class _$TrackCopyWithImpl<$Res> implements $TrackCopyWith<$Res> {
     Object? durationMs = null,
     Object? isFavorite = null,
     Object? nightEligible = null,
+    Object? addedAt = freezed,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -169,6 +186,10 @@ class _$TrackCopyWithImpl<$Res> implements $TrackCopyWith<$Res> {
           ? _self.nightEligible
           : nightEligible // ignore: cast_nullable_to_non_nullable
               as bool,
+      addedAt: freezed == addedAt
+          ? _self.addedAt
+          : addedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -286,7 +307,9 @@ extension TrackPatterns on Track {
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite,
             @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-            bool nightEligible)?
+            bool nightEligible,
+            @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+            DateTime? addedAt)?
         $default, {
     required TResult orElse(),
   }) {
@@ -303,7 +326,8 @@ extension TrackPatterns on Track {
             _that.streamUrl,
             _that.durationMs,
             _that.isFavorite,
-            _that.nightEligible);
+            _that.nightEligible,
+            _that.addedAt);
       case _:
         return orElse();
     }
@@ -344,7 +368,9 @@ extension TrackPatterns on Track {
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite,
             @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-            bool nightEligible)
+            bool nightEligible,
+            @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+            DateTime? addedAt)
         $default,
   ) {
     final _that = this;
@@ -360,7 +386,8 @@ extension TrackPatterns on Track {
             _that.streamUrl,
             _that.durationMs,
             _that.isFavorite,
-            _that.nightEligible);
+            _that.nightEligible,
+            _that.addedAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -400,7 +427,9 @@ extension TrackPatterns on Track {
             @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
             bool isFavorite,
             @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-            bool nightEligible)?
+            bool nightEligible,
+            @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+            DateTime? addedAt)?
         $default,
   ) {
     final _that = this;
@@ -416,7 +445,8 @@ extension TrackPatterns on Track {
             _that.streamUrl,
             _that.durationMs,
             _that.isFavorite,
-            _that.nightEligible);
+            _that.nightEligible,
+            _that.addedAt);
       case _:
         return null;
     }
@@ -444,7 +474,9 @@ class _Track implements Track {
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       this.isFavorite = false,
       @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-      this.nightEligible = false});
+      this.nightEligible = false,
+      @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+      this.addedAt});
   factory _Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
 
   @override
@@ -477,6 +509,9 @@ class _Track implements Track {
   @override
   @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
   final bool nightEligible;
+  @override
+  @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+  final DateTime? addedAt;
 
   /// Create a copy of Track
   /// with the given fields replaced by the non-null parameter values.
@@ -513,17 +548,29 @@ class _Track implements Track {
             (identical(other.isFavorite, isFavorite) ||
                 other.isFavorite == isFavorite) &&
             (identical(other.nightEligible, nightEligible) ||
-                other.nightEligible == nightEligible));
+                other.nightEligible == nightEligible) &&
+            (identical(other.addedAt, addedAt) || other.addedAt == addedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, id, title, artist, album,
-      coverFile, coverUrl, streamUrl, durationMs, isFavorite, nightEligible);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      title,
+      artist,
+      album,
+      coverFile,
+      coverUrl,
+      streamUrl,
+      durationMs,
+      isFavorite,
+      nightEligible,
+      addedAt);
 
   @override
   String toString() {
-    return 'Track(id: $id, title: $title, artist: $artist, album: $album, coverFile: $coverFile, coverUrl: $coverUrl, streamUrl: $streamUrl, durationMs: $durationMs, isFavorite: $isFavorite, nightEligible: $nightEligible)';
+    return 'Track(id: $id, title: $title, artist: $artist, album: $album, coverFile: $coverFile, coverUrl: $coverUrl, streamUrl: $streamUrl, durationMs: $durationMs, isFavorite: $isFavorite, nightEligible: $nightEligible, addedAt: $addedAt)';
   }
 }
 
@@ -551,7 +598,9 @@ abstract mixin class _$TrackCopyWith<$Res> implements $TrackCopyWith<$Res> {
       @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
       bool isFavorite,
       @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
-      bool nightEligible});
+      bool nightEligible,
+      @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+      DateTime? addedAt});
 }
 
 /// @nodoc
@@ -576,6 +625,7 @@ class __$TrackCopyWithImpl<$Res> implements _$TrackCopyWith<$Res> {
     Object? durationMs = null,
     Object? isFavorite = null,
     Object? nightEligible = null,
+    Object? addedAt = freezed,
   }) {
     return _then(_Track(
       id: null == id
@@ -618,6 +668,10 @@ class __$TrackCopyWithImpl<$Res> implements _$TrackCopyWith<$Res> {
           ? _self.nightEligible
           : nightEligible // ignore: cast_nullable_to_non_nullable
               as bool,
+      addedAt: freezed == addedAt
+          ? _self.addedAt
+          : addedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }

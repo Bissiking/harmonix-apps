@@ -49,20 +49,37 @@ class TrackListTile extends ConsumerWidget {
       },
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        minTileHeight: 76,
         leading: TrackArtwork(
           trackId: track.id,
           coverFile: track.coverFile,
           coverUrl: track.coverUrl,
+          size: 52,
+          borderRadius: 10,
         ),
         title: Text(
           track.title.isNotEmpty ? track.title : track.id,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          '${track.artist.isNotEmpty ? track.artist : "Artiste inconnu"} · ${device?.source.name == "personal" ? "Cet appareil" : device == null ? "Sonora" : "Téléchargé"}',
+          [
+            track.artist.isNotEmpty ? track.artist : 'Artiste inconnu',
+            if (device?.source.name == 'personal')
+              'Cet appareil'
+            else if (device != null)
+              'Téléchargé'
+            else if (track.album?.isNotEmpty == true)
+              track.album!,
+          ].join(' · '),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          style:
+              TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -91,7 +108,8 @@ class TrackListTile extends ConsumerWidget {
                   )),
             Text(
               track.durationMs > 0 ? formatMs(track.durationMs) : '--:--',
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),

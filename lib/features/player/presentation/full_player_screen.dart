@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
 
 import 'package:harmonix_apps/core/utils/duration_formatter.dart';
+import 'package:harmonix_apps/core/audio/playback_modes.dart';
 import 'package:harmonix_apps/features/cast/presentation/cast_sheet.dart';
 import 'package:harmonix_apps/features/cast/providers/google_cast_provider.dart';
 import 'package:harmonix_apps/features/player/presentation/lyrics_view.dart';
@@ -39,6 +40,14 @@ class FullPlayerScreen extends ConsumerWidget {
         )));
     final queue =
         ref.watch(playbackQueueProvider).valueOrNull ?? const <MediaItem>[];
+    // A queue of a single title cannot advance: the controls are disabled
+    // rather than left as dead buttons. Cast queues are driven by the
+    // receiver, so they keep their own availability.
+    final canSkip = ref.watch(playerNavigationProvider
+        .select((state) => (
+              next: state.valueOrNull?.$1 ?? false,
+              previous: state.valueOrNull?.$2 ?? false,
+            )));
     final cast = ref.watch(googleCastProvider.select((state) => (
           casting: state.casting,
           isPlaying: state.isPlaying,
@@ -102,6 +111,11 @@ class FullPlayerScreen extends ConsumerWidget {
     void onPrevious() => useCast
         ? castNotifier.skipToPrevious()
         : playerNotifier.skipToPrevious();
+
+    final VoidCallback? onNextIfAvailable =
+        useCast || canSkip.next ? onNext : null;
+    final VoidCallback? onPreviousIfAvailable =
+        useCast || canSkip.previous ? onPrevious : null;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -174,8 +188,8 @@ class FullPlayerScreen extends ConsumerWidget {
                             repeat: repeat,
                             useCast: useCast,
                             onPlayPause: onPlayPause,
-                            onNext: onNext,
-                            onPrevious: onPrevious,
+                            onNext: onNextIfAvailable,
+                            onPrevious: onPreviousIfAvailable,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -196,8 +210,8 @@ class FullPlayerScreen extends ConsumerWidget {
                       repeat: repeat,
                       useCast: useCast,
                       onPlayPause: onPlayPause,
-                      onNext: onNext,
-                      onPrevious: onPrevious,
+                      onNext: onNextIfAvailable,
+                      onPrevious: onPreviousIfAvailable,
                     );
             },
           ),
@@ -225,8 +239,8 @@ class _NowPlayingPanel extends ConsumerWidget {
   final AudioServiceRepeatMode repeat;
   final bool useCast;
   final VoidCallback onPlayPause;
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
+  final VoidCallback? onNext;
+  final VoidCallback? onPrevious;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -352,7 +366,7 @@ class _NowPlayingPanel extends ConsumerWidget {
                         ? 'Activer la répétition'
                         : 'Changer le mode de répétition',
                     icon: Icon(
-                      _repeatIcon(repeat),
+                      repeatModeIcon(repeat),
                       color: repeat != AudioServiceRepeatMode.none
                           ? Theme.of(context).colorScheme.primary
                           : Theme.of(context)
@@ -364,7 +378,7 @@ class _NowPlayingPanel extends ConsumerWidget {
                         ? null
                         : () => ref
                             .read(playerProvider.notifier)
-                            .setRepeat(_nextRepeat(repeat)),
+                            .setRepeat(nextRepeatMode(repeat)),
                   )),
             ],
           ),
@@ -372,18 +386,6 @@ class _NowPlayingPanel extends ConsumerWidget {
       ),
     );
   }
-
-  IconData _repeatIcon(AudioServiceRepeatMode mode) => switch (mode) {
-        AudioServiceRepeatMode.one => Icons.repeat_one,
-        _ => Icons.repeat,
-      };
-
-  AudioServiceRepeatMode _nextRepeat(AudioServiceRepeatMode current) =>
-      switch (current) {
-        AudioServiceRepeatMode.none => AudioServiceRepeatMode.all,
-        AudioServiceRepeatMode.all => AudioServiceRepeatMode.one,
-        _ => AudioServiceRepeatMode.none,
-      };
 }
 
 class _PlayerProgress extends ConsumerWidget {

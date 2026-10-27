@@ -6,6 +6,8 @@ import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart';
 import 'package:harmonix_apps/features/catalog/providers/tracks_provider.dart';
 import 'package:harmonix_apps/features/library/providers/playlists_provider.dart';
+import 'package:harmonix_apps/features/night/domain/night_visibility.dart';
+import 'package:harmonix_apps/features/night/providers/night_provider.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 
@@ -38,7 +40,9 @@ class PlaylistDetailScreen extends ConsumerWidget {
         value: playlist,
         onRetry: () => ref.invalidate(playlistDetailProvider(playlistId)),
         data: (p) {
-          final tracks = p.tracks;
+          final metadata =
+              ref.watch(nightMetadataProvider).valueOrNull ?? const {};
+          final tracks = visibleInLibrary(p.tracks, metadata);
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
@@ -65,7 +69,7 @@ class PlaylistDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _addTracks(context, ref, tracks),
+                      onPressed: () => _addTracks(context, ref, p.tracks),
                       icon: const Icon(Icons.library_music_outlined),
                       label: const Text('Ajouter des titres'),
                     ),

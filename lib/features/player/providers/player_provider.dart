@@ -16,6 +16,7 @@ import 'package:harmonix_apps/features/library/data/device_library.dart';
 import 'package:harmonix_apps/features/library/data/device_files.dart';
 import 'package:harmonix_apps/features/library/domain/source_resolver.dart';
 import 'package:harmonix_apps/core/utils/trusted_origin.dart';
+import 'package:harmonix_apps/features/night/domain/night_visibility.dart';
 import 'package:harmonix_apps/features/night/providers/night_provider.dart';
 import 'package:harmonix_apps/features/library/data/audio_cache.dart';
 
@@ -23,18 +24,39 @@ part 'player_provider.g.dart';
 
 int _webQueueGeneration = 0;
 StreamSubscription<dynamic>? _webQueueSub;
+final _webQueueBlobUrls = <String>{};
+
+void _releaseWebQueueUrls() {
+  for (final url in _webQueueBlobUrls) {
+    revokeBlobUrl(url);
+  }
+  _webQueueBlobUrls.clear();
+}
 
 @riverpod
 class Player extends _$Player {
   @override
   void build() {}
 
-  Future<void> playTrack(Track track) async {
+  /// Starts [track] on its own when no [queue] is given, or as part of the
+  /// list the title was tapped from when one is. The queue is what makes the
+  /// player's next/previous controls work: a lone title never reports a next
+  /// one to `just_audio`.
+  Future<void> playTrack(Track track, {List<Track>? queue}) async {
+    if (queue != null) {
+      final contextIndex =
+          queue.indexWhere((candidate) => candidate.id == track.id);
+      if (contextIndex >= 0) {
+        await playFromQueue(queue, contextIndex);
+        return;
+      }
+    }
     final nightMetadata = await ref.read(nightMetadataProvider.future);
-    if (nightMetadata[track.id]?.nightOnly == true) {
+    if (isNightOnly(nightMetadata, track.id, track: track)) {
       throw StateError('Ce titre est réservé à Harmonix Night.');
     }
     _webQueueGeneration++;
+    _releaseWebQueueUrls();
     await _webQueueSub?.cancel();
     _webQueueSub = null;
     final handler = ref.read(audioHandlerProvider);
@@ -95,7 +117,10 @@ class Player extends _$Player {
     if (!allowNightOnly) {
       final metadata = await ref.read(nightMetadataProvider.future);
       final selected = tracks[index].id;
-      tracks = tracks.where((t) => metadata[t.id]?.nightOnly != true).toList();
+      if (isNightOnly(metadata, selected, track: tracks[index])) {
+        throw StateError('Ce titre est réservé à Harmonix Night.');
+      }
+      tracks = visibleInLibrary(tracks, metadata);
       if (tracks.isEmpty) {
         throw StateError('Cette sélection est réservée à Harmonix Night.');
       }
@@ -159,6 +184,7 @@ class Player extends _$Player {
     }
 
     _webQueueGeneration++;
+    _releaseWebQueueUrls();
     final generation = _webQueueGeneration;
     await _webQueueSub?.cancel();
     _webQueueSub = null;
@@ -177,7 +203,11 @@ class Player extends _$Player {
       headers: serverHeaders(baseUrl, urls[0], token),
       dio: dio,
     );
-    if (generation != _webQueueGeneration) return;
+    if (generation != _webQueueGeneration) {
+      revokeBlobUrl(initial.url);
+      return;
+    }
+    _webQueueBlobUrls.add(initial.url);
 
     await handler.loadQueueIncremental(items, initial.url, initialIndex: 0);
     unawaited(handler.play());
@@ -190,7 +220,6 @@ class Player extends _$Player {
       server: baseUrl,
       token: token,
       dio: dio,
-      initialBlobUrl: initial.url,
     );
   }
 
@@ -202,13 +231,11 @@ class Player extends _$Player {
     required String server,
     required String? token,
     required Dio dio,
-    required String initialBlobUrl,
   }) {
     const window = 12;
-    const keepBehind = 6;
     var target = window + 1;
     var maxResolved = 1;
-    final blobUrls = <int, String>{0: initialBlobUrl};
+    var loadedCount = 1;
 
     late StreamSubscription<dynamic> sub;
     sub = handler.player.currentIndexStream.listen((index) async {
@@ -219,35 +246,53 @@ class Player extends _$Player {
       final current = index ?? 0;
       final nextTarget = current + window + 1;
       if (nextTarget > target) target = nextTarget;
-
-      final revokeBefore = current - keepBehind;
-      for (final entry in blobUrls.entries.toList()) {
-        if (entry.key < revokeBefore) {
-          revokeBlobUrl(entry.value);
-          blobUrls.remove(entry.key);
-        }
-      }
+      // Retain URLs while their sources remain in the queue: previous,
+      // shuffle and repeat may still seek to them. Revoke on queue replacement.
     });
 
     Future<void> resolverLoop() async {
+      // Retry transient failures, then skip unavailable titles. Only loaded
+      // sources consume the window; failed catalogue indices must not stall it.
+      const maxAttempts = 3;
+      final attempts = <int, int>{};
       while (generation == _webQueueGeneration) {
         if (maxResolved >= urls.length) return;
-        if (maxResolved < target) {
-          final i = maxResolved++;
-          try {
-            final resolved = await resolvePlayableStreamUrl(
-              url: urls[i],
-              headers: serverHeaders(server, urls[i], token),
-              dio: dio,
-            );
-            if (generation != _webQueueGeneration) return;
-            await handler.appendQueueItem(resolved.url, items[i]);
-            blobUrls[i] = resolved.url;
-          } catch (_) {
-            // Skip unresolvable tracks; the queue stays playable.
-          }
-        } else {
+        if (loadedCount >= target) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
+          continue;
+        }
+        final i = maxResolved;
+        try {
+          final resolved = await resolvePlayableStreamUrl(
+            url: urls[i],
+            headers: serverHeaders(server, urls[i], token),
+            dio: dio,
+          );
+          if (generation != _webQueueGeneration) {
+            revokeBlobUrl(resolved.url);
+            return;
+          }
+          try {
+            await handler.appendQueueItem(resolved.url, items[i]);
+          } catch (_) {
+            revokeBlobUrl(resolved.url);
+            rethrow;
+          }
+          if (generation != _webQueueGeneration) {
+            revokeBlobUrl(resolved.url);
+            return;
+          }
+          _webQueueBlobUrls.add(resolved.url);
+          loadedCount++;
+          maxResolved = i + 1;
+        } catch (_) {
+          final failed = (attempts[i] ?? 0) + 1;
+          attempts[i] = failed;
+          if (failed >= maxAttempts) {
+            maxResolved = i + 1;
+          } else {
+            await Future<void>.delayed(const Duration(milliseconds: 400));
+          }
         }
       }
     }

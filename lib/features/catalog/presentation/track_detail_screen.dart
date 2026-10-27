@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:harmonix_apps/core/navigation/route_names.dart';
+import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/core/utils/duration_formatter.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/features/catalog/providers/albums_provider.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
+import 'package:harmonix_apps/shared/widgets/flow_components.dart';
 import 'package:harmonix_apps/shared/widgets/track_artwork.dart';
 import 'package:harmonix_apps/features/catalog/providers/tracks_provider.dart';
 
@@ -79,7 +81,12 @@ class TrackDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: () => ref.read(playerProvider.notifier).playTrack(t),
+                onPressed: () => runFlowAction(context, () async {
+                  final queue = await _albumQueue(ref, t);
+                  await ref
+                      .read(playerProvider.notifier)
+                      .playTrack(t, queue: queue);
+                }),
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Lire'),
                 style: FilledButton.styleFrom(
@@ -92,4 +99,18 @@ class TrackDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Titles of [track]'s album, so "Lire" starts a real queue and the player's
+/// next/previous controls work. Returns null when the album is unknown or the
+/// title is not part of the local catalog (the player then falls back to a
+/// single-title queue).
+Future<List<Track>?> _albumQueue(WidgetRef ref, Track track) async {
+  final album = track.album?.trim();
+  if (album == null || album.isEmpty) return null;
+  final catalog = await ref.read(tracksProvider.future);
+  final queue = catalog
+      .where((candidate) => (candidate.album ?? '').trim() == album)
+      .toList();
+  return queue.length > 1 ? queue : null;
 }

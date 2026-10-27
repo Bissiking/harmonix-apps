@@ -55,7 +55,7 @@ void main() {
         find.widgetWithText(FilledButton, 'Démarrer · 45 min'));
     expect(catalog.loads, 1);
     expect(start().onPressed, isNotNull);
-    expect(find.text('Test · Autorisé depuis SonoraStudio'), findsOneWidget);
+    expect(find.byTooltip('Autorisé depuis SonoraStudio'), findsOneWidget);
 
     pending = Completer<Map<String, NightMetadata>>();
     container.invalidate(nightMetadataProvider);

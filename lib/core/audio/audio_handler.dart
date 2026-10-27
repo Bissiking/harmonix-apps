@@ -6,7 +6,8 @@ import 'package:just_audio/just_audio.dart';
 
 class HarmonixAudioHandler extends BaseAudioHandler
     with QueueHandler, SeekHandler {
-  HarmonixAudioHandler() {
+  HarmonixAudioHandler({AudioPlayer? player})
+      : _player = player ?? AudioPlayer() {
     _player.playbackEventStream.listen((event) {
       _lastPlaybackEvent = event;
       _broadcastState(event);
@@ -19,17 +20,24 @@ class HarmonixAudioHandler extends BaseAudioHandler
         mediaItem.add(q[index]);
       }
     });
-    _player.loopModeStream.listen((_) => _rebroadcastState());
-    _player.shuffleModeEnabledStream.listen((_) => _rebroadcastState());
+    _player.loopModeStream.listen((_) => _rebroadcastState(force: true));
+    _player.shuffleModeEnabledStream
+        .listen((_) => _rebroadcastState(force: true));
     _player.processingStateStream.listen((state) {
       if (state == ProcessingState.completed && !_isSkipping) {
         _isSkipping = true;
         skipToNext().whenComplete(() => _isSkipping = false);
       }
     });
+    _syncNavigation();
+    _player.currentIndexStream.listen((_) => _syncNavigation());
+    _player.sequenceStream.listen((_) => _syncNavigation());
+    _player.loopModeStream.listen((_) => _syncNavigation());
+    _player.shuffleModeEnabledStream.listen((_) => _syncNavigation());
+    _player.shuffleIndicesStream.listen((_) => _syncNavigation());
   }
 
-  final AudioPlayer _player = AudioPlayer();
+  final AudioPlayer _player;
   PlaybackEvent? _lastPlaybackEvent;
   DateTime _lastPlaybackLog = DateTime.fromMillisecondsSinceEpoch(0);
   ConcatenatingAudioSource? _incrementalSource;
@@ -47,6 +55,17 @@ class HarmonixAudioHandler extends BaseAudioHandler
   static const Duration _broadcastMinInterval = Duration(milliseconds: 200);
 
   AudioPlayer get player => _player;
+
+  /// Live `(hasNext, hasPrevious)` for the current queue, loop and shuffle
+  /// settings. The player screens use it to disable skip controls that would
+  /// otherwise do nothing (a queue of a single title, for instance).
+  final ValueNotifier<(bool hasNext, bool hasPrevious)> navigation =
+      ValueNotifier<(bool, bool)>((false, false));
+
+  void _syncNavigation() {
+    final next = (_player.hasNext, _player.hasPrevious);
+    if (navigation.value != next) navigation.value = next;
+  }
 
   /// Connects Android Auto's browse/search commands to the app repositories.
   /// The callbacks are installed once Riverpod is ready in [AutoBridge].
@@ -74,6 +93,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
           title: 'Unknown',
         );
 
+    queue.add([item]);
     mediaItem.add(item);
     _incrementalSource = null;
     assert(() {
@@ -91,6 +111,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
         ),
       ),
     );
+    _syncNavigation();
     unawaited(_player.play());
   }
 
@@ -122,6 +143,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
         initialIndex: initialIndex,
       ),
     );
+    _syncNavigation();
   }
 
   Future<void> loadQueueIncremental(
@@ -130,7 +152,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     required int initialIndex,
   }) async {
     final item = items[initialIndex];
-    queue.add(items);
+    queue.add([item]);
     mediaItem.add(item);
 
     _incrementalSource = ConcatenatingAudioSource(
@@ -141,12 +163,18 @@ class HarmonixAudioHandler extends BaseAudioHandler
     await _setAudioSourceWithRetry(
       () => _player.setAudioSource(_incrementalSource!, initialIndex: 0),
     );
+    _syncNavigation();
   }
 
   Future<void> appendQueueItem(String url, MediaItem item) async {
     final source = _incrementalSource;
     if (source == null) return;
     await source.add(AudioSource.uri(Uri.parse(url), tag: item));
+    // A failed resolution never enters the native sequence. Keep the public
+    // queue aligned with that sequence, including after subsequent appends.
+    if (_incrementalSource != source) return;
+    queue.add([...queue.value, item]);
+    _syncNavigation();
   }
 
   // --------------------------------------------------- BaseAudioHandler API
@@ -282,7 +310,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
       AudioServiceRepeatMode.all =>
         LoopMode.all,
     });
-    _rebroadcastState();
+    _rebroadcastState(force: true);
   }
 
   @override
@@ -290,7 +318,7 @@ class HarmonixAudioHandler extends BaseAudioHandler
     await _player.setShuffleModeEnabled(
       shuffleMode == AudioServiceShuffleMode.all,
     );
-    _rebroadcastState();
+    _rebroadcastState(force: true);
   }
 
   @override
@@ -305,11 +333,12 @@ class HarmonixAudioHandler extends BaseAudioHandler
 
   // ---------------------------------------------------------- State broadcast
 
-  void _broadcastState(PlaybackEvent event) {
+  void _broadcastState(PlaybackEvent event, {bool force = false}) {
     // Throttle on desktop to avoid flooding the UI isolate with position
     // updates (~4-5 Hz).  Important state changes (processingState, playing)
-    // are always broadcast immediately.
-    if (!kIsWeb) {
+    // are always broadcast immediately, and so is [force] (shuffle/repeat
+    // toggles, which change no other field and would otherwise be dropped).
+    if (!kIsWeb && !force) {
       final now = DateTime.now();
       final elapsed = now.difference(_lastBroadcast);
       final sameProcessingState =
@@ -338,6 +367,8 @@ class HarmonixAudioHandler extends BaseAudioHandler
           MediaAction.seek,
           MediaAction.seekForward,
           MediaAction.seekBackward,
+          MediaAction.setShuffleMode,
+          MediaAction.setRepeatMode,
         },
         androidCompactActionIndices: const [0, 1, 2],
         processingState: switch (_player.processingState) {
@@ -381,10 +412,10 @@ class HarmonixAudioHandler extends BaseAudioHandler
     }());
   }
 
-  void _rebroadcastState() {
+  void _rebroadcastState({bool force = false}) {
     final event = _lastPlaybackEvent;
     if (event != null) {
-      _broadcastState(event);
+      _broadcastState(event, force: force);
     }
   }
 

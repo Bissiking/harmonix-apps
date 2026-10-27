@@ -1,7 +1,7 @@
 name: harmonix_apps
 description: Cross-platform music streaming app for Android, iOS, Android Auto, and Desktop.
 publish_to: 'none'
-version: 4.0.0-dev.1+40000
+version: 4.0.0-dev.2
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -57,6 +57,7 @@ dependencies:
   # Utilities
   rxdart: ^0.28.0
   equatable: ^2.0.5
+  qr_flutter: ^4.1.0
   crypto: ^3.0.3
 
   # App info
@@ -86,8 +87,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/logo_harmonix.png
-    - assets/branding/
+    - assets/images/harmonix.png
+    - assets/images/harmonix_night.png
 
 flutter_launcher_icons:
   android: true
@@ -104,6 +105,6 @@ flutter_launcher_icons:
     background_color: "#0A0F2B"
     theme_color: "#0A0F2B"
   adaptive_icon_background: "#0A0F2B"
-  adaptive_icon_foreground: "assets/branding/harmonix-symbol.png"
+  adaptive_icon_foreground: "assets/images/harmonix_mobile.png"
   remove_alpha_ios: true
-  image_path: "assets/branding/harmonix-icon.png"
+  image_path: "assets/branding/harmonix-app-icon.png"
