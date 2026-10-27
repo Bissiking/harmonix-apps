@@ -17,7 +17,8 @@ class BootstrapRepository {
       final response = await _withTransientRetry(
         () => _dio.get('/api/harmonix/apps/v2/bootstrap'),
       );
-      final config = BootstrapConfig.fromJson(response.data as Map<String, dynamic>);
+      final config =
+          BootstrapConfig.fromJson(response.data as Map<String, dynamic>);
       _lastConfig = config;
       return config;
     } on DioException catch (e) {

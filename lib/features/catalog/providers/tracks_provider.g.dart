@@ -6,7 +6,7 @@ part of 'tracks_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tracksHash() => r'58d20388d25d49327550f57fa3cef15f09a7e6a6';
+String _$tracksHash() => r'222f512c3848ef49f30712935f5c2e7bd1199770';
 
 /// See also [tracks].
 @ProviderFor(tracks)

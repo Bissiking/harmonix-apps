@@ -25,6 +25,11 @@ abstract class Track with _$Track {
     @JsonKey(readValue: readIsFavorite, fromJson: boolFromJson)
     @Default(false)
     bool isFavorite,
+    @JsonKey(readValue: readNightEligible, fromJson: boolFromJson)
+    @Default(false)
+    bool nightEligible,
+    @JsonKey(readValue: readAddedAt, fromJson: dateTimeFromJson)
+    DateTime? addedAt,
   }) = _Track;
 
   factory Track.fromJson(Map<String, dynamic> json) => _$TrackFromJson(json);
@@ -64,8 +69,7 @@ Object? readStreamUrl(Map json, String key) =>
 
 String? stringFromJson(Object? value) => value is String ? value : null;
 
-String stringFromJsonOrEmpty(Object? value) =>
-    value is String ? value : '';
+String stringFromJsonOrEmpty(Object? value) => value is String ? value : '';
 
 Object? readDurationMs(Map json, String key) {
   if (json['duration_ms'] != null) {
@@ -99,6 +103,36 @@ int durationMsFromJson(Object? value) {
 
 Object? readIsFavorite(Map json, String key) =>
     json['isFavorite'] ?? json['is_favorite'] ?? json['favorite'];
+
+Object? readNightEligible(Map json, String key) =>
+    boolFromJson(json['nightEligible'] ?? json['night_eligible']) ||
+    hasNightTag(json);
+
+bool hasNightTag(Map json) {
+  final raw = json['genres'] ?? json['tags'];
+  final values = raw is List ? raw : (raw is String ? raw.split(';') : []);
+  return values.any(
+      (tag) => tag is String && tag.trim().toLowerCase() == 'harmonix:night');
+}
+
+Object? readAddedAt(Map json, String key) =>
+    json['addedAt'] ??
+    json['added_at'] ??
+    json['uploaded_at'] ??
+    json['created_at'] ??
+    json['uploadedAt'] ??
+    json['createdAt'];
+
+DateTime? dateTimeFromJson(Object? value) {
+  if (value is! String || value.trim().isEmpty) return null;
+  var text = value.trim();
+  // Sonora stores SQLite timestamps in UTC without an explicit offset.
+  if (RegExp(r'^\d{4}-\d\d-\d\d[ T]\d\d:\d\d(:\d\d(\.\d+)?)?$')
+      .hasMatch(text)) {
+    text = '${text.replaceFirst(' ', 'T')}Z';
+  }
+  return DateTime.tryParse(text)?.toUtc();
+}
 
 bool boolFromJson(Object? value) {
   if (value is bool) return value;

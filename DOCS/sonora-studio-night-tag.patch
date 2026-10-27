@@ -1,0 +1,73 @@
+diff --git a/src/components/TrackEditModal.tsx b/src/components/TrackEditModal.tsx
+index fea6452..538b7f8 100644
+--- a/src/components/TrackEditModal.tsx
++++ b/src/components/TrackEditModal.tsx
+@@ -37,6 +37,7 @@ export default function TrackEditModal({ track, onClose, onSaved, onDeleted }: P
+   const [artist, setArtist] = useState(track.artist ?? "");
+   const [album, setAlbum] = useState(track.album ?? "");
+   const [visibility, setVisibility] = useState<Visibility>(track.visibility);
++  const [genres, setGenres] = useState(track.genres ?? "");
+   const [lyrics, setLyrics] = useState(track.lyrics ?? "");
+   const [cover, setCover] = useState(track.cover);
+   const [variants, setVariants] = useState<TrackVariant[]>([]);
+@@ -86,6 +87,7 @@ export default function TrackEditModal({ track, onClose, onSaved, onDeleted }: P
+         artist: artist.trim() || null,
+         album: album.trim() || null,
+         visibility,
++        genres: genres.trim(),
+         lyrics: lyrics.trim() || null,
+       });
+       onSaved(result.item);
+@@ -219,6 +221,21 @@ export default function TrackEditModal({ track, onClose, onSaved, onDeleted }: P
+               </div>
+             </div>
+ 
++            <div className="field">
++              <label htmlFor="edit-genres">Genres et tags</label>
++              <input
++                id="edit-genres"
++                className="input"
++                value={genres}
++                onChange={(event) => setGenres(event.target.value)}
++                placeholder="Ambient ; harmonix:night"
++                aria-describedby="edit-genres-help"
++              />
++              <div id="edit-genres-help" className="muted" style={{ fontSize: 12 }}>
++                Sépare les valeurs par « ; ». Ajoute harmonix:night pour rendre ce morceau disponible dans Harmonix Night.
++              </div>
++            </div>
++
+             <div className="field">
+               <label htmlFor="edit-visibility">Visibilité</label>
+               <select
+diff --git a/src/lib/api.ts b/src/lib/api.ts
+index 66ac74a..399425b 100644
+--- a/src/lib/api.ts
++++ b/src/lib/api.ts
+@@ -98,7 +98,7 @@ export class SonoraApi {
+ 
+   updateTrack(
+     id: string,
+-    patch: Partial<Pick<Track, "title" | "artist" | "album" | "visibility" | "lyrics">>
++    patch: Partial<Pick<Track, "title" | "artist" | "album" | "visibility" | "lyrics" | "genres">>
+   ): Promise<{ success: boolean; item: Track }> {
+     return this.request(`/api/studio/music/${id}`, {
+       method: "PATCH",
+diff --git a/src/pages/Upload.tsx b/src/pages/Upload.tsx
+index 39445ad..545cd8a 100644
+--- a/src/pages/Upload.tsx
++++ b/src/pages/Upload.tsx
+@@ -188,8 +188,11 @@ export default function Upload() {
+               </div>
+             </div>
+             <div className="field">
+-              <label htmlFor="up-genres">Genres</label>
+-              <input id="up-genres" className="input" value={genres} onChange={(event) => setGenres(event.target.value)} placeholder="Séparés par « ; »" />
++              <label htmlFor="up-genres">Genres et tags</label>
++              <input id="up-genres" className="input" value={genres} onChange={(event) => setGenres(event.target.value)} placeholder="Ambient ; harmonix:night" aria-describedby="up-genres-help" />
++              <div id="up-genres-help" className="muted" style={{ fontSize: 12 }}>
++                Sépare les valeurs par « ; ». Ajoute harmonix:night pour rendre ce morceau disponible dans Harmonix Night.
++              </div>
+             </div>
+             <div className="field">
+               <label htmlFor="up-visibility">Visibilité initiale</label>

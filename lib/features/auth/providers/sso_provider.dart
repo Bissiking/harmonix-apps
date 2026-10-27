@@ -3,7 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:harmonix_apps/features/auth/data/sso_browser.dart';
+import 'package:harmonix_apps/core/storage/local_store.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
 
 import 'package:harmonix_apps/core/api/dio_provider.dart';
 import 'package:harmonix_apps/core/session/session_controller.dart';
@@ -40,6 +42,7 @@ class SsoController extends StateNotifier<SsoState> {
   Timer? _pollTimer;
   String? _activeState;
   int _pollAttempts = 0;
+  bool _polling = false;
 
   static const _maxPollAttempts = 60;
   static const _pollInterval = Duration(seconds: 2);
@@ -48,6 +51,7 @@ class SsoController extends StateNotifier<SsoState> {
   /// interroge celui-ci jusqu'à récupérer le token.
   Future<void> start() async {
     if (state.busy) return;
+    prepareSsoBrowser();
     final stateId = _generateState();
     _activeState = stateId;
     _pollAttempts = 0;
@@ -56,17 +60,19 @@ class SsoController extends StateNotifier<SsoState> {
     try {
       final repo = _ref.read(ssoRepositoryProvider);
       final url = await repo.start(stateId, platform: _platformName());
+      if (!mounted || _activeState != stateId) return;
       if (url == null || url.isEmpty) {
         throw StateError('SSO indisponible sur ce serveur');
       }
       final uri = Uri.tryParse(url);
-      if (uri == null) {
+      if (uri == null || !['http', 'https'].contains(uri.scheme)) {
         throw StateError('URL SSO invalide');
       }
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      await openSsoBrowser(uri);
       state = state.copyWith(phase: SsoPhase.waiting);
       _startPolling();
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(
         phase: SsoPhase.error,
         error: 'Impossible de démarrer le SSO.',
@@ -81,7 +87,8 @@ class SsoController extends StateNotifier<SsoState> {
 
   Future<void> _poll() async {
     final stateId = _activeState;
-    if (stateId == null) return;
+    if (stateId == null || _polling) return;
+    _polling = true;
     _pollAttempts++;
     if (_pollAttempts > _maxPollAttempts) {
       _stopPolling();
@@ -89,10 +96,12 @@ class SsoController extends StateNotifier<SsoState> {
         phase: SsoPhase.error,
         error: 'SSO expiré, réessaie.',
       );
+      _polling = false;
       return;
     }
     try {
       final tokens = await _ref.read(ssoRepositoryProvider).getTokens(stateId);
+      if (!mounted || _activeState != stateId) return;
       if (tokens == null) return; // pas encore prêt
       _stopPolling();
       _activeState = null;
@@ -100,14 +109,29 @@ class SsoController extends StateNotifier<SsoState> {
             accessToken: tokens.accessToken,
             refreshToken: tokens.refreshToken,
             expiresInSeconds: tokens.expiresInSeconds,
+            newLogin: true,
           );
       _ref.invalidate(dioProvider);
       _ref.invalidate(authTokenProvider);
       _ref.invalidate(bootstrapProvider);
+      _ref.invalidate(localStoreProvider);
+      _ref.invalidate(deviceLibraryProvider);
+      await _ref.read(offlineModeProvider.notifier).setEnabled(false);
       _ref.read(requireLoginProvider.notifier).state = false;
       state = state.copyWith(phase: SsoPhase.done, clearError: true);
+      try {
+        await finishSsoBrowser();
+      } catch (_) {/* Session is already saved; OS focus is best effort. */}
     } catch (_) {
-      // 404 tant que le relais n'a pas terminé : on continue de sonder.
+      if (mounted && _activeState == null) {
+        state = state.copyWith(
+            phase: SsoPhase.error,
+            error:
+                'Connexion reçue, mais la session n’a pas pu être enregistrée. Réessaie.');
+      }
+      // While pending, a temporary outage is retried within the bounded timeout.
+    } finally {
+      _polling = false;
     }
   }
 

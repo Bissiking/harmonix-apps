@@ -32,6 +32,23 @@ chmod +x tool/build_releases.sh
 ## Créer uniquement l'APK et l'AAB Android
 ./tool/build_releases.sh android
 
+## Signature Android commune (Mac et Windows)
+# Une seule clé harmonix-release.jks doit signer toutes les versions publiées.
+# Garder la clé hors de Git, en faire une sauvegarde chiffrée, puis copier la
+# même clé sur chaque machine. Configurer soit android/key.properties :
+# storeFile=/chemin/absolu/vers/harmonix-release.jks
+# storePassword=...
+# keyAlias=harmonix
+# keyPassword=...
+# soit les variables d'environnement équivalentes :
+# HARMONIX_KEYSTORE_PATH, HARMONIX_STORE_PASSWORD,
+# HARMONIX_KEY_ALIAS et HARMONIX_KEY_PASSWORD.
+# Si la compilation affiche "Signature Harmonix absente", copier
+# android/key.properties.example vers android/key.properties, puis renseigner
+# le chemin et les mots de passe de la clé existante. Sous Windows, utiliser
+# un chemin absolu avec des / (ex. C:/Users/mathe/cles/harmonix-release.jks).
+# Reprendre ensuite la compilation : flutter build apk --release
+
 ## Créer uniquement le DMG et le ZIP macOS
 ./tool/build_releases.sh macos
 

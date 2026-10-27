@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-19T20:10:03Z",
+  "generatedAt": "2026-10-27T15:18:47Z",
   "title": "Design System: Harmonix",
   "extensions": {
     "colorMeta": {
@@ -101,6 +101,93 @@
         "tonalRamp": ["oklch(15% 0.060 70)", "oklch(26% 0.090 70)", "oklch(38% 0.125 70)", "oklch(50% 0.155 70)", "oklch(64% 0.175 70)", "oklch(76% 0.145 70)", "oklch(87% 0.090 70)", "oklch(95% 0.035 70)"]
       }
     },
+    "collectionRefresh": {
+      "scope": "Bibliothèque, Night, Explorer, Paramètres et navigation compacte. Les anciennes entrées hors de ce périmètre sont conservées ; elles ne sont pas revalidées par cette mise à jour.",
+      "sources": [
+        "lib/shared/theme/app_theme.dart",
+        "lib/shared/theme/color_scheme.dart",
+        "lib/shared/widgets/music_collection.dart",
+        "lib/shared/widgets/app_shell.dart",
+        "lib/features/library/presentation/library_screen.dart",
+        "lib/features/library/presentation/device_library_screen.dart",
+        "lib/features/night/presentation/night_screen.dart",
+        "lib/features/catalog/presentation/catalog_screen.dart",
+        "lib/features/settings/presentation/settings_screen.dart"
+      ],
+      "textAccent": {
+        "source": "HarmonixColors.accessibleAccent",
+        "rule": "Conserver le remplissage de marque ; calculer séparément le premier plan accentué. Si contraste < 4,5:1, interpoler vers blanc sur fond de luminance < 0,5, sinon noir, par pas de 1 % jusqu’au contraste requis.",
+        "darkReference": "palette.darkCard",
+        "daylightReference": "daylight-chip-selected",
+        "usage": "Boutons texte et contour, onglets, listes sélectionnées et libellés de navigation concernés. Le rail compact et les remplissages gardent leurs rôles propres."
+      },
+      "chips": {
+        "darkUnselected": "palette.darkSurface",
+        "darkSelected": "Color.alphaBlend(palette.accent.withValues(alpha: .26), palette.darkSurface)",
+        "darkText": "palette.text",
+        "daylightUnselected": "daylight-chip",
+        "daylightSelected": "daylight-chip-selected",
+        "daylightText": "Colors.black87",
+        "shape": "choice-chip",
+        "padding": "8 dp horizontal et vertical"
+      },
+      "composition": {
+        "collectionMaxWidth": "1280 dp après navigation",
+        "settingsMaxWidth": "1180 dp après navigation",
+        "nightSplit": "680 dp disponibles après padding ; introduction/musique flex 3, minuteur flex 2, séparation 40 dp. Sous ce seuil, minuteur avant pochettes.",
+        "settingsNavigation": "850 dp disponibles : navigation interne de 220 dp ; sinon puces horizontales défilantes.",
+        "explorerAlbums": "floor(largeur disponible / 200), borné à 2–6 colonnes ; espacement 20 dp ; hauteur de cellule = largeur + 68 × facteur de texte.",
+        "textScaling": "Titres Bibliothèque/Explorer/Paramètres : headlineSmall au-delà de 1,5. Aperçus d’apparence en une colonne et mise en avant Explorer empilée au-delà de 1,3. Étagères : hauteur = taille + 16 + 50 × facteur de texte."
+      },
+      "navigation": {
+        "compactDestinations": [
+          "Accueil",
+          "Bibliothèque",
+          "Explorer",
+          "Night",
+          "Profil"
+        ],
+        "routes": [
+          "/home",
+          "/library",
+          "/catalog",
+          "/night",
+          "/settings"
+        ],
+        "searchOwner": "Explorer",
+        "labelBehavior": "onlyShowSelected",
+        "rail": "720 dp / 88 dp",
+        "sidebar": "1100 dp / 236 dp",
+        "televisionSidebar": "244 dp"
+      },
+      "settings": {
+        "tasks": [
+          "Apparence",
+          "Écoute",
+          "Connexion",
+          "À propos"
+        ],
+        "appearancePreviews": [
+          "Midnight",
+          "Aurora",
+          "Daylight",
+          "Night"
+        ],
+        "selection": "Contour primaire de 2 dp, coche et sémantique sélectionnée ; sélection conservée par AppearanceController. La navigation interne sélectionnée utilise explicitement colorScheme.onSurface."
+      },
+      "evidence": {
+        "path": ".impeccable/review",
+        "kind": "Vrais widgets Flutter dans AppShell, rendus par test/collection_surfaces_test.dart ; données synthétiques et pochettes de test.",
+        "variants": [
+          "390×844",
+          "834×1112",
+          "1440×1000",
+          "320×844 texte ×2",
+          "390×844 Daylight"
+        ],
+        "limits": "Aucune validation matérielle, audio ou gestuelle sur appareil. Aucun nouveau comp, police ou visuel généré."
+      }
+    },
     "typographyMeta": {
       "display": {"displayName": "Display", "purpose": "Moments de forte emphase uniquement."},
       "headline": {"displayName": "Headline", "purpose": "Titres d’écran éditoriaux et titre du morceau en lecture."},
@@ -156,10 +243,10 @@
     {
       "name": "Adaptive Navigation",
       "kind": "nav",
-      "refersTo": "navigation-bar-dark",
-      "description": "Cinq destinations, rail sur les écrans larges et barre basse sur les écrans compacts.",
-      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-nav-active\">⌂<span>Accueil</span></button><button class=\"ds-nav-item\">⌕<span>Explorer</span></button><button class=\"ds-nav-item\">▶<span>Lecteur</span></button><button class=\"ds-nav-item\">≋<span>Séances</span></button><button class=\"ds-nav-item\">●<span>Profil</span></button></nav>",
-      "css": ".ds-nav { display: flex; min-height: 72px; background: rgba(13,23,39,.96); border-top: 1px solid rgba(244,242,255,.07); } .ds-nav-item { flex: 1; display: grid; place-items: center; align-content: center; gap: 3px; min-width: 48px; border: 0; background: transparent; color: rgba(244,242,255,.58); font: 500 11px system-ui, sans-serif; cursor: pointer; } .ds-nav-item:hover { background: rgba(167,139,250,.08); } .ds-nav-item:focus-visible { outline: 2px solid #67D7F0; outline-offset: -3px; } .ds-nav-item:active, .ds-nav-active { color: #A78BFA; font-weight: 700; } .ds-nav-active::before { content: ''; position: absolute; width: 40px; height: 30px; border-radius: 999px; background: rgba(167,139,250,.18); z-index: -1; } .ds-nav-item { position: relative; z-index: 0; } @media (min-width: 1100px) { .ds-nav { width: 216px; min-height: 360px; flex-direction: column; border-top: 0; border-right: 1px solid rgba(255,255,255,.06); padding: 22px 12px; } .ds-nav-item { flex: 0 0 56px; grid-template-columns: 32px 1fr; justify-items: start; padding: 0 16px; font-size: 12px; } } @media (prefers-color-scheme: light) { .ds-nav { background: #fff; border-color: rgba(0,0,0,.12); } .ds-nav-item { color: rgba(0,0,0,.54); } .ds-nav-active { color: #A78BFA; } }"
+      "refersTo": "navigation-bar-midnight",
+      "description": "Barre compacte : Accueil, Bibliothèque, Explorer (/catalog et /search), Night, Profil. Seul le libellé sélectionné est visible. La coque complète emploie un rail de 88 dp à 720 dp et une sidebar de 236 dp à 1100 dp ; la TV utilise 244 dp.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Navigation principale\"><button class=\"ds-nav-item\" aria-label=\"Accueil\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v11h-6v-7H9v7H3z\"/></svg><span>Accueil</span></button><button class=\"ds-nav-item\" aria-label=\"Bibliothèque\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M4 3v18M8 3v18M12 6v15M16 3l5 17M13 7h5\"/></svg><span>Bibliothèque</span></button><button class=\"ds-nav-item ds-nav-active\" aria-current=\"page\" aria-label=\"Explorer\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/></svg><span>Explorer</span></button><button class=\"ds-nav-item\" aria-label=\"Night\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><path d=\"M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z\"/></svg><span>Night</span></button><button class=\"ds-nav-item\" aria-label=\"Profil\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21v-2a8 8 0 0 1 16 0v2\"/></svg><span>Profil</span></button></nav>",
+      "css": ".ds-nav { display: flex; min-height: 72px; background: #121735; } .ds-nav-item { flex: 1; display: grid; place-items: center; align-content: center; gap: 4px; min-width: 48px; border: 0; background: transparent; color: rgba(242,241,250,.58); font: 500 11px system-ui, sans-serif; cursor: pointer; } .ds-nav-item span { display: none; } .ds-nav-active { color: #8F74FF; font-weight: 700; } .ds-nav-active span { display: block; } .ds-nav-active svg { background: rgba(123,92,255,.18); border-radius: 999px; padding: 4px 12px; } .ds-nav-item:hover { background: rgba(123,92,255,.08); } .ds-nav-item:active { background: rgba(123,92,255,.12); } .ds-nav-item:focus-visible { outline: 2px solid #5EE6FF; outline-offset: -3px; }"
     },
     {
       "name": "Raised Panel",
@@ -178,11 +265,12 @@
       "css": ".ds-mini-player { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 6px 12px; border: 0; border-top: 1px solid rgba(244,242,255,.07); background: #0D1727; color: #F4F2FF; text-align: left; cursor: pointer; } .ds-mini-player:hover { background: #111d30; } .ds-mini-player:active { background: #152033; } .ds-mini-player:focus-visible { outline: 2px solid #A78BFA; outline-offset: -2px; } .ds-mini-art { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px; border-radius: 6px; background: linear-gradient(135deg,#A78BFA,#304E78); } .ds-mini-copy { min-width: 0; flex: 1; display: grid; gap: 2px; font: 400 14px system-ui, sans-serif; } .ds-mini-copy strong,.ds-mini-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-mini-copy strong { font-weight: 600; } .ds-mini-copy small { color: rgba(244,242,255,.58); font-size: 12px; } .ds-mini-control { font-size: 18px; } .ds-mini-play { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px; background: #A78BFA; color: #000; } @media (min-width: 1100px) { .ds-mini-player { min-height: 72px; } } @media (prefers-color-scheme: light) { .ds-mini-player { background: #fff; color: rgba(0,0,0,.87); border-color: rgba(0,0,0,.07); } .ds-mini-copy small { color: rgba(0,0,0,.58); } }"
     },
     {
-      "name": "Theme Choice Chip",
+      "name": "Collection Choice Chip",
       "kind": "chip",
-      "description": "Choix Material pour les modes Clair, Sombre et Auto.",
-      "html": "<button class=\"ds-chip ds-chip-selected\">☾ Sombre</button>",
-      "css": ".ds-chip { min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: rgba(244,242,255,.055); color: #F4F2FF; font: 500 14px system-ui, sans-serif; cursor: pointer; } .ds-chip:hover { background: rgba(167,139,250,.13); } .ds-chip:active, .ds-chip-selected { background: rgba(167,139,250,.18); color: #A78BFA; } .ds-chip:focus-visible { outline: 2px solid #67D7F0; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-chip { background: #F0F0F4; color: rgba(0,0,0,.87); } .ds-chip-selected { background: rgba(167,139,250,.18); color: #6f4fd0; } }"
+      "refersTo": "chip-choice-midnight",
+      "description": "Puces Material de source, catégorie, durée ou section : surface neutre au repos, accent superposé à 26 % en sélection sombre, rayon 12 dp. Daylight : #F0F0F4 / #E9E3FF et texte noir à 87 %. Exemple Midnight.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-selected\" aria-pressed=\"true\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m5 12 4 4L19 6\"/></svg>Tout</button><button class=\"ds-chip\" aria-pressed=\"false\">Sonora</button></div>",
+      "css": ".ds-chips { display: flex; flex-wrap: wrap; gap: 8px; } .ds-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px; border: 0; border-radius: 12px; background: #121735; color: #F2F1FA; font: 500 14px system-ui, sans-serif; cursor: pointer; } .ds-chip-selected { background: color-mix(in srgb, #7B5CFF 26%, #121735); } .ds-chip:hover { filter: brightness(1.08); } .ds-chip:active { filter: brightness(1.15); } .ds-chip:focus-visible { outline: 2px solid #5EE6FF; outline-offset: 2px; } @media (prefers-color-scheme: light) { .ds-chip { background: #F0F0F4; color: rgba(0,0,0,.87); } .ds-chip-selected { background: #E9E3FF; } .ds-chip:focus-visible { outline-color: #6A4FDB; } }"
     },
     {
       "name": "Featured Track",
@@ -203,6 +291,8 @@
       "Densité calme : marges de 20 px, panneaux de 16 px et sections séparées de 32 px."
     ],
     "rules": [
+      {"name": "The Readable Accent Rule", "body": "Séparer l’accent de texte calculé du remplissage de marque ; conserver le violet de marque pour les actions remplies.", "section": "colors"},
+      {"name": "The Available Space Rule", "body": "Adapter chaque collection à l’espace que la coque lui laisse et à la taille du texte, sans déduire sa composition du type d’appareil.", "section": "layout"},
       {"name": "The Two-Signal Rule", "body": "La lavande porte l’action et la sélection; le cyan porte le signal secondaire. Les accents vert et ambre ne quittent pas les raccourcis d’humeur de l’accueil.", "section": "colors"},
       {"name": "The Palette Authority Rule", "body": "En thème sombre, les rôles accent, secondaire, texte, fond, surface et carte peuvent être fournis par la palette Sonora; les valeurs documentées sont le repli livré.", "section": "colors"},
       {"name": "The Native Voice Rule", "body": "Conserver la famille système de la plateforme et exprimer la hiérarchie par la taille, la graisse et l’opacité déjà définies.", "section": "typography"},

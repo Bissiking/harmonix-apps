@@ -23,8 +23,7 @@ class HarmonixCastMediaTransformer implements MediaTransformer {
 
   @override
   Future<TransformedMedia> transform(CastMedia media, MediaProxy proxy) async {
-    final proxyUrl =
-        proxy.registerMedia(media.url, headers: media.httpHeaders);
+    final proxyUrl = proxy.registerMedia(media.url, headers: media.httpHeaders);
 
     if (media.type == CastMediaType.hls) {
       return TransformedMedia(
@@ -307,11 +306,17 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
     final queue = handler.queue.value;
 
     if (current == null) return;
+    if (current.id.startsWith('local:')) {
+      state = state.copyWith(
+          error:
+              'Les fichiers personnels se lisent uniquement sur cet appareil.');
+      return;
+    }
 
     _queue
       ..clear()
-      ..addAll(queue);
-    final index = queue.indexWhere((item) => item.id == current.id);
+      ..addAll(queue.where((item) => !item.id.startsWith('local:')));
+    final index = _queue.indexWhere((item) => item.id == current.id);
     _queueIndex = index < 0 ? 0 : index;
     _repeatMode = playbackState.repeatMode;
     _pendingStartPosition =
@@ -336,8 +341,9 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
     final settings = _ref.read(settingsRepositoryProvider);
     final baseUrl = settings.serverUrl;
     final token = settings.authToken;
-    final headers =
-        token != null && token.isNotEmpty ? {'Authorization': 'Bearer $token'} : null;
+    final headers = token != null && token.isNotEmpty
+        ? {'Authorization': 'Bearer $token'}
+        : null;
 
     final url = streamUrl(baseUrl, item.id);
 
@@ -409,9 +415,9 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
       if (data is Stream<List<int>>) {
         try {
           await data.first.then((_) {}).timeout(
-            const Duration(seconds: 2),
-            onTimeout: () {},
-          );
+                const Duration(seconds: 2),
+                onTimeout: () {},
+              );
         } catch (_) {
           // Ignore probe stream errors; headers were already received.
         }
@@ -467,6 +473,15 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
   Future<void> skipToNext() => _advance(1);
 
   Future<void> skipToPrevious() => _advance(-1);
+
+  /// Selects a title by ID because the cast queue excludes personal files.
+  Future<void> skipToTrack(String trackId) async {
+    if (!_casting) return;
+    final index = _queue.indexWhere((item) => item.id == trackId);
+    if (index < 0) return;
+    _pendingStartPosition = null;
+    await _loadQueueItem(index);
+  }
 
   Future<void> _advance(int delta) async {
     final session = _session;
@@ -543,7 +558,7 @@ class GoogleCastController extends StateNotifier<GoogleCastState> {
       if (castPosition > Duration.zero) {
         await handler.seek(castPosition);
       }
-      await handler.play();
+      unawaited(handler.play());
     }
 
     state = state.copyWith(

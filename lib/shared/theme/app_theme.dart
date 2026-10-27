@@ -5,6 +5,10 @@ import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/theme/page_transitions.dart';
 
 abstract final class AppTheme {
+  static Color _darkTextAccent(ThemePalette palette) =>
+      HarmonixColors.accessibleAccent(palette.accent, palette.darkCard);
+  static Color get _lightTextAccent => HarmonixColors.accessibleAccent(
+      HarmonixColors.accent, const Color(0xFFE9E3FF));
   static ThemeData dark(ThemePalette palette) => ThemeData(
         useMaterial3: true,
         colorScheme: HarmonixColors.darkFromPalette(palette),
@@ -23,7 +27,7 @@ abstract final class AppTheme {
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: palette.darkSurface,
-          selectedItemColor: palette.accent,
+          selectedItemColor: _darkTextAccent(palette),
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
@@ -35,7 +39,7 @@ abstract final class AppTheme {
           labelTextStyle: WidgetStateProperty.resolveWith(
             (states) => TextStyle(
               color: states.contains(WidgetState.selected)
-                  ? palette.accent
+                  ? _darkTextAccent(palette)
                   : palette.text.withValues(alpha: 0.58),
               fontSize: 11,
               fontWeight: states.contains(WidgetState.selected)
@@ -46,7 +50,7 @@ abstract final class AppTheme {
           iconTheme: WidgetStateProperty.resolveWith(
             (states) => IconThemeData(
               color: states.contains(WidgetState.selected)
-                  ? palette.accent
+                  ? _darkTextAccent(palette)
                   : palette.text.withValues(alpha: 0.58),
             ),
           ),
@@ -55,7 +59,7 @@ abstract final class AppTheme {
           backgroundColor: palette.darkSurface,
           selectedIconTheme: IconThemeData(color: palette.accent),
           selectedLabelTextStyle: TextStyle(
-            color: palette.accent,
+            color: _darkTextAccent(palette),
             fontWeight: FontWeight.w600,
           ),
           unselectedIconTheme: const IconThemeData(color: Colors.white54),
@@ -74,6 +78,7 @@ abstract final class AppTheme {
           thickness: 1,
         ),
         listTileTheme: ListTileThemeData(
+          selectedColor: _darkTextAccent(palette),
           iconColor: Colors.white70,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -84,6 +89,17 @@ abstract final class AppTheme {
           inactiveTrackColor: Colors.white24,
           thumbColor: palette.accent,
           overlayColor: palette.accent.withValues(alpha: 0.2),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: palette.darkSurface,
+          selectedColor: Color.alphaBlend(
+              palette.accent.withValues(alpha: .26), palette.darkSurface),
+          checkmarkColor: palette.text,
+          labelStyle: TextStyle(color: palette.text),
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -111,12 +127,17 @@ abstract final class AppTheme {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
+            foregroundColor: _darkTextAccent(palette),
             side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(
+                foregroundColor: _darkTextAccent(palette))),
+        tabBarTheme: TabBarThemeData(labelColor: _darkTextAccent(palette)),
         popupMenuTheme: PopupMenuThemeData(
           color: palette.darkSurface,
           shape: RoundedRectangleBorder(
@@ -139,6 +160,16 @@ abstract final class AppTheme {
 
   static ThemeData get light => ThemeData(
         useMaterial3: true,
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFFF0F0F4),
+          selectedColor: const Color(0xFFE9E3FF),
+          checkmarkColor: HarmonixColors.accent,
+          labelStyle: const TextStyle(color: Colors.black87),
+          side: BorderSide.none,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
         colorScheme: HarmonixColors.light.copyWith(
           surface: const Color(0xFFFAFAFC),
           surfaceContainerHighest: const Color(0xFFF0F0F4),
@@ -149,13 +180,16 @@ abstract final class AppTheme {
           elevation: 0,
           centerTitle: false,
         ),
-        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
-          selectedItemColor: HarmonixColors.accent,
+          selectedItemColor: _lightTextAccent,
           unselectedItemColor: Colors.black38,
           type: BottomNavigationBarType.fixed,
           elevation: 0,
         ),
+        textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: _lightTextAccent)),
+        tabBarTheme: TabBarThemeData(labelColor: _lightTextAccent),
         navigationRailTheme: const NavigationRailThemeData(
           backgroundColor: Colors.white,
           selectedIconTheme: IconThemeData(color: HarmonixColors.accent),
@@ -164,9 +198,10 @@ abstract final class AppTheme {
           color: Colors.black12,
           thickness: 1,
         ),
-        listTileTheme: const ListTileThemeData(
+        listTileTheme: ListTileThemeData(
+          selectedColor: _lightTextAccent,
           iconColor: Colors.black54,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(10)),
           ),
         ),
@@ -179,6 +214,7 @@ abstract final class AppTheme {
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
+            foregroundColor: _lightTextAccent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),

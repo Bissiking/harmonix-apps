@@ -1,5 +1,16 @@
 import 'package:harmonix_apps/core/models/track.dart' show Track;
 
+Map<String, dynamic> playlistJson(Playlist playlist) => {
+      'id': playlist.id,
+      'name': playlist.name,
+      'description': playlist.description,
+      'cover_file': playlist.coverFile,
+      'track_count': playlist.trackCount,
+      'owner_id': playlist.ownerId,
+      'updated_at': playlist.updatedAt,
+      'tracks': playlist.tracks.map((t) => t.toJson()).toList()
+    };
+
 class Playlist {
   const Playlist({
     required this.id,

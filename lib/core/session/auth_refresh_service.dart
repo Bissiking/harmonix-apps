@@ -42,6 +42,7 @@ class AuthRefreshService {
   }
 
   Future<AuthRefreshResult> _performRefresh({required bool force}) async {
+    final scope = _settings.libraryScope;
     final refreshToken = _settings.refreshToken;
     if (refreshToken == null || refreshToken.isEmpty) {
       return AuthRefreshResult.invalid;
@@ -62,6 +63,10 @@ class AuthRefreshService {
       );
       final tokens = AuthSessionTokens.fromJson(response.data);
       if (tokens == null) return AuthRefreshResult.invalid;
+      if (_settings.libraryScope != scope ||
+          _settings.refreshToken != refreshToken) {
+        return AuthRefreshResult.unavailable;
+      }
       await _settings.setAuthSession(
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken ?? refreshToken,
@@ -81,7 +86,7 @@ class AuthRefreshService {
   }
 
   Future<void> expireSession() async {
-    await _settings.clearAuthSession();
+    await _settings.clearAuthSession(keepLocalAccount: true);
     _onSessionChanged();
   }
 }

@@ -3,11 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:harmonix_apps/core/theme/theme_palette.dart';
 
 abstract final class HarmonixColors {
-  static const accent = Color(0xFFA78BFA);
-  static const signal = Color(0xFF67D7F0);
-  static const darkBackground = Color(0xFF07101E);
-  static const darkSurface = Color(0xFF0D1727);
-  static const darkCard = Color(0xFF152033);
+  /// Separate readable foreground tones from the unchanged brand fill.
+  static Color accessibleAccent(Color accent, Color background) {
+    double contrast(Color color) {
+      final a = color.computeLuminance();
+      final b = background.computeLuminance();
+      return a > b ? (a + .05) / (b + .05) : (b + .05) / (a + .05);
+    }
+
+    if (contrast(accent) >= 4.5) return accent;
+    final target =
+        background.computeLuminance() < .5 ? Colors.white : Colors.black;
+    for (var step = 1; step <= 100; step++) {
+      final tone = Color.lerp(accent, target, step / 100)!;
+      if (contrast(tone) >= 4.5) return tone;
+    }
+    return target;
+  }
+
+  static const accent = Color(0xFF7B5CFF);
+  static const signal = Color(0xFF5EE6FF);
+  static const darkBackground = Color(0xFF0A0F2B);
+  static const darkSurface = Color(0xFF121735);
+  static const darkCard = Color(0xFF1C2242);
 
   static const dark = ColorScheme.dark(
     primary: accent,
@@ -20,7 +38,7 @@ abstract final class HarmonixColors {
   static const light = ColorScheme.light(
     primary: accent,
     onPrimary: Colors.black,
-    secondary: Color(0xFF00BCD4),
+    secondary: Color(0xFF006779),
   );
 
   static ColorScheme darkFromPalette(ThemePalette palette) => ColorScheme.dark(
@@ -33,6 +51,8 @@ abstract final class HarmonixColors {
         surfaceContainer: palette.darkSurface,
         surfaceContainerHigh: palette.darkCard,
         surfaceContainerHighest: palette.darkCard,
+        outline: palette.text.withValues(alpha: .42),
+        outlineVariant: palette.text.withValues(alpha: .18),
       );
 
   static Color _bestContrastOn(Color background) {

@@ -15,6 +15,6 @@ class ResponsiveBreakpoints {
 
   static bool useRailNavigation(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    return width >= desktop || (width >= tablet && isLandscape(context));
+    return width >= tablet;
   }
 }

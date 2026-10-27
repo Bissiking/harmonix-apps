@@ -12,6 +12,8 @@ import 'package:harmonix_apps/core/theme/theme_provider.dart';
 import 'package:harmonix_apps/shared/theme/color_scheme.dart';
 import 'package:harmonix_apps/shared/widgets/error_view.dart';
 import 'package:harmonix_apps/shared/widgets/update_download_dialog.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
+import 'package:harmonix_apps/shared/widgets/harmonix_logo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -26,6 +28,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (ref.watch(offlineModeProvider)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/library');
+      });
+      return const Scaffold(body: Center(child: HarmonixLogo(size: 96)));
+    }
     final bootstrap = ref.watch(bootstrapProvider);
 
     bootstrap.whenData((_) {
@@ -45,34 +53,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return Scaffold(
       backgroundColor: HarmonixColors.darkBackground,
       body: bootstrap.when(
-        loading: () => Center(
+        loading: () => const Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 96,
-                height: 96,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: HarmonixColors.accent.withValues(alpha: 0.12),
-                  border: Border.all(
-                    color: HarmonixColors.accent.withValues(alpha: 0.55),
-                  ),
-                ),
-                child: ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                    HarmonixColors.accent,
-                    BlendMode.srcIn,
-                  ),
-                  child: Image.asset(
-                    'assets/images/logo_harmonix.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
+              HarmonixLogo(size: 96),
+              SizedBox(height: 24),
+              Text(
                 'Harmonix',
                 style: TextStyle(
                   fontSize: 28,
@@ -81,8 +68,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   letterSpacing: -0.4,
                 ),
               ),
-              const SizedBox(height: 28),
-              const CircularProgressIndicator(color: HarmonixColors.accent),
+              SizedBox(height: 28),
+              CircularProgressIndicator(color: HarmonixColors.accent),
             ],
           ),
         ),
@@ -103,7 +90,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: FilledButton.tonal(
-                    onPressed: () => context.go('/home'),
+                    onPressed: () =>
+                        ref.read(offlineModeProvider.notifier).setEnabled(true),
                     child: const Text('Continuer hors ligne'),
                   ),
                 ),

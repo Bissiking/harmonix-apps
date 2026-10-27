@@ -2,42 +2,51 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:harmonix_apps/core/models/album.dart';
 import 'package:harmonix_apps/core/api/providers/catalog_client_provider.dart';
 import 'package:harmonix_apps/core/models/lyrics.dart';
 import 'package:harmonix_apps/core/models/track.dart';
+import 'package:harmonix_apps/features/library/data/device_library.dart';
 
 part 'catalog_repository.g.dart';
 
 class CatalogRepository {
   CatalogRepository(this._ref);
 
-  final dynamic _ref;
-  List<Track>? _lastTracksCache;
+  final Ref _ref;
 
   Future<List<Track>> getTracks() async {
+    final DeviceLibrary library = await _ref.read(deviceLibraryProvider.future);
+    if (_ref.read(offlineModeProvider)) return library.allTracks();
     try {
       final tracks = await _withTransientRetry(
         () => _ref.read(catalogClientProvider).getTracks(),
       );
-      _lastTracksCache = tracks;
-      return tracks;
+      await library.cacheCatalog(tracks);
+      return library.allTracks();
     } catch (_) {
-      final cached = _lastTracksCache;
-      if (cached != null && cached.isNotEmpty) return cached;
+      final cached = await library.allTracks();
+      if (cached.isNotEmpty) return cached;
       rethrow;
     }
   }
 
   Future<Track> getTrack(String id) async {
+    final library = await _ref.read(deviceLibraryProvider.future);
+    final cached = (await library.allTracks()).where((track) => track.id == id);
+    if ((id.startsWith('local:') || _ref.read(offlineModeProvider)) &&
+        cached.isNotEmpty) {
+      return cached.first;
+    }
     try {
       return await _withTransientRetry(
         () => _ref.read(catalogClientProvider).getTrack(id),
       );
     } catch (_) {
-      final cachedTrack = _lastTracksCache
-          ?.where((track) => track.id == id)
+      final cachedTrack = (await library.allTracks())
+          .where((track) => track.id == id)
           .cast<Track?>()
           .firstWhere((track) => track != null, orElse: () => null);
       if (cachedTrack != null) return cachedTrack;
@@ -45,30 +54,58 @@ class CatalogRepository {
     }
   }
 
-  Future<List<Track>> search(String query) =>
-      _withTransientRetry(() => _ref.read(catalogClientProvider).search(query));
+  Future<List<Track>> search(String query) async {
+    final DeviceLibrary library = await _ref.read(deviceLibraryProvider.future);
+    final local = await library.search(query);
+    if (_ref.read(offlineModeProvider)) return local;
+    try {
+      final List<Track> remote =
+          await _ref.read(catalogClientProvider).search(query);
+      return {
+        for (final t in [...local, ...remote]) t.id: t
+      }.values.toList();
+    } catch (_) {
+      return local;
+    }
+  }
 
   Future<TrackLyrics> getLyrics(String trackId) => _withTransientRetry(
         () => _ref.read(catalogClientProvider).getLyrics(trackId),
       );
 
   Future<List<Album>> getAlbums() async {
+    final library = await _ref.read(deviceLibraryProvider.future);
+    Future<List<Album>> cached() async =>
+        (await library.store.all('albums')).map(Album.fromJson).toList();
+    if (_ref.read(offlineModeProvider)) return cached();
     try {
       final albums = await _withTransientRetry(
         () => _ref.read(catalogClientProvider).getAlbums(),
       );
+      await library.store
+          .replace('albums', {for (final a in albums) a.id: albumJson(a)});
       return albums;
     } catch (_) {
+      final saved = await cached();
+      if (saved.isNotEmpty) return saved;
       rethrow;
     }
   }
 
   Future<Album> getAlbum(String albumId) async {
+    final library = await _ref.read(deviceLibraryProvider.future);
+    final saved = await library.store.get('album_details', albumId);
+    if (_ref.read(offlineModeProvider) && saved != null) {
+      return Album.fromJson(saved);
+    }
     try {
-      return await _withTransientRetry(
+      final album = await _withTransientRetry<Album>(
         () => _ref.read(catalogClientProvider).getAlbum(albumId),
       );
+      await library.store.put('album_details', albumId, albumJson(album));
+      return album;
     } catch (_) {
+      if (saved != null) return Album.fromJson(saved);
       rethrow;
     }
   }

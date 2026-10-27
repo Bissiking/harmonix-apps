@@ -24,6 +24,7 @@ Dio dio(DioRef ref) {
       headers: {'Accept': 'application/json'},
     ),
   );
+  ref.onDispose(() => dio.close(force: true));
 
   dio.interceptors.add(
     AuthRefreshInterceptor(

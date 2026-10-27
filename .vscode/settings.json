@@ -1,3 +1,4 @@
 {
-    "cmake.sourceDirectory": "/Users/matheohemery/Documents/GitHub/harmonix-apps/linux"
+    "cmake.sourceDirectory": "/Users/matheohemery/Documents/GitHub/harmonix-apps/linux",
+    "java.configuration.updateBuildConfiguration": "interactive"
 }

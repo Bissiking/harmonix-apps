@@ -1,0 +1,7 @@
+La priorité de cette version est la stabilité fonctionnelle et architecturale. Construire un design system modulaire et une navigation responsive robuste. La direction artistique pourra être affinée dans une version ultérieure, sans nécessiter de réécriture des fonctionnalités métier.
+
+La DA des nouveau logo se trouve dans DOCS/New Logo
+
+L'onglet ne se ferme pas tout seul après connexion et ne redirige pas automatiquement sur l'application
+
+Tu as sonora et SonoraStudio plus haut si besoin. Pour Kyros, fait juste un fichier dans DOCS pour les API/Enderpoint pour que je push à la V5 si besoin

@@ -1,3 +1,4 @@
+import 'package:harmonix_apps/shared/widgets/flow_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -5,6 +6,8 @@ import 'package:harmonix_apps/core/models/track.dart';
 import 'package:harmonix_apps/features/catalog/presentation/track_list_tile.dart';
 import 'package:harmonix_apps/features/catalog/providers/tracks_provider.dart';
 import 'package:harmonix_apps/features/library/providers/playlists_provider.dart';
+import 'package:harmonix_apps/features/night/domain/night_visibility.dart';
+import 'package:harmonix_apps/features/night/providers/night_provider.dart';
 import 'package:harmonix_apps/features/player/providers/player_provider.dart';
 import 'package:harmonix_apps/shared/widgets/async_value_widget.dart';
 
@@ -21,12 +24,12 @@ class PlaylistDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Playlist'),
         actions: [
-          IconButton(
+          FlowIconButton(
             tooltip: 'Renommer',
             icon: const Icon(Icons.edit_outlined),
             onPressed: () => _rename(context, ref),
           ),
-          IconButton(
+          FlowIconButton(
             tooltip: 'Supprimer',
             icon: const Icon(Icons.delete_outline),
             onPressed: () => _delete(context, ref),
@@ -37,7 +40,9 @@ class PlaylistDetailScreen extends ConsumerWidget {
         value: playlist,
         onRetry: () => ref.invalidate(playlistDetailProvider(playlistId)),
         data: (p) {
-          final tracks = p.tracks;
+          final metadata =
+              ref.watch(nightMetadataProvider).valueOrNull ?? const {};
+          final tracks = visibleInLibrary(p.tracks, metadata);
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
@@ -64,7 +69,7 @@ class PlaylistDetailScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _addTracks(context, ref, tracks),
+                      onPressed: () => _addTracks(context, ref, p.tracks),
                       icon: const Icon(Icons.library_music_outlined),
                       label: const Text('Ajouter des titres'),
                     ),
@@ -117,7 +122,9 @@ class PlaylistDetailScreen extends ConsumerWidget {
     );
     if (name == null || name.isEmpty || !context.mounted) return;
     try {
-      await ref.read(playlistsActionsProvider.notifier).rename(playlistId, name);
+      await ref
+          .read(playlistsActionsProvider.notifier)
+          .rename(playlistId, name);
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -201,7 +208,8 @@ class PlaylistDetailScreen extends ConsumerWidget {
                   allTracks.where((t) => !currentIds.contains(t.id)).toList();
               return candidates.isEmpty
                   ? const Center(
-                      child: Text('Tous les titres sont déjà dans la playlist.'),
+                      child:
+                          Text('Tous les titres sont déjà dans la playlist.'),
                     )
                   : ListView.builder(
                       itemCount: candidates.length,

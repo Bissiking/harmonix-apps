@@ -33,12 +33,9 @@ class CastSheet extends ConsumerWidget {
             Row(
               children: [
                 Icon(
-                  state.connected
-                      ? Icons.cast_connected
-                      : Icons.cast,
-                  color: state.connected
-                      ? HarmonixColors.accent
-                      : Colors.white70,
+                  state.connected ? Icons.cast_connected : Icons.cast,
+                  color:
+                      state.connected ? HarmonixColors.accent : Colors.white70,
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -85,9 +82,7 @@ class CastSheet extends ConsumerWidget {
                           ? controller.stopCasting
                           : controller.castCurrent,
                       icon: Icon(
-                        state.casting
-                            ? Icons.smartphone
-                            : Icons.cast,
+                        state.casting ? Icons.smartphone : Icons.cast,
                       ),
                       label: Text(
                         state.casting
@@ -140,9 +135,7 @@ class CastSheet extends ConsumerWidget {
                         }
                       },
                 icon: Icon(
-                  state.discovering
-                      ? Icons.stop_circle_outlined
-                      : Icons.search,
+                  state.discovering ? Icons.stop_circle_outlined : Icons.search,
                 ),
                 label: Text(
                   state.devices.isEmpty

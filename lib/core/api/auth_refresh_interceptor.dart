@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import 'package:harmonix_apps/core/session/auth_refresh_service.dart';
 import 'package:harmonix_apps/core/settings/settings_repository.dart';
+import 'package:harmonix_apps/core/utils/trusted_origin.dart';
 
 class AuthRefreshInterceptor extends Interceptor {
   AuthRefreshInterceptor({
@@ -24,6 +25,11 @@ class AuthRefreshInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
+    if (!sameServerOrigin(_settings.serverUrl, options.uri)) {
+      options.headers.remove('Authorization');
+      handler.next(options);
+      return;
+    }
     if (!_isAuthRoute(options)) {
       await _refreshService.refresh();
       _setAuthorization(options);
@@ -37,6 +43,7 @@ class AuthRefreshInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     if (err.response?.statusCode != 401 ||
+        !sameServerOrigin(_settings.serverUrl, err.requestOptions.uri) ||
         err.requestOptions.extra['auth_retry'] == true ||
         _isAuthRoute(err.requestOptions)) {
       handler.next(err);

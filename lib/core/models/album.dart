@@ -1,5 +1,16 @@
 import 'package:harmonix_apps/core/models/track.dart' show Track;
 
+Map<String, dynamic> albumJson(Album album) => {
+      'id': album.id,
+      'title': album.title,
+      'artist': album.artist,
+      'coverFile': album.coverFile,
+      'coverUrl': album.coverUrl,
+      'track_count': album.trackCount,
+      'duration_ms': album.durationMs,
+      'tracks': album.tracks.map((t) => t.toJson()).toList()
+    };
+
 class Album {
   const Album({
     required this.id,
@@ -40,8 +51,9 @@ class Album {
   final int durationMs;
   final List<Track> tracks;
 
-  int get totalDurationMs =>
-      durationMs > 0 ? durationMs : tracks.fold(0, (sum, t) => sum + t.durationMs);
+  int get totalDurationMs => durationMs > 0
+      ? durationMs
+      : tracks.fold(0, (sum, t) => sum + t.durationMs);
 }
 
 Object? readCoverFile(Map json, String key) =>

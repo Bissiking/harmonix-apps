@@ -1,0 +1,10 @@
+--- a/routes/harmonix.js
++++ b/routes/harmonix.js
+@@ -59,6 +59,7 @@
+     is_favorite: favorite,
+     visibility: row.visibility || "private",
+     night_eligible: isHarmonixNightEligible(row.genres),
++    added_at: row.uploaded_at || null,
+   };
+ }
+ 

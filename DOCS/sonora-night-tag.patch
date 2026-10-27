@@ -1,0 +1,141 @@
+diff --git a/routes/harmonix.js b/routes/harmonix.js
+index c10e76f..89f31c1 100644
+--- a/routes/harmonix.js
++++ b/routes/harmonix.js
+@@ -18,6 +18,8 @@ import {
+   registerAppSso,
+ } from "../core/kyrosClient.js";
+ 
++import { isHarmonixNightEligible } from "../core/harmonix-night.js";
++
+ import { mixedPlaylistsRouter } from "./mixed-playlists.js";
+ 
+ const router = express.Router();
+@@ -55,6 +57,7 @@ function hxTrack(row, favorite = false) {
+     duration_ms: durationSeconds > 0 ? Math.round(durationSeconds * 1000) : null,
+     is_favorite: favorite,
+     visibility: row.visibility || "private",
++    night_eligible: isHarmonixNightEligible(row.genres),
+   };
+ }
+ 
+diff --git a/routes/studio.js b/routes/studio.js
+index 48f7bb2..9ff1d67 100644
+--- a/routes/studio.js
++++ b/routes/studio.js
+@@ -114,7 +114,7 @@ router.patch("/music/:id", requirePermission("tracks:update"), async (req, res,
+   const db = getDB();
+   const { id } = req.params;
+   if (id === "bulk-visibility") return next();
+-  const { title, artist, album, visibility, lyrics } = req.body || {};
++  const { title, artist, album, visibility, lyrics, genres } = req.body || {};
+ 
+   const track = await db.get("SELECT * FROM tracks WHERE id = ?", [id]);
+   if (!track) return res.status(404).json({ success: false, error: "TRACK_NOT_FOUND" });
+@@ -125,6 +125,16 @@ router.patch("/music/:id", requirePermission("tracks:update"), async (req, res,
+     if (!nextVisibility) return res.status(400).json({ success: false, error: "INVALID_VISIBILITY" });
+   }
+ 
++  let nextGenres = track.genres;
++  if (genres !== undefined) {
++    if (genres !== null && typeof genres !== "string" &&
++        !(Array.isArray(genres) && genres.every((tag) => typeof tag === "string"))) {
++      return res.status(400).json({ success: false, error: "INVALID_GENRES" });
++    }
++    const values = Array.isArray(genres) ? genres : String(genres || "").split(";");
++    nextGenres = [...new Set(values.map((tag) => tag.trim()).filter(Boolean))].join(";");
++  }
++
+   const nextLyrics =
+     lyrics === undefined
+       ? track.lyrics
+@@ -134,9 +144,9 @@ router.patch("/music/:id", requirePermission("tracks:update"), async (req, res,
+ 
+   await db.run(
+     `UPDATE tracks
+-     SET title = ?, artist = ?, album = ?, visibility = ?, lyrics = ?, updated_at = CURRENT_TIMESTAMP
++     SET title = ?, artist = ?, album = ?, visibility = ?, lyrics = ?, genres = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?`,
+-    [title ?? track.title, artist ?? track.artist, album ?? track.album, nextVisibility, nextLyrics, id]
++    [title ?? track.title, artist ?? track.artist, album ?? track.album, nextVisibility, nextLyrics, nextGenres, id]
+   );
+ 
+   const updated = await db.get("SELECT * FROM tracks WHERE id = ?", [id]);
+diff --git a/test/api.test.js b/test/api.test.js
+index 3392e2d..b02c912 100644
+--- a/test/api.test.js
++++ b/test/api.test.js
+@@ -325,3 +325,43 @@ test("playback state and resume are persisted per user", async () => {
+   await request("/api/playback/state", { method: "PUT", headers: bearer(listener), body: JSON.stringify({}) });
+   assert.equal((await (await request("/api/playback/state", { headers: bearer(listener) })).json()).state.trackId, null);
+ });
++
++
++test("Studio Night tags flow through the Harmonix API and can be removed", async () => {
++  const admin = tokenFor("admin-1");
++  const listener = tokenFor("listener-1");
++  await db.run(
++    "INSERT INTO tracks (id,filename,title,artist,visibility,owner_id,genres) VALUES (?,?,?,?,?,?,?)",
++    ["night-tagged", "night.mp3", "Night Tag Contract", "Test", "public", "admin-1", "Ambient"]
++  );
++  const studioPath = "/api/studio/music/night-tagged";
++  const patch = (body, token = admin) => request(studioPath, {
++    method: "PATCH", headers: bearer(token), body: JSON.stringify(body),
++  });
++  assert.equal((await patch({ genres: "harmonix:night" }, listener)).status, 403);
++  assert.equal((await patch({ genres: { tag: "harmonix:night" } })).status, 400);
++  assert.equal((await patch({ genres: [42] })).status, 400);
++  const tagged = await patch({ genres: " Ambient ; HARMONIX:NIGHT ;Ambient; " });
++  assert.equal(tagged.status, 200);
++  assert.equal((await tagged.json()).item.genres, "Ambient;HARMONIX:NIGHT");
++  await patch({ title: "Night Tag Contract" });
++  assert.equal((await db.get("SELECT genres FROM tracks WHERE id='night-tagged'")).genres,
++    "Ambient;HARMONIX:NIGHT", "unrelated patches preserve tags");
++
++  const hx = async (path) => {
++    const response = await request(`/api/harmonix/apps/v2/catalog/${path}`, { headers: bearer(listener) });
++    assert.equal(response.status, 200);
++    return (await response.json()).data;
++  };
++  assert.equal((await hx("tracks/night-tagged")).night_eligible, true);
++  assert.equal((await hx("tracks")).find((track) => track.id === "night-tagged").night_eligible, true);
++  assert.equal((await hx("search?q=Night%20Tag%20Contract"))[0].night_eligible, true);
++  await patch({ visibility: "private" });
++  assert.equal((await request("/api/harmonix/apps/v2/catalog/tracks/night-tagged", {
++    headers: bearer(listener),
++  })).status, 404, "Night tags do not bypass track visibility");
++  await patch({ visibility: "public", genres: ["Ambient"] });
++  assert.equal((await hx("tracks/night-tagged")).night_eligible, false);
++  await patch({ genres: null });
++  assert.equal((await db.get("SELECT genres FROM tracks WHERE id='night-tagged'")).genres, "");
++});
+diff --git a/core/harmonix-night.js b/core/harmonix-night.js
+new file mode 100644
+--- /dev/null
++++ b/core/harmonix-night.js
+@@ -0,0 +1,8 @@
++// Editorial Night opt-in. A musical genre alone does not opt a track in.
++export function isHarmonixNightEligible(genres) {
++  const tags = Array.isArray(genres)
++    ? genres
++    : typeof genres === "string" ? genres.split(";") : [];
++  return tags.some((tag) => typeof tag === "string" &&
++    tag.trim().toLowerCase() === "harmonix:night");
++}
+diff --git a/test/harmonix-night.test.js b/test/harmonix-night.test.js
+new file mode 100644
+--- /dev/null
++++ b/test/harmonix-night.test.js
+@@ -0,0 +1,12 @@
++import test from "node:test";
++import assert from "node:assert/strict";
++import { isHarmonixNightEligible } from "../core/harmonix-night.js";
++
++test("Night opt-in matches an exact tag, with whitespace and case normalization", () => {
++  for (const genres of ["harmonix:night", "Ambient; HARMONIX:NIGHT ;Piano", ["Lo-Fi", " harmonix:night "]]) {
++    assert.equal(isHarmonixNightEligible(genres), true);
++  }
++  for (const genres of [null, undefined, 42, [], "", "Ambient;Piano", "night", "harmonix:night-only", "prefix-harmonix:night", [null, 42, "Ambient"]]) {
++    assert.equal(isHarmonixNightEligible(genres), false);
++  }
++});

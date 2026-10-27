@@ -20,11 +20,13 @@ class LyricsView extends ConsumerWidget {
       onRetry: () => ref.invalidate(trackLyricsProvider(trackId)),
       data: (data) {
         if (!data.hasLyrics) {
-          return const Center(child: Text('Paroles indisponibles pour ce titre.'));
+          return const Center(
+              child: Text('Paroles indisponibles pour ce titre.'));
         }
         final lines = data.lines;
         if (lines.isEmpty) {
-          return const Center(child: Text('Paroles indisponibles pour ce titre.'));
+          return const Center(
+              child: Text('Paroles indisponibles pour ce titre.'));
         }
         return data.synced
             ? _SyncedLyrics(trackId: trackId, lines: lines)

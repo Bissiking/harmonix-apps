@@ -58,6 +58,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.scrollUntilVisible(find.text('Une nuit harmonieuse'), 180,
+          scrollable: find.byType(Scrollable).first);
+      await tester.pumpAndSettle();
       expect(find.text('Une nuit harmonieuse'), findsWidgets);
       expect(tester.takeException(), isNull);
     });

@@ -20,6 +20,10 @@ _Track _$TrackFromJson(Map<String, dynamic> json) => _Track(
       isFavorite: readIsFavorite(json, 'is_favorite') == null
           ? false
           : boolFromJson(readIsFavorite(json, 'is_favorite')),
+      nightEligible: readNightEligible(json, 'night_eligible') == null
+          ? false
+          : boolFromJson(readNightEligible(json, 'night_eligible')),
+      addedAt: dateTimeFromJson(readAddedAt(json, 'added_at')),
     );
 
 Map<String, dynamic> _$TrackToJson(_Track instance) => <String, dynamic>{
@@ -32,4 +36,6 @@ Map<String, dynamic> _$TrackToJson(_Track instance) => <String, dynamic>{
       'stream_url': instance.streamUrl,
       'duration_ms': instance.durationMs,
       'is_favorite': instance.isFavorite,
+      'night_eligible': instance.nightEligible,
+      'added_at': instance.addedAt?.toIso8601String(),
     };
